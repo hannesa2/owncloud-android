@@ -25,11 +25,13 @@ package com.owncloud.android;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 
 import com.owncloud.android.authentication.FingerprintManager;
 import com.owncloud.android.authentication.PassCodeManager;
@@ -67,6 +69,8 @@ public class MainApp extends Application {
 
     private static Context mContext;
 
+    private static String storagePath;
+
     // TODO Enable when "On Device" is recovered?
     // TODO better place
     // private static boolean mOnlyOnDevice = false;
@@ -77,7 +81,12 @@ public class MainApp extends Application {
         super.onCreate();
         MainApp.mContext = getApplicationContext();
 
-        OwnCloudClient.setContext(mContext);
+         OwnCloudClient.setContext(mContext);
+
+        SharedPreferences appPrefs =
+                PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        MainApp.storagePath = appPrefs.getString(Preferences.Keys.STORAGE_PATH, Environment.
+                              getExternalStorageDirectory().getAbsolutePath());
 
         boolean isSamlAuth = AUTH_ON.equals(getString(R.string.auth_method_saml_web_sso));
 
@@ -195,11 +204,17 @@ public class MainApp extends Application {
         return MainApp.mContext;
     }
 
-    /**
-     * Next methods give access in code to some constants that need to be defined in string resources to be referred
-     * in AndroidManifest.xml file or other xml resource files; or that need to be easy to modify in build time.
-     */
+    public static String getStoragePath(){
+        return MainApp.storagePath;
+    }
 
+    public static void setStoragePath(String path){
+        MainApp.storagePath = path;
+    }
+
+    // Methods to obtain Strings referring app_name 
+    //   From AccountAuthenticator 
+    //   public static final String ACCOUNT_TYPE = "owncloud";    
     public static String getAccountType() {
         return getAppContext().getResources().getString(R.string.account_type);
     }

@@ -33,6 +33,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
+import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
@@ -53,6 +54,8 @@ import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
 import com.owncloud.android.authentication.FingerprintManager;
 import com.owncloud.android.datamodel.OCFile;
+import com.owncloud.android.datastorage.DataStorageProvider;
+import com.owncloud.android.datastorage.StoragePoint;
 import com.owncloud.android.db.PreferenceManager.CameraUploadsConfiguration;
 import com.owncloud.android.files.services.CameraUploadsHandler;
 import com.owncloud.android.lib.common.utils.Log_OC;
@@ -101,11 +104,13 @@ public class Preferences extends PreferenceActivity {
     private Preference mPrefCameraUploadsSourcePath;
     private Preference mPrefCameraUploadsBehaviour;
 
-    private PreferenceCategory mPrefSecurityCategory;
+    private String mStoragePath;
 
-    private CameraUploadsHandler mCameraUploadsHandler;
-
-    private FingerprintManager mFingerprintManager;
+    public static class Keys {
+        public static final String STORAGE_PATH = "storage_path";
+        public static final String INSTANT_UPLOAD_PATH = "instant_upload_path";
+        public static final String INSTANT_VIDEO_UPLOAD_PATH = "instant_video_upload_path";
+    }
 
     @SuppressWarnings("deprecation")
     @Override
@@ -240,7 +245,7 @@ public class Preferences extends PreferenceActivity {
         CameraUploadsConfiguration configuration = com.owncloud.android.db.PreferenceManager.
                 getCameraUploadsConfiguration(this);
 
-        mCameraUploadsHandler = new CameraUploadsHandler(configuration);
+        CameraUploadsHandler = new CameraUploadsHandler(configuration);
 
         /**
          * Security
@@ -473,6 +478,37 @@ public class Preferences extends PreferenceActivity {
             } else {
                 preferenceCategory.removePreference(pImprint);
             }
+        }
+
+        mPrefStoragePath =  (ListPreference) findPreference(Keys.STORAGE_PATH);
+        if (mPrefStoragePath != null) {
+            StoragePoint[] storageOptions = DataStorageProvider.getInstance().getAvailableStoragePoints();
+            String[] entries = new String[storageOptions.length];
+            String[] values = new String[storageOptions.length];
+            for (int i = 0; i < storageOptions.length; ++i) {
+                entries[i] = storageOptions[i].getDescription();
+                values[i] = storageOptions[i].getPath();
+            }
+            mPrefStoragePath.setEntries(entries);
+            mPrefStoragePath.setEntryValues(values);
+
+            mPrefStoragePath.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    String newPath = (String)newValue;
+                    if (mStoragePath.equals(newPath))
+                        return true;
+
+                    StorageMigration storageMigration = new StorageMigration(Preferences.this, mStoragePath, newPath);
+
+                    storageMigration.setStorageMigrationProgressListener(Preferences.this);
+
+                    storageMigration.migrate();
+
+                    return false;
+                }
+            });
+
         }
 
         /**

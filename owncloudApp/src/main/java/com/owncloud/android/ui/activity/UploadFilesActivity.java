@@ -101,8 +101,9 @@ public class UploadFilesActivity extends FileActivity implements
         super.onCreate(savedInstanceState);
 
         if(savedInstanceState != null) {
-            mCurrentDir = new File(savedInstanceState.getString(
-                    UploadFilesActivity.KEY_DIRECTORY_PATH));
+            mCurrentDir = new File(savedInstanceState.getString(KEY_DIRECTORY_PATH));
+        } else if (getIntent() != null && getIntent().hasExtra(KEY_DIRECTORY_PATH)) {
+            mCurrentDir = new File(getIntent().getStringExtra(KEY_DIRECTORY_PATH));
         } else {
             mCurrentDir = Environment.getExternalStorageDirectory();
         }

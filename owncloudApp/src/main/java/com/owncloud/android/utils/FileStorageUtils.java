@@ -23,6 +23,25 @@
 
 package com.owncloud.android.utils;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Vector;
+
+import third_parties.daveKoeller.AlphanumComparator;
+
+import com.owncloud.android.MainApp;
+import com.owncloud.android.R;
+import com.owncloud.android.datamodel.OCFile;
+import com.owncloud.android.lib.resources.files.RemoteFile;
+import com.owncloud.android.ui.activity.Preferences;
+
+import android.accounts.Account;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -74,9 +93,8 @@ public class FileStorageUtils {
     /**
      * Get local owncloud storage path for accountName.
      */
-    public static String getSavePath(String accountName) {
-        File sdCard = Environment.getExternalStorageDirectory();
-        return sdCard.getAbsolutePath() + "/" + MainApp.getDataFolder() + "/" + Uri.encode(accountName, "@");
+    public static final String getSavePath(String accountName) {
+        return MainApp.getStoragePath() + File.separator + MainApp.getDataFolder() + File.separator + Uri.encode(accountName, "@");
         // URL encoding is an 'easy fix' to overcome that NTFS and FAT32 don't allow ":" in file names,
         // that can be in the accountName since 0.1.190B
     }
@@ -93,11 +111,10 @@ public class FileStorageUtils {
     /**
      * Get absolute path to tmp folder inside datafolder in sd-card for given accountName.
      */
-    public static String getTemporalPath(String accountName) {
-        File sdCard = Environment.getExternalStorageDirectory();
-        return sdCard.getAbsolutePath() + "/" + MainApp.getDataFolder() + "/tmp/" + Uri.encode(accountName, "@");
-        // URL encoding is an 'easy fix' to overcome that NTFS and FAT32 don't allow ":" in file names,
-        // that can be in the accountName since 0.1.190B
+    public static final String getTemporalPath(String accountName) {
+        return MainApp.getStoragePath() + File.separator + MainApp.getDataFolder() + File.separator + "tmp" + File.separator + Uri.encode(accountName, "@");
+            // URL encoding is an 'easy fix' to overcome that NTFS and FAT32 don't allow ":" in file names,
+            // that can be in the accountName since 0.1.190B
     }
 
     /**
@@ -107,8 +124,8 @@ public class FileStorageUtils {
      * @return Optimistic number of available bytes (can be less)
      */
     @SuppressLint("NewApi")
-    public static long getUsableSpace(String accountName) {
-        File savePath = Environment.getExternalStorageDirectory();
+    public static final long getUsableSpace(String accountName) {
+        File savePath = new File(MainApp.getStoragePath());
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.GINGERBREAD) {
             return savePath.getUsableSpace();
 
@@ -118,10 +135,18 @@ public class FileStorageUtils {
         }
 
     }
-
-    public static String getLogPath() {
+    
+    public static final String getLogPath()  {
         return Environment.getExternalStorageDirectory() + File.separator + MainApp.getDataFolder() + File.separator + "log";
     }
+
+//    public static String getInstantUploadFilePath(Context context, String fileName) {
+//        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
+//        String uploadPathdef = context.getString(R.string.instant_upload_path);
+//        String uploadPath = pref.getString("instant_upload_path", uploadPathdef);
+//        String value = uploadPath + OCFile.PATH_SEPARATOR +  (fileName == null ? "" : fileName);
+//        return value;
+//    }
 
     /**
      * Gets the composed path when video is or must be stored
@@ -130,13 +155,13 @@ public class FileStorageUtils {
      * @param fileName: video file name
      * @return String: video file path composed
      */
-    public static String getInstantVideoUploadFilePath(Context context, String fileName) {
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
-        String uploadVideoPathdef = context.getString(R.string.camera_upload_path);
-        String uploadVideoPath = pref.getString("instant_video_upload_path", uploadVideoPathdef);
-        String value = uploadVideoPath + OCFile.PATH_SEPARATOR + (fileName == null ? "" : fileName);
-        return value;
-    }
+//    public static String getInstantVideoUploadFilePath(Context context, String fileName) {
+//        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(context);
+//        String uploadVideoPathdef = context.getString(R.string.instant_upload_path);
+//        String uploadVideoPath = pref.getString(Preferences.Keys.INSTANT_VIDEO_UPLOAD_PATH, uploadVideoPathdef);
+//        String value = uploadVideoPath + OCFile.PATH_SEPARATOR +  (fileName == null ? "" : fileName);
+//        return value;
+//    }
 
     public static String getParentPath(String remotePath) {
         String parentPath = new File(remotePath).getParent();
