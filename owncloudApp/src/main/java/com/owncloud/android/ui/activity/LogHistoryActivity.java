@@ -347,6 +347,7 @@ public class LogHistoryActivity extends ToolbarActivity {
             if (result != null) {
                 mLogListAdapter = new LogListAdapter(result, mCurrentFilter, LogHistoryActivity.this);
                 mLogsRecycler.setAdapter(mLogListAdapter);
+                mLogsRecycler.scrollToPosition(result.size() - 1);
                 dismissLoadingDialog();
             }
         }
