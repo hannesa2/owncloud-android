@@ -47,6 +47,9 @@ env:
   matrix:
   - ANDROID_TARGET=android-28 ANDROID_ABI=armeabi-v7a
 
+after_script:
+- ./signing/cleanup.sh
+
 deploy:
   provider: releases
   api_key: ${api_key}
