@@ -22,6 +22,9 @@ proguard-project.txt
 *.iml
 build
 
+signing/GooglePlay.p12
+signing/release.keystore
+
 # android sdk captures folder
 captures
 
