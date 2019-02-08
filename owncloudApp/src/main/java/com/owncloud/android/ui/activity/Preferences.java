@@ -42,13 +42,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.LayoutRes;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatDelegate;
 import com.google.android.material.snackbar.Snackbar;
 import com.owncloud.android.BuildConfig;
-import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
 import com.owncloud.android.authentication.FingerprintManager;
 import com.owncloud.android.datamodel.OCFile;
@@ -78,6 +78,8 @@ public class Preferences extends PreferenceActivity {
     private static final int ACTION_CONFIRM_PASSCODE = 6;
     private static final int ACTION_REQUEST_PATTERN = 7;
     private static final int ACTION_CONFIRM_PATTERN = 8;
+    private static final String CLICK_DEV_MENU = "clickDeveloperMenu";
+    private static final int CLICKS_NEEDED_TO_BE_DEVELOPER = 5;
 
     public static final String PREFERENCE_TOUCHES_WITH_OTHER_VISIBLE_WINDOWS = "touches_with_other_visible_windows";
 
@@ -109,12 +111,16 @@ public class Preferences extends PreferenceActivity {
     private Preference mAboutApp;
     private AppCompatDelegate mDelegate;
 
+    private SharedPreferences mAppPrefs;
+    private Preference mLogger;
+
     @SuppressWarnings("deprecation")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         getDelegate().installViewFactory();
         getDelegate().onCreate(savedInstanceState);
         super.onCreate(savedInstanceState);
+        mAppPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         addPreferencesFromResource(R.xml.preferences);
 
         ActionBar actionBar = getSupportActionBar();
@@ -468,21 +474,15 @@ public class Preferences extends PreferenceActivity {
             }
         }
 
-        boolean loggerEnabled = getResources().getBoolean(R.bool.logger_enabled) ||
-                BuildConfig.DEBUG || MainApp.isBeta();
-        Preference pLogger = findPreference("logger");
-        if (pLogger != null) {
-            if (loggerEnabled) {
-                pLogger.setOnPreferenceClickListener(preference -> {
-                    Intent loggerIntent = new Intent(getApplicationContext(), LogHistoryActivity.class);
-                    startActivity(loggerIntent);
+        // show item(s) only when you are developer
+        mLogger = findPreference("logger");
+        mLogger.setOnPreferenceClickListener(preference -> {
+            Intent loggerIntent = new Intent(getApplicationContext(), LogHistoryActivity.class);
+            startActivity(loggerIntent);
 
-                    return true;
-                });
-            } else {
-                pCategoryMore.removePreference(pLogger);
-            }
-        }
+            return true;
+        });
+        showDeveloperItems(preferenceCategory);
 
         boolean imprintEnabled = getResources().getBoolean(R.bool.imprint_enabled);
         Preference pImprint = findPreference("imprint");
@@ -513,13 +513,37 @@ public class Preferences extends PreferenceActivity {
             ));
             mAboutApp.setSummary(String.format(getString(R.string.about_version), appVersion));
             mAboutApp.setOnPreferenceClickListener(preference -> {
-                String commitUrl = BuildConfig.GIT_REMOTE + "/commit/" + BuildConfig.COMMIT_SHA1;
-                Uri uriUrl = Uri.parse(commitUrl);
-                Intent intent = new Intent(Intent.ACTION_VIEW, uriUrl);
-                startActivity(intent);
+                int clickCount = mAppPrefs.getInt(CLICK_DEV_MENU, 0);
+                if (mAppPrefs.getInt(CLICK_DEV_MENU, 0) > CLICKS_NEEDED_TO_BE_DEVELOPER) {
+                    String commitUrl = BuildConfig.GIT_REMOTE + "/commit/" + BuildConfig.COMMIT_SHA1;
+                    Uri uriUrl = Uri.parse(commitUrl);
+                    Intent intent = new Intent(Intent.ACTION_VIEW, uriUrl);
+                    startActivity(intent);
+                } else if (mAppPrefs.getInt(CLICK_DEV_MENU, 0) == CLICKS_NEEDED_TO_BE_DEVELOPER) {
+                    showDeveloperItems(preferenceCategory);
+                } else if (clickCount > 0) {
+                    Toast.makeText(this,
+                            getString(R.string.clicks_to_be_developer, CLICKS_NEEDED_TO_BE_DEVELOPER - clickCount),
+                            Toast.LENGTH_SHORT).show();
+                }
+                mAppPrefs.edit().putInt(CLICK_DEV_MENU, clickCount + 1).apply();
                 return true;
             });
         }
+    }
+
+    private void showDeveloperItems(PreferenceCategory preferenceCategory) {
+
+        Preference pLogger = findPreference("logger");
+        if (mAppPrefs.getInt(CLICK_DEV_MENU, 0) >= CLICKS_NEEDED_TO_BE_DEVELOPER && pLogger == null) {
+            preferenceCategory.addPreference(mLogger);
+        } else if (!isDeveloper() && pLogger != null) {
+            preferenceCategory.removePreference(mLogger);
+        }
+    }
+
+    private boolean isDeveloper() {
+        return mAppPrefs.getInt(CLICK_DEV_MENU, 0) > CLICKS_NEEDED_TO_BE_DEVELOPER;
     }
 
     /**
@@ -613,13 +637,11 @@ public class Preferences extends PreferenceActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        SharedPreferences appPrefs =
-                PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        boolean passCodeState = appPrefs.getBoolean(PassCodeActivity.PREFERENCE_SET_PASSCODE, false);
+        boolean passCodeState = mAppPrefs.getBoolean(PassCodeActivity.PREFERENCE_SET_PASSCODE, false);
         mPasscode.setChecked(passCodeState);
-        boolean patternState = appPrefs.getBoolean(PatternLockActivity.PREFERENCE_SET_PATTERN, false);
+        boolean patternState = mAppPrefs.getBoolean(PatternLockActivity.PREFERENCE_SET_PATTERN,false);
         mPattern.setChecked(patternState);
-        boolean fingerprintState = appPrefs.getBoolean(FingerprintActivity.PREFERENCE_SET_FINGERPRINT, false);
+        boolean fingerprintState = mAppPrefs.getBoolean(FingerprintActivity.PREFERENCE_SET_FINGERPRINT,false);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && mFingerprintManager != null &&
                 !mFingerprintManager.hasEnrolledFingerprints()) {
