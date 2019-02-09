@@ -49,6 +49,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatDelegate;
 import com.google.android.material.snackbar.Snackbar;
 import com.owncloud.android.BuildConfig;
+import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
 import com.owncloud.android.authentication.FingerprintManager;
 import com.owncloud.android.datamodel.OCFile;
@@ -78,8 +79,6 @@ public class Preferences extends PreferenceActivity {
     private static final int ACTION_CONFIRM_PASSCODE = 6;
     private static final int ACTION_REQUEST_PATTERN = 7;
     private static final int ACTION_CONFIRM_PATTERN = 8;
-    private static final String CLICK_DEV_MENU = "clickDeveloperMenu";
-    private static final int CLICKS_NEEDED_TO_BE_DEVELOPER = 5;
 
     public static final String PREFERENCE_TOUCHES_WITH_OTHER_VISIBLE_WINDOWS = "touches_with_other_visible_windows";
 
@@ -511,22 +510,23 @@ public class Preferences extends PreferenceActivity {
                     getString(R.string.about_android),
                     getString(R.string.app_name)
             ));
-            mAboutApp.setSummary(String.format(getString(R.string.about_version), appVersion));
-            mAboutApp.setOnPreferenceClickListener(preference -> {
-                int clickCount = mAppPrefs.getInt(CLICK_DEV_MENU, 0);
-                if (mAppPrefs.getInt(CLICK_DEV_MENU, 0) > CLICKS_NEEDED_TO_BE_DEVELOPER) {
+            pAboutApp.setSummary(String.format(getString(R.string.about_version), appVersion));
+            pAboutApp.setOnPreferenceClickListener(preference -> {
+                int clickCount = mAppPrefs.getInt(MainApp.CLICK_DEV_MENU, 0);
+                if (mAppPrefs.getInt(MainApp.CLICK_DEV_MENU, 0) > MainApp.CLICKS_NEEDED_TO_BE_DEVELOPER) {
                     String commitUrl = BuildConfig.GIT_REMOTE + "/commit/" + BuildConfig.COMMIT_SHA1;
                     Uri uriUrl = Uri.parse(commitUrl);
                     Intent intent = new Intent(Intent.ACTION_VIEW, uriUrl);
                     startActivity(intent);
-                } else if (mAppPrefs.getInt(CLICK_DEV_MENU, 0) == CLICKS_NEEDED_TO_BE_DEVELOPER) {
+                } else if (mAppPrefs.getInt(MainApp.CLICK_DEV_MENU, 0) == MainApp.CLICKS_NEEDED_TO_BE_DEVELOPER) {
                     showDeveloperItems(preferenceCategory);
                 } else if (clickCount > 0) {
                     Toast.makeText(this,
-                            getString(R.string.clicks_to_be_developer, CLICKS_NEEDED_TO_BE_DEVELOPER - clickCount),
+                            getString(R.string.clicks_to_be_developer, MainApp.CLICKS_NEEDED_TO_BE_DEVELOPER - clickCount),
                             Toast.LENGTH_SHORT).show();
                 }
-                mAppPrefs.edit().putInt(CLICK_DEV_MENU, clickCount + 1).apply();
+                mAppPrefs.edit().putInt(MainApp.CLICK_DEV_MENU, clickCount + 1).apply();
+                ((MainApp)getApplication()).readIsDeveloper(); // read value to global variable
                 return true;
             });
         }
@@ -535,15 +535,11 @@ public class Preferences extends PreferenceActivity {
     private void showDeveloperItems(PreferenceCategory preferenceCategory) {
 
         Preference pLogger = findPreference("logger");
-        if (mAppPrefs.getInt(CLICK_DEV_MENU, 0) >= CLICKS_NEEDED_TO_BE_DEVELOPER && pLogger == null) {
+        if (mAppPrefs.getInt(MainApp.CLICK_DEV_MENU, 0) >= MainApp.CLICKS_NEEDED_TO_BE_DEVELOPER && pLogger == null) {
             preferenceCategory.addPreference(mLogger);
-        } else if (!isDeveloper() && pLogger != null) {
+        } else if (!MainApp.isDeveloper() && pLogger != null) {
             preferenceCategory.removePreference(mLogger);
         }
-    }
-
-    private boolean isDeveloper() {
-        return mAppPrefs.getInt(CLICK_DEV_MENU, 0) > CLICKS_NEEDED_TO_BE_DEVELOPER;
     }
 
     /**
@@ -638,10 +634,10 @@ public class Preferences extends PreferenceActivity {
     protected void onResume() {
         super.onResume();
         boolean passCodeState = mAppPrefs.getBoolean(PassCodeActivity.PREFERENCE_SET_PASSCODE, false);
-        mPasscode.setChecked(passCodeState);
-        boolean patternState = mAppPrefs.getBoolean(PatternLockActivity.PREFERENCE_SET_PATTERN,false);
-        mPattern.setChecked(patternState);
-        boolean fingerprintState = mAppPrefs.getBoolean(FingerprintActivity.PREFERENCE_SET_FINGERPRINT,false);
+        pPasscode.setChecked(passCodeState);
+        boolean patternState = mAppPrefs.getBoolean(PatternLockActivity.PREFERENCE_SET_PATTERN, false);
+        pPattern.setChecked(patternState);
+        boolean fingerprintState = mAppPrefs.getBoolean(FingerprintActivity.PREFERENCE_SET_FINGERPRINT, false);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && mFingerprintManager != null &&
                 !mFingerprintManager.hasEnrolledFingerprints()) {
