@@ -44,9 +44,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import androidx.annotation.LayoutRes;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatDelegate;
 import com.google.android.material.snackbar.Snackbar;
 import com.owncloud.android.BuildConfig;
 import com.owncloud.android.MainApp;
@@ -61,6 +58,10 @@ import com.owncloud.android.utils.PreferenceUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+
+import androidx.annotation.LayoutRes;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatDelegate;
 
 /**
  * An Activity that allows the user to change the application's settings.
@@ -268,8 +269,7 @@ public class Preferences extends PreferenceActivity {
             mPasscode.setOnPreferenceChangeListener((preference, newValue) -> {
                 Intent i = new Intent(getApplicationContext(), PassCodeActivity.class);
                 Boolean incoming = (Boolean) newValue;
-                SharedPreferences appPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                patternSet = appPrefs.getBoolean(PatternLockActivity.PREFERENCE_SET_PATTERN, false);
+                patternSet = mAppPrefs.getBoolean(PatternLockActivity.PREFERENCE_SET_PATTERN, false);
                 if (patternSet) {
                     showSnackMessage(R.string.pattern_already_set);
                 } else {
@@ -288,8 +288,7 @@ public class Preferences extends PreferenceActivity {
             mPattern.setOnPreferenceChangeListener((preference, newValue) -> {
                 Intent intent = new Intent(getApplicationContext(), PatternLockActivity.class);
                 Boolean state = (Boolean) newValue;
-                SharedPreferences appPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                passcodeSet = appPrefs.getBoolean(PassCodeActivity.PREFERENCE_SET_PASSCODE, false);
+                passcodeSet = mAppPrefs.getBoolean(PassCodeActivity.PREFERENCE_SET_PASSCODE, false);
                 if (passcodeSet) {
                     showSnackMessage(R.string.passcode_already_set);
                 } else {
@@ -336,8 +335,7 @@ public class Preferences extends PreferenceActivity {
 
         if (mPrefTouchesWithOtherVisibleWindows != null) {
             mPrefTouchesWithOtherVisibleWindows.setOnPreferenceChangeListener((preference, newValue) -> {
-                        SharedPreferences.Editor appPrefs = PreferenceManager.
-                                getDefaultSharedPreferences(getApplicationContext()).edit();
+                        SharedPreferences.Editor editor = mAppPrefs.edit();
 
                         if ((Boolean) newValue) {
                             showConfirmationDialog(
@@ -345,20 +343,17 @@ public class Preferences extends PreferenceActivity {
                                     getString(R.string.confirmation_touches_with_other_windows_message),
                                     (dialog, which) -> {
                                         if (which == DialogInterface.BUTTON_POSITIVE) {
-                                            appPrefs.putBoolean(
-                                                    PREFERENCE_TOUCHES_WITH_OTHER_VISIBLE_WINDOWS,
-                                                    true
-                                            );
+                                            editor.putBoolean(PREFERENCE_TOUCHES_WITH_OTHER_VISIBLE_WINDOWS, true);
                                         } else if (which == DialogInterface.BUTTON_NEGATIVE) {
                                             mPrefTouchesWithOtherVisibleWindows.setChecked(false);
                                         }
                                         dialog.dismiss();
                                     });
                         } else {
-                            appPrefs.putBoolean(PREFERENCE_TOUCHES_WITH_OTHER_VISIBLE_WINDOWS, false);
+                            editor.putBoolean(PREFERENCE_TOUCHES_WITH_OTHER_VISIBLE_WINDOWS, false);
                         }
 
-                        appPrefs.apply();
+                        editor.apply();
 
                         return true;
                     }
@@ -481,7 +476,7 @@ public class Preferences extends PreferenceActivity {
 
             return true;
         });
-        showDeveloperItems(preferenceCategory);
+        showDeveloperItems(mPrefCameraUploadsCategory);
 
         boolean imprintEnabled = getResources().getBoolean(R.bool.imprint_enabled);
         Preference pImprint = findPreference("imprint");
@@ -510,8 +505,8 @@ public class Preferences extends PreferenceActivity {
                     getString(R.string.about_android),
                     getString(R.string.app_name)
             ));
-            pAboutApp.setSummary(String.format(getString(R.string.about_version), appVersion));
-            pAboutApp.setOnPreferenceClickListener(preference -> {
+            mAboutApp.setSummary(String.format(getString(R.string.about_version), appVersion));
+            mAboutApp.setOnPreferenceClickListener(preference -> {
                 int clickCount = mAppPrefs.getInt(MainApp.CLICK_DEV_MENU, 0);
                 if (mAppPrefs.getInt(MainApp.CLICK_DEV_MENU, 0) > MainApp.CLICKS_NEEDED_TO_BE_DEVELOPER) {
                     String commitUrl = BuildConfig.GIT_REMOTE + "/commit/" + BuildConfig.COMMIT_SHA1;
@@ -519,14 +514,14 @@ public class Preferences extends PreferenceActivity {
                     Intent intent = new Intent(Intent.ACTION_VIEW, uriUrl);
                     startActivity(intent);
                 } else if (mAppPrefs.getInt(MainApp.CLICK_DEV_MENU, 0) == MainApp.CLICKS_NEEDED_TO_BE_DEVELOPER) {
-                    showDeveloperItems(preferenceCategory);
+                    showDeveloperItems(mPrefCameraUploadsCategory);
                 } else if (clickCount > 0) {
                     Toast.makeText(this,
                             getString(R.string.clicks_to_be_developer, MainApp.CLICKS_NEEDED_TO_BE_DEVELOPER - clickCount),
                             Toast.LENGTH_SHORT).show();
                 }
                 mAppPrefs.edit().putInt(MainApp.CLICK_DEV_MENU, clickCount + 1).apply();
-                ((MainApp)getApplication()).readIsDeveloper(); // read value to global variable
+                ((MainApp) getApplication()).readIsDeveloper(); // read value to global variable
                 return true;
             });
         }
@@ -634,9 +629,9 @@ public class Preferences extends PreferenceActivity {
     protected void onResume() {
         super.onResume();
         boolean passCodeState = mAppPrefs.getBoolean(PassCodeActivity.PREFERENCE_SET_PASSCODE, false);
-        pPasscode.setChecked(passCodeState);
+        mPasscode.setChecked(passCodeState);
         boolean patternState = mAppPrefs.getBoolean(PatternLockActivity.PREFERENCE_SET_PATTERN, false);
-        pPattern.setChecked(patternState);
+        mPattern.setChecked(patternState);
         boolean fingerprintState = mAppPrefs.getBoolean(FingerprintActivity.PREFERENCE_SET_FINGERPRINT, false);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && mFingerprintManager != null &&
@@ -718,15 +713,13 @@ public class Preferences extends PreferenceActivity {
 
             String passcode = data.getStringExtra(PassCodeActivity.KEY_PASSCODE);
             if (passcode != null && passcode.length() == 4) {
-                SharedPreferences.Editor appPrefs = PreferenceManager
-                        .getDefaultSharedPreferences(getApplicationContext()).edit();
+                SharedPreferences.Editor editor = mAppPrefs.edit();
 
                 for (int i = 1; i <= 4; ++i) {
-                    appPrefs.putString(PassCodeActivity.PREFERENCE_PASSCODE_D + i,
-                            passcode.substring(i - 1, i));
+                    editor.putString(PassCodeActivity.PREFERENCE_PASSCODE_D + i, passcode.substring(i - 1, i));
                 }
-                appPrefs.putBoolean(PassCodeActivity.PREFERENCE_SET_PASSCODE, true);
-                appPrefs.apply();
+                editor.putBoolean(PassCodeActivity.PREFERENCE_SET_PASSCODE, true);
+                editor.apply();
 
                 showSnackMessage(R.string.pass_code_stored);
 
@@ -737,10 +730,7 @@ public class Preferences extends PreferenceActivity {
         } else if (requestCode == ACTION_CONFIRM_PASSCODE && resultCode == RESULT_OK) { // Disable passcode
 
             if (data.getBooleanExtra(PassCodeActivity.KEY_CHECK_RESULT, false)) {
-                SharedPreferences.Editor appPrefs = PreferenceManager
-                        .getDefaultSharedPreferences(getApplicationContext()).edit();
-                appPrefs.putBoolean(PassCodeActivity.PREFERENCE_SET_PASSCODE, false);
-                appPrefs.apply();
+                mAppPrefs.edit().putBoolean(PassCodeActivity.PREFERENCE_SET_PASSCODE, false).apply();
                 showSnackMessage(R.string.pass_code_removed);
 
                 // Do not allow to use Fingerprint lock since Passcode lock has been disabled
@@ -749,11 +739,10 @@ public class Preferences extends PreferenceActivity {
         } else if (requestCode == ACTION_REQUEST_PATTERN && resultCode == RESULT_OK) { // Enable pattern
             String patternValue = data.getStringExtra(PatternLockActivity.KEY_PATTERN);
             if (patternValue != null) {
-                SharedPreferences.Editor appPrefs = PreferenceManager.
-                        getDefaultSharedPreferences(getApplicationContext()).edit();
-                appPrefs.putString(PatternLockActivity.KEY_PATTERN, patternValue);
-                appPrefs.putBoolean(PatternLockActivity.PREFERENCE_SET_PATTERN, true);
-                appPrefs.apply();
+                SharedPreferences.Editor editor = mAppPrefs.edit();
+                editor.putString(PatternLockActivity.KEY_PATTERN, patternValue);
+                editor.putBoolean(PatternLockActivity.PREFERENCE_SET_PATTERN, true);
+                editor.apply();
                 showSnackMessage(R.string.pattern_stored);
 
                 // Allow to use Fingerprint lock since Pattern lock has been enabled
@@ -761,10 +750,7 @@ public class Preferences extends PreferenceActivity {
             }
         } else if (requestCode == ACTION_CONFIRM_PATTERN && resultCode == RESULT_OK) { // Disable pattern
             if (data.getBooleanExtra(PatternLockActivity.KEY_CHECK_RESULT, false)) {
-                SharedPreferences.Editor appPrefs = PreferenceManager.
-                        getDefaultSharedPreferences(getApplicationContext()).edit();
-                appPrefs.putBoolean(PatternLockActivity.PREFERENCE_SET_PATTERN, false);
-                appPrefs.apply();
+                mAppPrefs.edit().putBoolean(PatternLockActivity.PREFERENCE_SET_PATTERN, false).apply();
                 showSnackMessage(R.string.pattern_removed);
 
                 // Do not allow to use Fingerprint lock since Pattern lock has been disabled
@@ -865,9 +851,7 @@ public class Preferences extends PreferenceActivity {
      * Load picture upload path set on preferences
      */
     private void loadCameraUploadsPicturePath() {
-        SharedPreferences appPrefs =
-                PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        mUploadPath = appPrefs.getString("camera_picture_uploads_path", getString(R.string.camera_upload_path));
+        mUploadPath = mAppPrefs.getString("camera_picture_uploads_path", getString(R.string.camera_upload_path));
         mPrefCameraPictureUploadsPath.setSummary(
                 DisplayUtils.getPathWithoutLastSlash(mUploadPath)
         );
@@ -877,43 +861,29 @@ public class Preferences extends PreferenceActivity {
      * Save the "Picture upload path" on preferences
      */
     private void saveCameraUploadsPicturePathOnPreferences() {
-        SharedPreferences appPrefs =
-                PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        SharedPreferences.Editor editor = appPrefs.edit();
-        editor.putString("camera_picture_uploads_path", mUploadPath);
-        editor.apply();
+        mAppPrefs.edit().putString("camera_picture_uploads_path", mUploadPath).apply();
     }
 
     /**
      * Load video upload path set on preferences
      */
     private void loadCameraUploadsVideoPath() {
-        SharedPreferences appPrefs =
-                PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        mUploadVideoPath = appPrefs.getString("camera_video_uploads_path", getString(R.string.camera_upload_path));
-        mPrefCameraVideoUploadsPath.setSummary(
-                DisplayUtils.getPathWithoutLastSlash(mUploadVideoPath)
-        );
+        mUploadVideoPath = mAppPrefs.getString("camera_video_uploads_path", getString(R.string.camera_upload_path));
+        mPrefCameraVideoUploadsPath.setSummary(DisplayUtils.getPathWithoutLastSlash(mUploadVideoPath));
     }
 
     /**
      * Save the "Video upload path" on preferences
      */
     private void saveCameraUploadsVideoPathOnPreferences() {
-        SharedPreferences appPrefs =
-                PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        SharedPreferences.Editor editor = appPrefs.edit();
-        editor.putString("camera_video_uploads_path", mUploadVideoPath);
-        editor.apply();
+        mAppPrefs.edit().putString("camera_video_uploads_path", mUploadVideoPath).apply();
     }
 
     /**
      * Load source path set on preferences
      */
     private void loadCameraUploadsSourcePath() {
-        SharedPreferences appPrefs =
-                PreferenceManager.getDefaultSharedPreferences(this);
-        mSourcePath = appPrefs.getString(
+        mSourcePath = mAppPrefs.getString(
                 "camera_uploads_source_path",
                 CameraUploadsConfiguration.DEFAULT_SOURCE_PATH
         );
@@ -937,11 +907,7 @@ public class Preferences extends PreferenceActivity {
      * Save the "Camera folder" path on preferences
      */
     private void saveCameraUploadsSourcePathOnPreferences() {
-        SharedPreferences appPrefs =
-                PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = appPrefs.edit();
-        editor.putString("camera_uploads_source_path", mSourcePath);
-        editor.apply();
+        mAppPrefs.edit().putString("camera_uploads_source_path", mSourcePath).apply();
     }
 
     private void enableFingerprint() {
