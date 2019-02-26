@@ -476,7 +476,7 @@ public class Preferences extends PreferenceActivity {
 
             return true;
         });
-        showDeveloperItems(mPrefCameraUploadsCategory);
+        showDeveloperItems(pCategoryMore);
 
         boolean imprintEnabled = getResources().getBoolean(R.bool.imprint_enabled);
         Preference pImprint = findPreference("imprint");
@@ -514,7 +514,7 @@ public class Preferences extends PreferenceActivity {
                     Intent intent = new Intent(Intent.ACTION_VIEW, uriUrl);
                     startActivity(intent);
                 } else if (mAppPrefs.getInt(MainApp.CLICK_DEV_MENU, 0) == MainApp.CLICKS_NEEDED_TO_BE_DEVELOPER) {
-                    showDeveloperItems(mPrefCameraUploadsCategory);
+                    showDeveloperItems(pCategoryMore);
                 } else if (clickCount > 0) {
                     Toast.makeText(this,
                             getString(R.string.clicks_to_be_developer, MainApp.CLICKS_NEEDED_TO_BE_DEVELOPER - clickCount),
