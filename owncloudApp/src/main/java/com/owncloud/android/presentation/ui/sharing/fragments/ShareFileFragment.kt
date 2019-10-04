@@ -63,8 +63,6 @@ import java.util.Locale
  * Fragment for Sharing a file with sharees (users or groups) or creating
  * a public link.
  *
- * A simple [Fragment] subclass.
- *
  * Activities that contain this fragment must implement the
  * [ShareFragmentListener] interface
  * to handle interaction events.

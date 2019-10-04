@@ -194,6 +194,7 @@ class MainApp : MultiDexApplication() {
         private const val BETA_VERSION = "beta"
         private const val CLICKS_DEFAULT = 0
 
+        // this is nasty !
         var appContext: Context? = null
             private set
         var isDeveloper: Boolean = false
