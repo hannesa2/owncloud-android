@@ -96,6 +96,7 @@ import com.owncloud.android.operations.AuthenticationMethod;
 import com.owncloud.android.operations.GetServerInfoOperation;
 import com.owncloud.android.services.OperationsService;
 import com.owncloud.android.services.OperationsService.OperationsServiceBinder;
+import com.owncloud.android.ui.activity.LogHistoryActivity;
 import com.owncloud.android.ui.dialog.LoadingDialog;
 import com.owncloud.android.ui.dialog.SslUntrustedCertDialog;
 import com.owncloud.android.ui.errorhandling.ErrorMessageAdapter;
@@ -226,7 +227,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
 
     /**
      * {@inheritDoc}
-     * <p>
+     *<p>
      * IMPORTANT ENTRY POINT 1: activity is shown to the user
      */
     @Override
@@ -279,6 +280,13 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
 
         /// load user interface
         setContentView(R.layout.account_setup);
+
+        findViewById(R.id.thumbnail).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(AuthenticatorActivity.this, LogHistoryActivity.class));
+            }
+        });
 
         // Allow or disallow touches with other visible windows
         FrameLayout loginLayout = findViewById(R.id.login_layout);
@@ -625,7 +633,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
 
     /**
      * Saves relevant state before {@link #onPause()}
-     * <p>
+     *<p>
      * See {@link super#onSaveInstanceState(Bundle)}
      */
     @Override
@@ -829,11 +837,11 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
 
     /**
      * Handles changes in focus on the text input for the server URL.
-     * <p>
+     *<p>
      * IMPORTANT ENTRY POINT 2: When (!hasFocus), user wrote the server URL and changed to
      * other field. The operation to check the existence of the server in the entered URL is
      * started.
-     * <p>
+     *<p>
      * When hasFocus:    user 'comes back' to write again the server URL.
      */
     private void onUrlInputFocusLost() {
@@ -895,9 +903,9 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
 
     /**
      * Handles changes in focus on the text input for the password (basic authorization).
-     * <p>
+     *<p>
      * When (hasFocus), the button to toggle password visibility is shown.
-     * <p>
+     *<p>
      * When (!hasFocus), the button is made invisible and the password is hidden.
      *
      * @param hasFocus 'True' if focus is received, 'false' if is lost
@@ -949,13 +957,13 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
     /**
      * Checks the credentials of the user in the root of the ownCloud server
      * before creating a new local account.
-     * <p>
+     *<p>
      * For basic authorization, a check of existence of the root folder is
      * performed.
-     * <p>
+     *<p>
      * For OAuth, starts the flow to get an access token; the credentials test
      * is postponed until it is available.
-     * <p>
+     *<p>
      * IMPORTANT ENTRY POINT 4
      */
     public void onLoginClick() {
@@ -1068,7 +1076,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
 
     /**
      * Callback method invoked when a RemoteOperation executed by this Activity finishes.
-     * <p>
+     *<p>
      * Dispatches the operation flow to the right method.
      */
     @Override
@@ -1325,7 +1333,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
 
     /**
      * Processes the result of the access check performed to try the user credentials.
-     * <p>
+     *<p>
      * Creates a new account through the AccountManager.
      *
      * @param result Result of the operation.
@@ -1409,9 +1417,9 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
 
     /**
      * Creates a new account through the Account Authenticator that started this activity.
-     * <p>
+     *<p>
      * This makes the account permanent.
-     * <p>
+     *<p>
      * TODO Decide how to name the OAuth accounts
      */
     private boolean createAccount(RemoteOperationResult<UserInfo> authResult) {
@@ -1513,7 +1521,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
 
     /**
      * Update an existing account
-     * <p>
+     *<p>
      * Check if the username of the account to update is the same as the username in the current
      * account, calling {@link #updateAccountAuthentication()} if so and showing an error otherwise
      *
@@ -1552,10 +1560,10 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
 
     /**
      * Updates the authentication token.
-     * <p>
+     *<p>
      * Sets the proper response so that the AccountAuthenticator that started this activity
      * saves a new authorization token for mAccount.
-     * <p>
+     *<p>
      * Kills the session kept by OwnCloudClientManager so that a new one will be created with
      * the new credentials when needed.
      */
@@ -1651,7 +1659,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
 
     /**
      * Called when the eye icon in the password field is clicked.
-     * <p>
+     *<p>
      * Toggles the visibility of the password in the field.
      */
     public void onViewPasswordClick() {
@@ -1667,7 +1675,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
 
     /**
      * Called when the 'action' button in an IME is pressed ('enter' in software keyboard).
-     * <p>
+     *<p>
      * Used to trigger the authentication check when the user presses 'enter' after writing the
      * password, or to throw the server test when the only field on screen is the URL input field.
      */
