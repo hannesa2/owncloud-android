@@ -83,6 +83,7 @@ import com.owncloud.android.operations.AuthenticationMethod;
 import com.owncloud.android.operations.GetServerInfoOperation;
 import com.owncloud.android.services.OperationsService;
 import com.owncloud.android.services.OperationsService.OperationsServiceBinder;
+import com.owncloud.android.ui.activity.LogHistoryActivity;
 import com.owncloud.android.ui.dialog.LoadingDialog;
 import com.owncloud.android.ui.dialog.SslUntrustedCertDialog;
 import com.owncloud.android.ui.errorhandling.ErrorMessageAdapter;
@@ -259,6 +260,13 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
 
         /// load user interface
         setContentView(R.layout.account_setup);
+
+        findViewById(R.id.thumbnail).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(AuthenticatorActivity.this, LogHistoryActivity.class));
+            }
+        });
 
         // Allow or disallow touches with other visible windows
         FrameLayout loginLayout = findViewById(R.id.login_layout);
@@ -1540,7 +1548,7 @@ public class AuthenticatorActivity extends AccountAuthenticatorActivity
 
     /**
      * Called when the 'action' button in an IME is pressed ('enter' in software keyboard).
-     * 
+     *
      * Used to trigger the authentication check when the user presses 'enter' after writing the
      * password, or to throw the server test when the only field on screen is the URL input field.
      */
