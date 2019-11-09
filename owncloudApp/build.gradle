@@ -111,8 +111,8 @@ android {
 
         testInstrumentationRunner "com.owncloud.android.utils.OCTestAndroidJUnitRunner"
 
-        versionCode = 21500200
-        versionName = "2.15.2"
+        versionCode = getGitCommitCount()
+        versionName = getTag()
 
         buildConfigField "String", gitRemote, "\"" + getGitOriginRemote() + "\""
         buildConfigField "String", commitSHA1, "\"" + getLatestGitHash() + "\""
@@ -257,6 +257,16 @@ def setOutputFileName(variant, appName, callerProject) {
     }
 }
 
+static def getGitCommitCount() {
+    def process = "git rev-list HEAD --count".execute()
+    return process.text.toInteger() + 21300106
+}
+
+static def getTag() {
+    def process = "git describe --abbrev=0".execute()
+    return process.text.toString().trim()
+}
+
 static def getLatestGitHash() {
     def process = "git rev-parse --short HEAD".execute()
     return process.text.toString().trim()
@@ -275,15 +285,15 @@ static def getGitUser() {
     return remote.replace("https://github.com/", "").replace("/owncloud-android", "").trim()
 }
 
-def decryptPrivateFiles() {
+task decryptPrivate {
     def out = services.get(StyledTextOutputFactory).create("")
     def pass = "$System.env.CRYPT_PASS"
     if (pass == "null") {
-        out.style(Style.Normal).text("decrypt files for ")
+        out.style(Style.Normal).text("In decrypt files the mandatory ")
                 .style(Style.Failure).println('CRYPT_PASS not set')
-                .style(Style.Normal).println("please set it with ")
-                .style(Style.SuccessHeader).println("export CRYPT_PASS=<superSecret>")
-        throw new GradleException('CRYPT_PASS not set')
+                .style(Style.Normal).println("  If you want use Firebase features, please set it with ")
+                .style(Style.SuccessHeader).println("  export CRYPT_PASS=<superSecret>")
+        println ""
     } else {
         out.style(Style.Normal).text("decrypt files for ")
                 .style(Style.SuccessHeader).text(getTag() + "." + getGitCommitCount() + "." + getLatestGitHash())
@@ -298,11 +308,6 @@ def decryptPrivateFiles() {
         def processDecrypt = "$projectDir/../signing/decrypt.sh".execute()
         processDecrypt.waitForProcessOutput(System.out, System.err)
     }
-}
-
-task decryptPrivate {
-    println 'decrypt private files'
-    decryptPrivateFiles()
 }
 
 clean.dependsOn decryptPrivate
