@@ -108,8 +108,8 @@ android {
 
         testInstrumentationRunner "com.owncloud.android.utils.OCTestAndroidJUnitRunner"
 
-        versionCode = 21400100
-        versionName = "2.14.1"
+        versionCode = getGitCommitCount()
+        versionName = getTag()
 
         buildConfigField "String", gitRemote, "\"" + getGitOriginRemote() + "\""
         buildConfigField "String", commitSHA1, "\"" + getLatestGitHash() + "\""
@@ -226,13 +226,8 @@ def setOutputFileName(variant, appName, callerProject) {
     }
 
     def versionName = "$variant.mergedFlavor.versionName"
-    if (variant.mergedFlavor.manifestPlaceholders.versionName != null) {
-        versionName = "$variant.mergedFlavor.manifestPlaceholders.versionName"
-    }
-    if (variant.buildType.manifestPlaceholders.versionName != null) {
-        versionName = "$variant.buildType.manifestPlaceholders.versionName"
-    }
-    newName += "_$versionName"
+    def versionCode = "$variant.mergedFlavor.versionCode".toInteger()
+    newName += "_$versionName-$versionCode"
 
     def buildNumber = System.env.OC_BUILD_NUMBER
     if (buildNumber) {
@@ -246,6 +241,16 @@ def setOutputFileName(variant, appName, callerProject) {
     variant.outputs.all {
         outputFileName = new File(".", newName)
     }
+}
+
+static def getGitCommitCount() {
+    def process = "git rev-list HEAD --count".execute()
+    return process.text.toInteger() + 21300100
+}
+
+static def getTag() {
+    def process = "git describe --abbrev=0".execute()
+    return process.text.toString().trim()
 }
 
 static def getLatestGitHash() {
