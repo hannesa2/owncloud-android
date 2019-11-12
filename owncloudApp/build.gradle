@@ -261,6 +261,16 @@ def setOutputFileName(variant, appName, callerProject) {
     }
 }
 
+static def getGitCommitCount() {
+    def process = "git rev-list HEAD --count".execute()
+    return process.text.toInteger() + 21300106
+}
+
+static def getTag() {
+    def process = "git describe --abbrev=0".execute()
+    return process.text.toString().trim()
+}
+
 static def getLatestGitHash() {
     def process = "git rev-parse --short HEAD".execute()
     return process.text.toString().trim()
