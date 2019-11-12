@@ -7,11 +7,15 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-allopen'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'io.fabric'
 
 def commitSHA1 = 'COMMIT_SHA1'
 def gitRemote = 'GIT_REMOTE'
 
 dependencies {
+    implementation 'com.google.firebase:firebase-analytics:17.2.2'
+    implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
+
     // Data and domain modules
     implementation project(':owncloudDomain')
     implementation project(':owncloudData')
@@ -275,15 +279,15 @@ static def getGitUser() {
     return remote.replace("https://github.com/", "").replace("/owncloud-android", "").trim()
 }
 
-def decryptPrivateFiles() {
+task decryptPrivate {
     def out = services.get(StyledTextOutputFactory).create("")
     def pass = "$System.env.CRYPT_PASS"
     if (pass == "null") {
-        out.style(Style.Normal).text("decrypt files for ")
+        out.style(Style.Normal).text("In decrypt files the mandatory ")
                 .style(Style.Failure).println('CRYPT_PASS not set')
-                .style(Style.Normal).println("please set it with ")
-                .style(Style.SuccessHeader).println("export CRYPT_PASS=<superSecret>")
-        throw new GradleException('CRYPT_PASS not set')
+                .style(Style.Normal).println("  If you want use Firebase features, please set it with ")
+                .style(Style.SuccessHeader).println("  export CRYPT_PASS=<superSecret>")
+        println ""
     } else {
         out.style(Style.Normal).text("decrypt files for ")
                 .style(Style.SuccessHeader).text(getTag() + "." + getGitCommitCount() + "." + getLatestGitHash())
@@ -300,9 +304,6 @@ def decryptPrivateFiles() {
     }
 }
 
-task decryptPrivate {
-    println 'decrypt private files'
-    decryptPrivateFiles()
-}
-
 clean.dependsOn decryptPrivate
+
+apply plugin: 'com.google.gms.google-services'
