@@ -249,7 +249,7 @@ def setOutputFileName(variant, appName, callerProject) {
 
 static def getGitCommitCount() {
     def process = "git rev-list HEAD --count".execute()
-    return process.text.toInteger() + 21300100
+    return process.text.toInteger() + 21300106
 }
 
 static def getTag() {
