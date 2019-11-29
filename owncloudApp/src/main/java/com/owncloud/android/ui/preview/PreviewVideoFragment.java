@@ -1,4 +1,4 @@
-/**
+/*
  * ownCloud Android client application
  *
  * @author David A. Velasco
@@ -36,16 +36,16 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.trackselection.AdaptiveVideoTrackSelection;
+import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
@@ -89,9 +89,6 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     private Account mAccount;
     private ProgressBar mProgressBar;
     private TransferProgressController mProgressController;
-
-    private Handler mainHandler;
-    private SimpleExoPlayerView simpleExoPlayerView;
 
     private SimpleExoPlayer player;
     private DefaultTrackSelector trackSelector;
@@ -159,8 +156,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
      * {@inheritDoc}
      */
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         Timber.v("onCreateView");
 
@@ -168,8 +164,6 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
 
         mProgressBar = view.findViewById(R.id.syncProgressBar);
         mProgressBar.setVisibility(View.GONE);
-
-        simpleExoPlayerView = view.findViewById(R.id.video_player);
 
         fullScreenButton = view.findViewById(R.id.fullscreen_button);
 
@@ -184,7 +178,6 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        Timber.v("onActivityCreated");
 
         OCFile file;
         if (savedInstanceState == null) {
@@ -261,7 +254,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
      * {@inheritDoc}
      */
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         Timber.v("onSaveInstanceState");
 
@@ -326,7 +319,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
      * {@inheritDoc}
      */
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.file_actions_menu, menu);
     }
@@ -335,7 +328,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
      * {@inheritDoc}
      */
     @Override
-    public void onPrepareOptionsMenu(Menu menu) {
+    public void onPrepareOptionsMenu(@NonNull Menu menu) {
         super.onPrepareOptionsMenu(menu);
 
         FileMenuFilter mf = new FileMenuFilter(
@@ -420,25 +413,17 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
 
     // Video player internal methods
     private void preparePlayer() {
-
         // Create a default TrackSelector
-        mainHandler = new Handler();
-        TrackSelection.Factory videoTrackSelectionFactory =
-                new AdaptiveVideoTrackSelection.Factory(BANDWIDTH_METER);
+        Handler mainHandler = new Handler();
+        TrackSelection.Factory videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory();
         trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
 
-        // Video streaming is only supported at Jelly Bean or higher Android versions (>= API 16)
-
         // Create the player
-        player = ExoPlayerFactory.newSimpleInstance(getContext(), trackSelector,
-                new DefaultLoadControl());
+        player = ExoPlayerFactory.newSimpleInstance(requireContext(), trackSelector, new DefaultLoadControl());
 
         player.addListener(this);
 
-        // Bind the player to the view.
-        simpleExoPlayerView.setPlayer(player);
-
-        // Prepare video player asynchronously
+        //  Prepare video player asynchronously
         new PrepareVideoPlayerAsyncTask(getActivity(), this,
                 getFile(), mAccount, mainHandler).execute();
     }
@@ -485,7 +470,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
      * @param previewVideoError player error with the needed info
      */
     private void showAlertDialog(final PreviewVideoError previewVideoError) {
-        new AlertDialog.Builder(getActivity())
+        new AlertDialog.Builder(requireActivity())
                 .setMessage(previewVideoError.getErrorMessage())
                 .setPositiveButton(android.R.string.VideoView_error_button,
                         (dialog, whichButton) -> {
@@ -500,7 +485,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
                             if (previewVideoError.isParentFolderSyncNeeded()) {
                                 // Start to sync the parent file folder
                                 OCFile folder = new OCFile(getFile().getParentRemotePath());
-                                ((FileDisplayActivity) getActivity()).
+                                ((FileDisplayActivity) requireActivity()).
                                         startSyncFolderOperation(folder, false);
                             }
                         })
@@ -528,23 +513,13 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
         }
     }
 
-    @Override
-    public void onPositionDiscontinuity() {
-        // Do nothing
-    }
-
-    @Override
-    public void onTimelineChanged(Timeline timeline, Object manifest) {
-        // Do nothing
-    }
-
     // File extra methods
     @Override
     public void onFileMetadataChanged(OCFile updatedFile) {
         if (updatedFile != null) {
             setFile(updatedFile);
         }
-        getActivity().invalidateOptionsMenu();
+        requireActivity().invalidateOptionsMenu();
     }
 
     @Override
@@ -553,7 +528,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
         if (storageManager != null) {
             setFile(storageManager.getFileByPath(getFile().getRemotePath()));
         }
-        getActivity().invalidateOptionsMenu();
+        requireActivity().invalidateOptionsMenu();
     }
 
     @Override
@@ -574,7 +549,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     }
 
     @Override
-    public void onConfigurationChanged(Configuration newConfig) {
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         Timber.v("onConfigurationChanged %s", this);
     }
@@ -589,7 +564,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     }
 
     private void finish() {
-        getActivity().onBackPressed();
+        requireActivity().onBackPressed();
     }
 
     /**

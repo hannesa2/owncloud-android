@@ -1,6 +1,6 @@
 package com.owncloud.android.ui.preview;
 
-/**
+/*
  * ownCloud Android client application
  *
  * @author David González Verdugo
@@ -19,8 +19,10 @@ package com.owncloud.android.ui.preview;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import com.google.android.exoplayer2.upstream.DataSource;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.upstream.HttpDataSource.BaseFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource.Factory;
 import com.google.android.exoplayer2.upstream.TransferListener;
@@ -33,11 +35,11 @@ import java.util.Map;
 public final class CustomHttpDataSourceFactory extends BaseFactory {
 
     private final String userAgent;
-    private final TransferListener<? super DataSource> listener;
+    private final @Nullable
+    TransferListener listener;
     private final int connectTimeoutMillis;
     private final int readTimeoutMillis;
     private final boolean allowCrossProtocolRedirects;
-    private final Map<String, String> headers;
 
     /**
      * Constructs a CustomHttpDataSourceFactory. Sets {@link
@@ -48,12 +50,10 @@ public final class CustomHttpDataSourceFactory extends BaseFactory {
      * @param userAgent The User-Agent string that should be used.
      * @param listener  An optional listener.
      * @param params    http authentication header
-     * @see #CustomHttpDataSourceFactory(String, TransferListener, int, int, boolean,
-     * Map<String, String>)
+     *                  Map<String, String>)
      */
-    public CustomHttpDataSourceFactory(
-            String userAgent, TransferListener<? super DataSource> listener, Map<String,
-            String> params) {
+    public CustomHttpDataSourceFactory(String userAgent, @NonNull TransferListener listener,
+                                       Map<String, String> params) {
         this(userAgent, listener, DefaultHttpDataSource.DEFAULT_CONNECT_TIMEOUT_MILLIS,
                 DefaultHttpDataSource.DEFAULT_READ_TIMEOUT_MILLIS, false, params);
     }
@@ -69,8 +69,7 @@ public final class CustomHttpDataSourceFactory extends BaseFactory {
      * @param allowCrossProtocolRedirects Whether cross-protocol redirects (i.e. redirects from HTTP
      *                                    to HTTPS and vice versa) are enabled.
      */
-    public CustomHttpDataSourceFactory(String userAgent,
-                                       TransferListener<? super DataSource> listener,
+    public CustomHttpDataSourceFactory(String userAgent, @NonNull TransferListener listener,
                                        int connectTimeoutMillis, int readTimeoutMillis,
                                        boolean allowCrossProtocolRedirects,
                                        Map<String, String> params) {
@@ -79,21 +78,22 @@ public final class CustomHttpDataSourceFactory extends BaseFactory {
         this.connectTimeoutMillis = connectTimeoutMillis;
         this.readTimeoutMillis = readTimeoutMillis;
         this.allowCrossProtocolRedirects = allowCrossProtocolRedirects;
-        this.headers = params;
     }
 
     @Override
-    protected DefaultHttpDataSource createDataSourceInternal() {
-        DefaultHttpDataSource defaultHttpDataSource = new DefaultHttpDataSource(userAgent, null,
-                listener, connectTimeoutMillis,
-                readTimeoutMillis, allowCrossProtocolRedirects);
-
-        // Set headers in http data source
-        for (Map.Entry<String, String> entry : headers.entrySet()) {
-            defaultHttpDataSource.setRequestProperty(entry.getKey(), entry.getValue());
+    protected HttpDataSource createDataSourceInternal(HttpDataSource.RequestProperties defaultRequestProperties) {
+        DefaultHttpDataSource dataSource =
+                new DefaultHttpDataSource(
+                        userAgent,
+                        null,
+                        connectTimeoutMillis,
+                        readTimeoutMillis,
+                        allowCrossProtocolRedirects,
+                        defaultRequestProperties);
+        if (listener != null) {
+            dataSource.addTransferListener(listener);
         }
-
-        return defaultHttpDataSource;
+        return dataSource;
     }
 }
 

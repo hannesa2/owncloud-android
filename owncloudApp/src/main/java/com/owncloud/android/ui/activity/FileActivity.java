@@ -1,4 +1,4 @@
-/**
+/*
  * ownCloud Android client application
  *
  * @author David A. Velasco
@@ -66,14 +66,13 @@ import timber.log.Timber;
 /**
  * Activity with common behaviour for activities handling {@link OCFile}s in ownCloud {@link Account}s .
  */
-public class FileActivity extends DrawerActivity
+public abstract class FileActivity extends DrawerActivity
         implements OnRemoteOperationListener, ComponentsGetter, SslUntrustedCertDialog.OnSslUntrustedCertListener {
 
     public static final String EXTRA_FILE = "com.owncloud.android.ui.activity.FILE";
     public static final String EXTRA_ACCOUNT = "com.owncloud.android.ui.activity.ACCOUNT";
-    public static final String EXTRA_FROM_NOTIFICATION =
-            "com.owncloud.android.ui.activity.FROM_NOTIFICATION";
-    public static final String EXTRA_FILE_LIST_OPTION = "EXTRA_FILE_LIST_OPTION";
+    public static final String EXTRA_FROM_NOTIFICATION = "com.owncloud.android.ui.activity.FROM_NOTIFICATION";
+    static final String EXTRA_ONLY_AVAILABLE_OFFLINE = "ONLY_AVAILABLE_OFFLINE";
 
     private static final String KEY_WAITING_FOR_OP_ID = "WAITING_FOR_OP_ID";
     private static final String KEY_ACTION_BAR_TITLE = "ACTION_BAR_TITLE";

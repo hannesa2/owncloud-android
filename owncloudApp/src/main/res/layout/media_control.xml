@@ -20,34 +20,30 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:filterTouchesWhenObscured="true">
+    android:filterTouchesWhenObscured="true"
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:paddingTop="4dp"
         android:orientation="horizontal"
-        >
+        android:paddingTop="4dp">
 
         <ImageButton
             android:id="@+id/rewindBtn"
             style="@android:style/MediaButton.Rew"
-            android:contentDescription="@string/media_rewind_description"
-            />
+            android:contentDescription="@string/media_rewind_description" />
 
         <ImageButton
             android:id="@+id/playBtn"
             style="@android:style/MediaButton.Play"
-            android:contentDescription="@string/media_play_pause_description"
-            />
+            android:contentDescription="@string/media_play_pause_description" />
 
         <ImageButton
             android:id="@+id/forwardBtn"
             style="@android:style/MediaButton.Ffwd"
-            android:contentDescription="@string/media_forward_description"
-            />
+            android:contentDescription="@string/media_forward_description" />
 
     </LinearLayout>
 
@@ -58,38 +54,34 @@
 
         <TextView
             android:id="@+id/currentTimeText"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:paddingTop="4dp"
-            android:paddingStart="4dp"
-            android:layout_gravity="center_horizontal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:paddingStart="4dp"
+            android:paddingTop="4dp"
             android:paddingEnd="4dp"
             android:text="@string/placeholder_media_time"
-            />
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
         <SeekBar
             android:id="@+id/progressBar"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="32dp"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentEnd="true" />
+            android:layout_weight="1" />
 
         <TextView
             android:id="@+id/totalTimeText"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:paddingTop="4dp"
-            android:paddingEnd="4dp"
-            android:layout_gravity="center_horizontal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
             android:paddingStart="4dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="4dp"
             android:text="@string/placeholder_media_time"
-            />
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
     </LinearLayout>
 

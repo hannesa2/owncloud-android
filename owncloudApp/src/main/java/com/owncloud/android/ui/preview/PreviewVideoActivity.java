@@ -1,4 +1,4 @@
-/**
+/*
  * ownCloud Android client application
  *
  * @author David A. Velasco
@@ -35,15 +35,13 @@ import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.trackselection.AdaptiveVideoTrackSelection;
+import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
+import com.google.android.exoplayer2.ui.PlayerView;
 import com.owncloud.android.R;
 import com.owncloud.android.ui.activity.FileActivity;
 import timber.log.Timber;
@@ -54,16 +52,17 @@ import timber.log.Timber;
 public class PreviewVideoActivity extends FileActivity implements ExoPlayer.EventListener,
         PrepareVideoPlayerAsyncTask.OnPrepareVideoPlayerTaskListener {
 
-    /** Key to receive a flag signaling if the video should be started immediately */
+    /**
+     * Key to receive a flag signaling if the video should be started immediately
+     */
     public static final String EXTRA_AUTOPLAY = "AUTOPLAY";
 
-    /** Key to receive the position of the playback where the video should be put at start */
+    /**
+     * Key to receive the position of the playback where the video should be put at start
+     */
     public static final String EXTRA_START_POSITION = "START_POSITION";
 
-    private final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
-
-    private Handler mainHandler;
-    private SimpleExoPlayerView simpleExoPlayerView;
+    private PlayerView mPlayerView;
 
     private SimpleExoPlayer player;
     private DefaultTrackSelector trackSelector;
@@ -71,20 +70,15 @@ public class PreviewVideoActivity extends FileActivity implements ExoPlayer.Even
     private boolean mAutoplay; // when 'true', the playback starts immediately with the activity
     private long mPlaybackPosition; // continue the playback in the specified position
 
-    private static final int NOT_FOUND_ERROR = 404;
-
-    // Activity lifecycle
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Timber.v("onCreate");
 
         clearResumePosition();
 
         setContentView(R.layout.video_preview);
 
-        simpleExoPlayerView = findViewById(R.id.video_player);
+        mPlayerView = findViewById(R.id.video_player);
 
         // Hide sync bar
         ProgressBar syncProgressBar = findViewById(R.id.syncProgressBar);
@@ -107,29 +101,20 @@ public class PreviewVideoActivity extends FileActivity implements ExoPlayer.Even
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        Timber.v("onStart");
-    }
-
-    @Override
     public void onResume() {
         super.onResume();
-        Timber.v("onResume");
         preparePlayer();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        Timber.v("onPause");
         releasePlayer();
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        Timber.v("onStop");
     }
 
     // Handle full screen modes
@@ -138,13 +123,21 @@ public class PreviewVideoActivity extends FileActivity implements ExoPlayer.Even
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
             // Let app go truly full screen using immersive mode, user swipes to display the system bars
-            getWindow().getDecorView().setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                getWindow().getDecorView().setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+            } else {
+                /*
+                 * Use full screen but with a limitation, the least user interaction will cause
+                 * navigation controls to reappear immediately
+                 */
+                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+            }
         }
     }
 
@@ -153,23 +146,22 @@ public class PreviewVideoActivity extends FileActivity implements ExoPlayer.Even
     private void preparePlayer() {
 
         // Create a default TrackSelector
-        mainHandler = new Handler();
-        TrackSelection.Factory videoTrackSelectionFactory =
-                new AdaptiveVideoTrackSelection.Factory(BANDWIDTH_METER);
+        Handler mainHandler = new Handler();
+        TrackSelection.Factory videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory();
         trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
         player = ExoPlayerFactory.newSimpleInstance(this, trackSelector, new DefaultLoadControl());
         player.addListener(this);
-        simpleExoPlayerView.setPlayer(player);
+        mPlayerView.setPlayer(player);
         player.seekTo(mPlaybackPosition);
         player.setPlayWhenReady(mAutoplay);
 
         // Prepare video player asynchronously
-        new PrepareVideoPlayerAsyncTask(getApplicationContext(), this, getFile(), getAccount(),
-                mainHandler).execute();
+        new PrepareVideoPlayerAsyncTask(getApplicationContext(), this, getFile(), getAccount(), mainHandler).execute();
     }
 
     /**
      * Called after preparing the player asynchronously
+     *
      * @param mediaSource media to be played
      */
     @Override
@@ -233,21 +225,9 @@ public class PreviewVideoActivity extends FileActivity implements ExoPlayer.Even
     }
 
     @Override
-    public void onPositionDiscontinuity() {
-        // Do nothing
-    }
-
-    @Override
-    public void onTimelineChanged(Timeline timeline, Object manifest) {
-        // Do nothing
-    }
-
-    @Override
     public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
         // Do nothing
     }
-
-    // Back button behaviour
 
     @Override
     public void onBackPressed() {

@@ -1,4 +1,4 @@
-/**
+/*
  * ownCloud Android client application
  *
  * @author David A. Velasco
@@ -45,11 +45,9 @@ public class PreviewVideoErrorAdapter {
 
     /**
      * @param error   Exoplayer exception
-     * @param context
      * @return preview video error after processing the Exoplayer exception
      */
-    public static PreviewVideoError handlePreviewVideoError(ExoPlaybackException error,
-                                                            Context context) {
+    public static PreviewVideoError handlePreviewVideoError(ExoPlaybackException error, Context context) {
         switch (error.type) {
             case ExoPlaybackException.TYPE_SOURCE:
                 return handlePlayerSourceError(error, context);
