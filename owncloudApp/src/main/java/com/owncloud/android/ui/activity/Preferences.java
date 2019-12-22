@@ -23,6 +23,7 @@
 package com.owncloud.android.ui.activity;
 
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -48,6 +49,8 @@ import com.owncloud.android.BuildConfig;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
 import com.owncloud.android.authentication.BiometricManager;
+import com.owncloud.android.datamodel.CameraUploadsSyncStorageManager;
+import com.owncloud.android.datamodel.OCCameraUploadSync;
 import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider;
 import com.owncloud.android.data.preferences.datasources.implementation.SharedPreferencesProviderImpl;
 import com.owncloud.android.datamodel.OCFile;
@@ -60,6 +63,10 @@ import org.jetbrains.annotations.NotNull;
 import timber.log.Timber;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 
 import static com.owncloud.android.db.PreferenceManager.PREF__CAMERA_PICTURE_UPLOADS_ENABLED;
 import static com.owncloud.android.db.PreferenceManager.PREF__CAMERA_PICTURE_UPLOADS_PATH;
@@ -97,6 +104,7 @@ public class Preferences extends PreferenceActivity {
     private static final String PREFERENCE_FEEDBACK = "feedback";
     private static final String PREFERENCE_PRIVACY_POLICY = "privacyPolicy";
     private static final String PREFERENCE_LOGGER = "logger";
+    private static final String PREFERENCE_SYNCSTART = "sync_start";
     private static final String PREFERENCE_IMPRINT = "imprint";
     private static final String PREFERENCE_ABOUT_APP = "about_app";
     private static final String PREFERENCE_LOG_HTTP = "set_httpLogs";
@@ -133,6 +141,7 @@ public class Preferences extends PreferenceActivity {
     private SharedPreferencesProvider mPreferencesProvider;
     private LogsProvider mLogsProvider;
     private Preference mLogger;
+    private Preference mSyncStart;
 
     @SuppressWarnings("deprecation")
     @Override
@@ -499,6 +508,50 @@ public class Preferences extends PreferenceActivity {
             }
         }
 
+        // show item(s) only when you are developer
+        mLogger = findPreference(PREFERENCE_LOGGER);
+        mLogger.setOnPreferenceClickListener(preference -> {
+            Intent loggerIntent = new Intent(getApplicationContext(), LogHistoryActivity.class);
+            startActivity(loggerIntent);
+
+            return true;
+        });
+
+        SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd", Locale.getDefault());
+        CameraUploadsSyncStorageManager cameraUploadsSyncStorageManager =
+                new CameraUploadsSyncStorageManager(getApplicationContext().getContentResolver());
+        OCCameraUploadSync cameraUploadSync =
+                cameraUploadsSyncStorageManager.getCameraUploadSync(null, null, null);
+        mSyncStart = findPreference(PREFERENCE_SYNCSTART);
+
+        if (cameraUploadSync != null) {
+            mSyncStart.setTitle("Pictures sync: " + sdf.format(new Date(cameraUploadSync.getPicturesLastSync())));
+            mSyncStart.setSummary("Video sync: " + sdf.format(new Date(cameraUploadSync.getPicturesLastSync())));
+        } else {
+            mSyncStart.setTitle("Pictures sync: not set");
+            mSyncStart.setSummary("Video sync: not set");
+        }
+        mSyncStart.setOnPreferenceClickListener(preference -> {
+            final Calendar newCalendar = Calendar.getInstance();
+            DatePickerDialog StartTime = new DatePickerDialog(this, (view, year, monthOfYear, dayOfMonth) -> {
+                Calendar newDate = Calendar.getInstance();
+                newDate.set(year, monthOfYear, dayOfMonth);
+                if (cameraUploadSync != null) {
+                    cameraUploadSync.setPicturesLastSync(newDate.getTimeInMillis());
+                    cameraUploadSync.setVideosLastSync(newDate.getTimeInMillis());
+                    cameraUploadsSyncStorageManager.updateCameraUploadSync(cameraUploadSync);
+
+                    mSyncStart.setTitle("Pictures sync: " + sdf.format(new Date(cameraUploadSync.getPicturesLastSync())));
+                    mSyncStart.setSummary("Video sync: " + sdf.format(new Date(cameraUploadSync.getPicturesLastSync())));
+                }
+            }, newCalendar.get(Calendar.YEAR), newCalendar.get(Calendar.MONTH), newCalendar.get(Calendar.DAY_OF_MONTH));
+
+            StartTime.show();
+
+            return true;
+        });
+        showDeveloperItems(pCategoryMore);
+
         boolean imprintEnabled = getResources().getBoolean(R.bool.imprint_enabled);
         Preference pImprint = findPreference(PREFERENCE_IMPRINT);
         if (pImprint != null) {
@@ -555,8 +608,10 @@ public class Preferences extends PreferenceActivity {
         PreferenceScreen preferenceScreen = (PreferenceScreen) findPreference(PREFERENCE_SCREEN);
         if (mPreferencesProvider.getInt(MainApp.CLICK_DEV_MENU, 0) >= MainApp.CLICKS_NEEDED_TO_BE_DEVELOPER && pLogger == null) {
             preferenceScreen.addPreference(preferenceCategory);
+            preferenceCategory.addPreference(mSyncStart);
         } else if (!MainApp.Companion.isDeveloper() && pLogger != null) {
             preferenceScreen.removePreference(preferenceCategory);
+            preferenceCategory.removePreference(mSyncStart);
         }
     }
 
@@ -981,4 +1036,5 @@ public class Preferences extends PreferenceActivity {
                 .setPositiveButton(getString(android.R.string.ok), null)
                 .show();
     }
+
 }
