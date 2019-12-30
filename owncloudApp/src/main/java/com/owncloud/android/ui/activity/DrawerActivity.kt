@@ -69,6 +69,7 @@ import com.owncloud.android.presentation.common.UIResult
 import com.owncloud.android.presentation.settings.SettingsActivity
 import com.owncloud.android.utils.DisplayUtils
 import com.owncloud.android.utils.PreferenceUtils
+import info.hannes.github.AppUpdateHelper.checkForNewVersion
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import timber.log.Timber
@@ -186,6 +187,11 @@ abstract class DrawerActivity : ToolbarActivity() {
                     startActivity(settingsIntent)
                 }
                 R.id.drawer_menu_feedback -> openFeedback()
+                R.id.nav_check_update -> checkForNewVersion(
+                    this@DrawerActivity,
+                    BuildConfig.GIT_REPOSITORY,
+                    BuildConfig.VERSION_NAME
+                )
                 R.id.drawer_menu_help -> openHelp()
                 R.id.drawer_menu_privacy_policy -> openPrivacyPolicy()
                 else -> Timber.i("Unknown drawer menu item clicked: %s", menuItem.title)
