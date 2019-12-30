@@ -94,6 +94,7 @@ import com.owncloud.android.ui.preview.PreviewVideoActivity
 import com.owncloud.android.ui.preview.PreviewVideoFragment
 import com.owncloud.android.utils.Extras
 import com.owncloud.android.utils.PreferenceUtils
+import info.hannes.github.AppUpdateHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -216,6 +217,8 @@ class FileDisplayActivity : FileActivity(), FileFragment.ContainerActivity, OnEn
         if (resources.getBoolean(R.bool.enable_rate_me_feature) && !BuildConfig.DEBUG) {
             AppRater.appLaunched(this, packageName)
         }
+
+        AppUpdateHelper.checkForNewVersion(this, BuildConfig.GIT_USER, BuildConfig.GIT_REPOSITORY, BuildConfig.VERSION_NAME)
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
