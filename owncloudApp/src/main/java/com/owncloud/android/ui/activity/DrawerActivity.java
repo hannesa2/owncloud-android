@@ -28,7 +28,6 @@ import android.accounts.AccountManagerFuture;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.DisplayCutout;
@@ -57,6 +56,7 @@ import com.owncloud.android.lib.common.OwnCloudAccount;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.utils.DisplayUtils;
 import com.owncloud.android.utils.PreferenceUtils;
+import info.hannes.github.AppUpdateHelper;
 
 /**
  * Base class to handle setup of the drawer implementation including user switching and avatar fetching and fallback
@@ -264,6 +264,13 @@ public abstract class DrawerActivity extends ToolbarActivity {
                                 break;
                             case R.id.drawer_menu_feedback:
                                 openFeedback();
+                                break;
+                            case R.id.nav_check_update:
+                                AppUpdateHelper.INSTANCE.checkForNewVersion(
+                                        DrawerActivity.this,
+                                        BuildConfig.GIT_USER,
+                                        BuildConfig.GIT_REPOSITORY,
+                                        BuildConfig.VERSION_NAME);
                                 break;
                             case R.id.drawer_menu_help:
                                 openHelp();
