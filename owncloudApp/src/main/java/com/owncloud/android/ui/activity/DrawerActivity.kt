@@ -64,6 +64,7 @@ import com.owncloud.android.presentation.accounts.AccountsManagementActivity.Com
 import com.owncloud.android.presentation.accounts.AccountsManagementActivity.Companion.KEY_CURRENT_ACCOUNT_CHANGED
 import com.owncloud.android.utils.DisplayUtils
 import com.owncloud.android.utils.PreferenceUtils
+import info.hannes.github.AppUpdateHelper.checkForNewVersion
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 import kotlin.math.ceil
@@ -185,6 +186,11 @@ abstract class DrawerActivity : ToolbarActivity() {
                     startActivityForResult(manageAccountsIntent, ACTION_MANAGE_ACCOUNTS)
                 }
                 R.id.drawer_menu_feedback -> openFeedback()
+                R.id.nav_check_update -> checkForNewVersion(
+                    this@DrawerActivity,
+                    BuildConfig.GIT_REPOSITORY,
+                    BuildConfig.VERSION_NAME
+                )
                 R.id.drawer_menu_help -> openHelp()
                 R.id.drawer_menu_privacy_policy -> openPrivacyPolicy()
                 Menu.NONE -> {
