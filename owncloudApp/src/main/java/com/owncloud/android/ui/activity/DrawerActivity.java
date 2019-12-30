@@ -56,6 +56,7 @@ import com.owncloud.android.lib.common.OwnCloudAccount;
 import com.owncloud.android.utils.DisplayUtils;
 import com.owncloud.android.utils.PreferenceUtils;
 import timber.log.Timber;
+import info.hannes.github.AppUpdateHelper;
 
 /**
  * Base class to handle setup of the drawer implementation including user switching and avatar fetching and fallback
@@ -262,6 +263,13 @@ public abstract class DrawerActivity extends ToolbarActivity {
                                 break;
                             case R.id.drawer_menu_feedback:
                                 openFeedback();
+                                break;
+                            case R.id.nav_check_update:
+                                AppUpdateHelper.INSTANCE.checkForNewVersion(
+                                        DrawerActivity.this,
+                                        BuildConfig.GIT_USER,
+                                        BuildConfig.GIT_REPOSITORY,
+                                        BuildConfig.VERSION_NAME);
                                 break;
                             case R.id.drawer_menu_help:
                                 openHelp();
