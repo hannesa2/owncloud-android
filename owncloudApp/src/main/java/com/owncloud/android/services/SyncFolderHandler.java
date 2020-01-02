@@ -44,7 +44,7 @@ import java.io.IOException;
 
 /**
  * SyncFolder worker. Performs the pending operations in the order they were requested.
- *
+ * <p>
  * Created with the Looper of a new thread, started in
  * {@link com.owncloud.android.services.OperationsService#onCreate()}.
  */
@@ -78,8 +78,8 @@ class SyncFolderHandler extends Handler {
      * Returns True when the folder located in 'remotePath' in the ownCloud account 'account', or any of its
      * descendants, is being synchronized (or waiting for it).
      *
-     * @param account       ownCloud account where the remote folder is stored.
-     * @param remotePath    The path to a folder that could be in the queue of synchronizations.
+     * @param account    ownCloud account where the remote folder is stored.
+     * @param remotePath The path to a folder that could be in the queue of synchronizations.
      */
     public boolean isSynchronizing(Account account, String remotePath) {
         if (account == null || remotePath == null) {
@@ -119,14 +119,11 @@ class SyncFolderHandler extends Handler {
 
                 // always get client from client manager, to get fresh credentials in case of update
                 OwnCloudAccount ocAccount = new OwnCloudAccount(account, mService);
-                mOwnCloudClient = OwnCloudClientManagerFactory.getDefaultSingleton().
-                        getClientFor(ocAccount, mService);
+                mOwnCloudClient = OwnCloudClientManagerFactory.getDefaultSingleton().getClientFor(ocAccount, mService);
 
                 result = mCurrentSyncOperation.execute(mOwnCloudClient, mStorageManager);
 
-            } catch (AccountsException e) {
-                Log_OC.e(TAG, "Error while trying to get authorization", e);
-            } catch (IOException e) {
+            } catch (AccountsException | IOException e) {
                 Log_OC.e(TAG, "Error while trying to get authorization", e);
             } finally {
                 mPendingOperations.removePayload(account.name, remotePath);
@@ -150,8 +147,8 @@ class SyncFolderHandler extends Handler {
     /**
      * Cancels a pending or current sync' operation.
      *
-     * @param account       ownCloud {@link Account} where the remote file is stored.
-     * @param file          A file in the queue of pending synchronizations
+     * @param account ownCloud {@link Account} where the remote file is stored.
+     * @param file    A file in the queue of pending synchronizations
      */
     public void cancel(Account account, OCFile file) {
         if (account == null || file == null) {
