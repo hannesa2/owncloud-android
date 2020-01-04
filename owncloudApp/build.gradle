@@ -74,6 +74,8 @@ dependencies {
     // MDM feedback
     implementation 'androidx.enterprise:enterprise-feedback:1.1.0'
 
+    implementation 'com.github.hannesa2:CVScanner:1.0'
+
     // Tests
     testImplementation project(':owncloudTestUtil')
     testImplementation "junit:junit:$junitVersion"
