@@ -69,6 +69,8 @@ dependencies {
     // Markdown Preview
     implementation libs.bundles.markwon
 
+    implementation 'com.github.hannesa2:CVScanner:1.0'
+
     // Tests
     testImplementation project(":owncloudTestUtil")
     testImplementation libs.androidx.arch.core.testing
