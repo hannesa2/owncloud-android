@@ -39,7 +39,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -82,6 +81,7 @@ import com.owncloud.android.ui.preview.PreviewVideoFragment;
 import com.owncloud.android.utils.FileStorageUtils;
 import com.owncloud.android.utils.PreferenceUtils;
 import timber.log.Timber;
+import info.hannes.cvscanner.CVScanner;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -282,6 +282,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
     private void setFabLabels() {
         getFabUpload().setTitle(getResources().getString(R.string.actionbar_upload));
         getFabMkdir().setTitle(getResources().getString(R.string.actionbar_mkdir));
+        getFabScan().setTitle(getResources().getString(R.string.scan_document));
     }
 
     /**
@@ -304,6 +305,8 @@ public class OCFileListFragment extends ExtendedListFragment implements
                 final BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
                 dialog.setContentView(uploadBottomSheet);
                 final LinearLayout uploadFilesLinearLayout = uploadBottomSheet.findViewById(R.id.files_linear_layout);
+                final LinearLayout scan_document_upload_linear_layout =
+                        uploadBottomSheet.findViewById(R.id.scan_document_upload_linear_layout);
                 LinearLayout uploadFromCameraLinearLayout =
                         uploadBottomSheet.findViewById(R.id.upload_from_camera_linear_layout);
                 TextView uploadToTextView = uploadBottomSheet.findViewById(R.id.upload_to_text_view);
@@ -320,6 +323,12 @@ public class OCFileListFragment extends ExtendedListFragment implements
                 });
                 uploadFromCameraLinearLayout.setOnTouchListener((v12, event) -> {
                     ((FileDisplayActivity) getActivity()).getFilesUploadHelper().uploadFromCamera(FileDisplayActivity.REQUEST_CODE__UPLOAD_FROM_CAMERA);
+                    dialog.hide();
+                    return false;
+                });
+                scan_document_upload_linear_layout.setOnTouchListener((v1, event) -> {
+                    CVScanner.INSTANCE.startScanner(requireActivity(), false,
+                            FileDisplayActivity.REQUEST_CODE__UPLOAD_SCANNED_DOCUMENT);
                     dialog.hide();
                     return false;
                 });
@@ -346,6 +355,14 @@ public class OCFileListFragment extends ExtendedListFragment implements
                 return true;
             }
         });
+
+        getFabScan().setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                CVScanner.INSTANCE.startScanner(requireActivity(), false,
+                        FileDisplayActivity.REQUEST_CODE__UPLOAD_SCANNED_DOCUMENT);
+            }
+        });
     }
 
     /**
@@ -367,6 +384,14 @@ public class OCFileListFragment extends ExtendedListFragment implements
             @Override
             public boolean onLongClick(View v) {
                 showSnackMessage(R.string.actionbar_mkdir);
+                return true;
+            }
+        });
+
+        getFabScan().setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                showSnackMessage(R.string.scan_document);
                 return true;
             }
         });
@@ -394,8 +419,10 @@ public class OCFileListFragment extends ExtendedListFragment implements
     private void removeFabLabels() {
         getFabUpload().setTitle(null);
         getFabMkdir().setTitle(null);
+        getFabScan().setTitle(null);
         ((TextView) getFabUpload().getTag(com.getbase.floatingactionbutton.R.id.fab_label)).setVisibility(View.GONE);
         ((TextView) getFabMkdir().getTag(com.getbase.floatingactionbutton.R.id.fab_label)).setVisibility(View.GONE);
+        ((TextView) getFabScan().getTag(com.getbase.floatingactionbutton.R.id.fab_label)).setVisibility(View.GONE);
     }
 
     @Override
@@ -626,7 +653,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
      * Saves the current listed folder
      */
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable(KEY_FILE, mFile);
 

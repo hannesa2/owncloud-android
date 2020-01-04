@@ -36,6 +36,8 @@ dependencies {
     implementation 'commons-io:commons-io:2.6'
     implementation "androidx.sqlite:sqlite:$sqliteVersion"
 
+    implementation 'com.github.hannesa2:CVScanner:0.6'
+
     // Tests
     testImplementation project(':owncloudTestUtil')
     testImplementation "junit:junit:$junitVersion"
@@ -138,6 +140,10 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 
     sourceSets {
