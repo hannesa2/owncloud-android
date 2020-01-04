@@ -74,6 +74,8 @@ dependencies {
     implementation "io.noties.markwon:ext-tasklist:$markwon"
     implementation "io.noties.markwon:html:$markwon"
 
+    implementation 'com.github.hannesa2:CVScanner:1.0'
+
     // Tests
     testImplementation project(":owncloudTestUtil")
     testImplementation "androidx.arch.core:core-testing:$androidxArchCore"
