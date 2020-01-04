@@ -611,4 +611,5 @@
     <string name="welcome_feature_12_text">The coming app versions will not appear in Google Play for devices lower than Android 5</string>
     <string name="no_borwser_installed_alert">No browser installed. Please install a Browser in order to allow a secure login.</string>
     <string name="common_not_found">it was not found</string>
+    <string name="scan_document">Scan document</string>
 </resources>

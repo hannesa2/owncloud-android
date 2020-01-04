@@ -36,6 +36,8 @@ dependencies {
     implementation 'commons-io:commons-io:2.6'
     implementation "androidx.sqlite:sqlite:$sqliteVersion"
 
+    implementation 'com.github.hannesa2.CVScanner:library:0.3'
+
     // Tests
     testImplementation project(':owncloudTestUtil')
     testImplementation "junit:junit:$junitVersion"
