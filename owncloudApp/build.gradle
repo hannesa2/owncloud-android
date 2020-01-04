@@ -67,6 +67,8 @@ dependencies {
     implementation "com.google.android.material:material:1.8.0"
     implementation "com.jakewharton:disklrucache:2.0.2"
 
+    implementation 'com.github.hannesa2:CVScanner:1.0'
+
     // Tests
     testImplementation project(":owncloudTestUtil")
     testImplementation "androidx.arch.core:core-testing:$androidxArchCore"
