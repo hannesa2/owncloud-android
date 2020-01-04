@@ -65,6 +65,8 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$ktxViewModelVersion"
     implementation "androidx.fragment:fragment-ktx:$ktxFragmentVersion"
 
+    implementation 'com.github.hannesa2:CVScanner:1.0'
+
     // Tests
     testImplementation project(':owncloudTestUtil')
     testImplementation "junit:junit:$junitVersion"
