@@ -162,7 +162,7 @@ public class FileUploader extends Service
     //since there can be only one instance of an Android service, there also just one db connection.
     private UploadsStorageManager mUploadsStorageManager = null;
 
-    private IndexedForest<UploadFileOperation> mPendingUploads = new IndexedForest<UploadFileOperation>();
+    private IndexedForest<UploadFileOperation> mPendingUploads = new IndexedForest<>();
 
     private LocalBroadcastManager mLocalBroadcastManager;
 
@@ -570,7 +570,7 @@ public class FileUploader extends Service
          * {@link FileUploaderBinder} instance
          */
         private Map<String, WeakReference<OnDatatransferProgressListener>> mBoundListeners =
-                new HashMap<String, WeakReference<OnDatatransferProgressListener>>();
+                new HashMap<>();
 
         /**
          * Cancels a pending or current upload of a remote file.
@@ -882,7 +882,7 @@ public class FileUploader extends Service
                     );
                 }
 
-                if (!uploadResult.isSuccess()) {
+                if (uploadResult != null && !uploadResult.isSuccess()) {
                     TransferRequester requester = new TransferRequester();
                     int jobId = mPendingUploads.buildKey(
                             mCurrentAccount.name,
@@ -930,10 +930,11 @@ public class FileUploader extends Service
                     );
                 }
 
-                mUploadsStorageManager.updateDatabaseUploadResult(uploadResult, mCurrentUpload);
-
-                /// notify result
-                notifyUploadResult(mCurrentUpload, uploadResult);
+                if (uploadResult != null) {
+                    mUploadsStorageManager.updateDatabaseUploadResult(uploadResult, mCurrentUpload);
+                    /// notify result
+                    notifyUploadResult(mCurrentUpload, uploadResult);
+                }
 
                 sendBroadcastUploadFinished(mCurrentUpload, uploadResult, removeResult.second);
             }
