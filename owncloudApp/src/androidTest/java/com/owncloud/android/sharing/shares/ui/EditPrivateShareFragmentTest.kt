@@ -39,6 +39,7 @@ import com.owncloud.android.presentation.ui.sharing.fragments.EditPrivateShareFr
 import com.owncloud.android.presentation.viewmodels.sharing.OCShareViewModel
 import com.owncloud.android.testutil.OC_ACCOUNT
 import com.owncloud.android.testutil.OC_SHARE
+import com.owncloud.android.testutil.annotation.FailsOnGithubAction
 import com.owncloud.android.utils.AppTestUtil.OC_FILE
 import com.owncloud.android.utils.AppTestUtil.OC_FOLDER
 import com.owncloud.android.utils.Permissions
@@ -82,6 +83,7 @@ class EditPrivateShareFragmentTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun showDialogTitle() {
         loadEditPrivateShareFragment()
         onView(withId(R.id.editShareTitle))
@@ -95,6 +97,7 @@ class EditPrivateShareFragmentTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun closeDialog() {
         loadEditPrivateShareFragment()
         onView(withId(R.id.closeButton)).perform(click())
@@ -207,6 +210,7 @@ class EditPrivateShareFragmentTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun disableEditPermissionWithFile() {
         loadEditPrivateShareFragment(permissions = Permissions.EDIT_PERMISSIONS.value)
         onView(withId(R.id.canEditSwitch)).check(matches(isChecked()))
@@ -222,6 +226,7 @@ class EditPrivateShareFragmentTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun disableEditPermissionWithFolder() {
         loadEditPrivateShareFragment(true, permissions = Permissions.EDIT_PERMISSIONS.value)
         onView(withId(R.id.canEditSwitch)).check(matches(isChecked()))
