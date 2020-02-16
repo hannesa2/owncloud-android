@@ -43,6 +43,7 @@ import com.owncloud.android.presentation.viewmodels.sharing.OCShareViewModel
 import com.owncloud.android.testutil.OC_ACCOUNT
 import com.owncloud.android.testutil.OC_CAPABILITY
 import com.owncloud.android.testutil.OC_SHARE
+import com.owncloud.android.testutil.annotation.FailsOnGithubAction
 import com.owncloud.android.utils.AppTestUtil.OC_FILE
 import com.owncloud.android.utils.matchers.assertVisibility
 import com.owncloud.android.utils.matchers.isDisplayed
@@ -144,6 +145,7 @@ class ShareFileFragmentTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun showUserShares() {
         loadShareFileFragment(shares = userSharesList)
         onView(withText("Batman")).check(matches(isDisplayed()))
