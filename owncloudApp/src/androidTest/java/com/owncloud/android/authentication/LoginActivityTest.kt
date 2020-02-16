@@ -69,6 +69,7 @@ import com.owncloud.android.testutil.OC_BASIC_USERNAME
 import com.owncloud.android.testutil.OC_INSECURE_SERVER_INFO_BASIC_AUTH
 import com.owncloud.android.testutil.OC_SECURE_SERVER_INFO_BASIC_AUTH
 import com.owncloud.android.testutil.OC_SECURE_SERVER_INFO_BEARER_AUTH
+import com.owncloud.android.testutil.annotation.FailsOnGithubAction
 import com.owncloud.android.utils.CONFIGURATION_SERVER_URL
 import com.owncloud.android.utils.CONFIGURATION_SERVER_URL_INPUT_VISIBILITY
 import com.owncloud.android.utils.NO_MDM_RESTRICTION_YET
@@ -210,6 +211,7 @@ class LoginActivityTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun initialViewStatus_brandedOptions_serverInfoInSetup() {
         launchTest(showServerUrlInput = false, serverUrl = OC_SECURE_SERVER_INFO_BASIC_AUTH.baseUrl)
 
@@ -359,6 +361,7 @@ class LoginActivityTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun checkServerInfo_isSuccess_basicModifyUrlInput() {
         launchTest()
 
@@ -402,6 +405,7 @@ class LoginActivityTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun checkServerInfo_isError_emptyUrl() {
         launchTest()
 
@@ -458,6 +462,7 @@ class LoginActivityTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun loginBasic_callLoginBasic() {
         launchTest()
 
@@ -476,6 +481,7 @@ class LoginActivityTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun loginBasic_callLoginBasic_trimUsername() {
         launchTest()
 
@@ -494,6 +500,7 @@ class LoginActivityTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun loginBasic_showOrHideFields() {
         launchTest()
 
