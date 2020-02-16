@@ -28,6 +28,7 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import com.owncloud.android.R
+import com.owncloud.android.testutil.annotation.FailsOnGithubAction
 import com.owncloud.android.presentation.ui.settings.LogHistoryActivity
 import org.hamcrest.Matchers.allOf
 import org.junit.Rule
@@ -40,6 +41,7 @@ class LogHistoryActivityTest {
     val activityRule = ActivityScenarioRule(LogHistoryActivity::class.java)
 
     @Test
+    @FailsOnGithubAction
     fun itemsToolbar() {
         onView(
             allOf(withId(R.id.search_button), isDescendantOfA(withId(R.id.standard_toolbar)))
