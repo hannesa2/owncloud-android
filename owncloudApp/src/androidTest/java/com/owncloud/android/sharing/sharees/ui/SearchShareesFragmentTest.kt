@@ -38,6 +38,7 @@ import com.owncloud.android.presentation.ui.sharing.fragments.SearchShareesFragm
 import com.owncloud.android.presentation.viewmodels.sharing.OCShareViewModel
 import com.owncloud.android.sharing.shares.ui.TestShareFileActivity
 import com.owncloud.android.testutil.OC_SHARE
+import com.owncloud.android.testutil.annotation.FailsOnGithubAction
 import io.mockk.every
 import io.mockk.mockkClass
 import org.hamcrest.CoreMatchers
@@ -83,6 +84,7 @@ class SearchShareesFragmentTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun showUserShares() {
         sharesLiveData.postValue(
             Event(
