@@ -112,6 +112,8 @@ allOpen {
 android {
     compileSdkVersion sdkCompileVersion
 
+    ndkVersion '21.0.6113669'
+
     defaultConfig {
         minSdkVersion sdkMinVersion
         targetSdkVersion sdkTargetVersion
