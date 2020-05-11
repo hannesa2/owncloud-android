@@ -44,4 +44,4 @@ jobs:
         if: failure()
         with:
           name: Espresso-test-report
-          path: ./owncloudApp/build/reports/androidTests/connected
+          path: ./**/build/reports/androidTests/connected
