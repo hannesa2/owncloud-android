@@ -25,6 +25,10 @@ jobs:
   Espresso:
     runs-on: macOS-latest
     steps:
+      # In order to have sha256sum on macOS, we need to install coreutils first
+      # Use this until coreutils or sha256sum are natively included in macOS on actions https://github.com/actions/virtual-environments/issues/90
+      - name: Install coreutils for macOS
+        run: brew install coreutils
       - uses: actions/checkout@v2
         with:
           submodules: true
