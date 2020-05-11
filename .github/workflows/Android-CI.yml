@@ -20,7 +20,7 @@ jobs:
       - name: Archive App Lint report
         uses: actions/upload-artifact@v1
         with:
-          name: Lint-report
+          name: Owncloud-Lint-report
           path: lint-app-report.html
   Espresso:
     runs-on: macOS-latest
@@ -43,5 +43,5 @@ jobs:
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
-          name: Espresso-test-report
+          name: Owncloud-Espresso-test-report
           path: ./**/build/reports/androidTests/connected
