@@ -687,6 +687,7 @@
     <string name="no_browser_installed_alert">No browser installed. Please install a browser in order to allow a secure login.</string>
     <string name="common_not_found">it was not found</string>
     <string name="scan_document">Scan document</string>
+    <string name="scan_edge">Scan edge document</string>
 
     <string name="supports_oauth2_error">It was not possible to know if OAuth2 is supported.</string>
     <string name="get_base_url_error">It was not possible to know the server base URL.</string>
@@ -834,4 +835,7 @@
     <string name="content_description_delete_share">Delete share</string>
     <string name="content_description_file_operations">%1$s operations</string>
 
+
+    <string name="rotate">Rotate</string>
+    <string name="send_as_pdf">Send as PDF</string>
 </resources>
