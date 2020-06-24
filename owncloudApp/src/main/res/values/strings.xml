@@ -588,6 +588,7 @@
     <string name="welcome_feature_5_text">Play your videos without downloading them</string>
     <string name="common_not_found">it was not found</string>
     <string name="scan_document">Scan document</string>
+    <string name="scan_edge">Scan edge document</string>
 
     <string name="supports_oauth2_error">It was not possible to know if OAuth2 is supported.</string>
     <string name="get_base_url_error">It was not possible to know the server base URL.</string>
@@ -827,5 +828,8 @@
     <string name="details_label">Details</string>
     <string name="text_preview_label">Text preview</string>
     <string name="space_members_label">Space members</string>
+
+    <string name="rotate">Rotate</string>
+    <string name="send_as_pdf">Send as PDF</string>
 
 </resources>
