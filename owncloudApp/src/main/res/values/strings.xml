@@ -690,6 +690,7 @@
     <string name="no_browser_installed_alert">No browser installed. Please install a browser in order to allow a secure login.</string>
     <string name="common_not_found">it was not found</string>
     <string name="scan_document">Scan document</string>
+    <string name="scan_edge">Scan edge document</string>
 
     <string name="supports_oauth2_error">It was not possible to know if OAuth2 is supported.</string>
     <string name="get_base_url_error">It was not possible to know the server base URL.</string>
@@ -768,4 +769,42 @@
     <string name="password_policy_min_special_character">At least %1$d of the special characters: \"%2$s\"</string>
     <string name="password_policy_error_password_banned">Unfortunately, your password is commonly used. Please, pick a harder-to-guess password for your safety.</string>
 
+    <string name="prefs_delete_local_files_entries_never">Never</string>
+    <string name="prefs_delete_local_files_entries_1hour">1 hour</string>
+    <string name="prefs_delete_local_files_entries_12hours">12 hours</string>
+    <string name="prefs_delete_local_files_entries_1day">1 day</string>
+    <string name="prefs_delete_local_files_entries_30days">30 days</string>
+    <string name="prefs_delete_local_files">Delete local copies</string>
+    <string name="prefs_delete_local_files_summary">Remove automatically downloaded files that are not available offline, when the time since their last usage exceeds the selected time.\nSelected time: %1$s</string>
+
+    <string name="insecure_http_url_title_dialog">Insecure HTTP URL</string>
+    <string name="insecure_http_url_message_dialog">The URL you provided uses HTTP rather than the encrypted HTTPS protocol. If you continue, your communication will not be encrypted.</string>
+    <string name="insecure_http_url_continue_button">Continue</string>
+
+    <string name="clean_data_account_message">All downloaded files that are not available offline will be cleaned up for this account</string>
+    <string name="clean_data_account_title">Remove local storage</string>
+    <string name="clean_data_account_button_yes">Clean data</string>
+
+    <string name="content_description_menu">Menu</string>
+    <string name="content_description_manage_accounts">Manage accounts</string>
+    <string name="content_description_search">Search</string>
+    <string name="content_description_type_view">Type of view</string>
+    <string name="content_description_image_previewed">Image previewed</string>
+    <string name="content_description_add_public_link">Add public link</string>
+    <string name="content_description_get_private_link">Get private link</string>
+    <string name="content_description_get_public_link">Get public link</string>
+    <string name="content_description_delete_public_link">Delete public link</string>
+    <string name="content_description_get_edit_public_link">Edit public link</string>
+    <string name="content_description_remove_account">Remove account</string>
+    <string name="content_description_add_new_content">Add new content</string>
+    <string name="content_description_clean_account_storage">Clean account storage</string>
+    <string name="content_description_logo">Logo</string>
+    <string name="content_description_add_share">Add share</string>
+    <string name="content_description_edit_share">Edit share</string>
+    <string name="content_description_delete_share">Delete share</string>
+    <string name="content_description_file_operations">%1$s operations</string>
+
+
+    <string name="rotate">Rotate</string>
+    <string name="send_as_pdf">Send as PDF</string>
 </resources>
