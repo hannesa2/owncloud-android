@@ -30,6 +30,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
@@ -89,6 +90,8 @@ import com.owncloud.android.ui.preview.PreviewTextFragment;
 import com.owncloud.android.ui.preview.PreviewVideoFragment;
 import com.owncloud.android.utils.FileStorageUtils;
 import com.owncloud.android.utils.PreferenceUtils;
+import info.hannes.liveedgedetection.ScanConstants;
+import info.hannes.liveedgedetection.activity.ScanActivity;
 import org.jetbrains.annotations.NotNull;
 import timber.log.Timber;
 import info.hannes.cvscanner.CVScanner;
@@ -115,6 +118,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
     private static final String KEY_FILE = MY_PACKAGE + ".extra.FILE";
     private static final String KEY_FILE_LIST_OPTION = "FILE_LIST_OPTION";
     private static final String KEY_FAB_EVER_CLICKED = "FAB_EVER_CLICKED";
+    private static final long SCAN_HOLD_TINE = 600L;
 
     private static final String GRID_IS_PREFERED_PREFERENCE = "gridIsPrefered";
 
@@ -351,6 +355,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
         getFabUpload().setTitle(getResources().getString(R.string.actionbar_upload));
         getFabMkdir().setTitle(getResources().getString(R.string.actionbar_mkdir));
         getFabScan().setTitle(getResources().getString(R.string.scan_document));
+        getFabEdge().setTitle(getResources().getString(R.string.scan_edge));
     }
 
     /**
@@ -375,6 +380,8 @@ public class OCFileListFragment extends ExtendedListFragment implements
                     uploadBottomSheet.findViewById(R.id.upload_from_camera_item_view);
             final BottomSheetFragmentItemView scan_document_upload_linear_layout =
                         uploadBottomSheet.findViewById(R.id.scan_document_upload_linear_layout);
+                final BottomSheetFragmentItemView scan_edge_upload_linear_layout =
+                        uploadBottomSheet.findViewById(R.id.scan_edge_upload_linear_layout);
                 TextView uploadToTextView = uploadBottomSheet.findViewById(R.id.upload_to_text_view);
                 uploadFromFilesItemView.setOnTouchListener((v13, event) -> {
                     Intent action = new Intent(Intent.ACTION_GET_CONTENT);
@@ -396,15 +403,24 @@ public class OCFileListFragment extends ExtendedListFragment implements
                     CVScanner.INSTANCE.startScanner(requireActivity(), false,
                             FileDisplayActivity.REQUEST_CODE__UPLOAD_SCANNED_DOCUMENT);
                 dialog.hide();
-                return false;
-            });
-            uploadToTextView.setText(String.format(getResources().getString(R.string.upload_to),
-                    getResources().getString(R.string.app_name)));
-            final BottomSheetBehavior uploadBottomSheetBehavior =
-                    BottomSheetBehavior.from((View) uploadBottomSheet.getParent());
-            dialog.setOnShowListener(dialog1 ->
-                    uploadBottomSheetBehavior.setPeekHeight(uploadBottomSheet.getMeasuredHeight()));
-            dialog.show();
+                    return false;
+                });
+                scan_edge_upload_linear_layout.setOnTouchListener((v1, event) -> {
+                    Intent intent = new Intent(getActivity(), ScanActivity.class);
+                    intent.putExtra(ScanConstants.IMAGE_PATH, getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString());
+                    intent.putExtra(ScanConstants.TIME_HOLD_STILL, SCAN_HOLD_TINE);
+                    getActivity().startActivityForResult(intent, FileDisplayActivity.REQUEST_CODE__UPLOAD_LIVEDGE_DOCUMENT);
+
+                    dialog.hide();
+                    return false;
+                });
+                uploadToTextView.setText(String.format(getResources().getString(R.string.upload_to),
+                        getResources().getString(R.string.app_name)));
+                final BottomSheetBehavior uploadBottomSheetBehavior =
+                        BottomSheetBehavior.from((View) uploadBottomSheet.getParent());
+                dialog.setOnShowListener(dialog1 ->
+                        uploadBottomSheetBehavior.setPeekHeight(uploadBottomSheet.getMeasuredHeight()));
+                dialog.show();
             DialogExtKt.avoidScreenshotsIfNeeded(dialog);
             getFabMain().collapse();
             recordMiniFabClick();
@@ -420,6 +436,16 @@ public class OCFileListFragment extends ExtendedListFragment implements
             public void onClick(View v) {
                 CVScanner.INSTANCE.startScanner(requireActivity(), false,
                         FileDisplayActivity.REQUEST_CODE__UPLOAD_SCANNED_DOCUMENT);
+            }
+        });
+
+        getFabEdge().setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), ScanActivity.class);
+                intent.putExtra(ScanConstants.IMAGE_PATH, getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString());
+                intent.putExtra(ScanConstants.TIME_HOLD_STILL, SCAN_HOLD_TINE);
+                getActivity().startActivityForResult(intent, FileDisplayActivity.REQUEST_CODE__UPLOAD_LIVEDGE_DOCUMENT);
             }
         });
     }
@@ -448,6 +474,14 @@ public class OCFileListFragment extends ExtendedListFragment implements
                 return true;
             }
         });
+
+        getFabEdge().setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                showSnackMessage(R.string.scan_edge);
+                return true;
+            }
+        });
     }
 
     /**
@@ -473,9 +507,11 @@ public class OCFileListFragment extends ExtendedListFragment implements
         getFabUpload().setTitle(null);
         getFabMkdir().setTitle(null);
         getFabScan().setTitle(null);
+        getFabEdge().setTitle(null);
         ((TextView) getFabUpload().getTag(com.getbase.floatingactionbutton.R.id.fab_label)).setVisibility(View.GONE);
         ((TextView) getFabMkdir().getTag(com.getbase.floatingactionbutton.R.id.fab_label)).setVisibility(View.GONE);
         ((TextView) getFabScan().getTag(com.getbase.floatingactionbutton.R.id.fab_label)).setVisibility(View.GONE);
+        ((TextView) getFabEdge().getTag(com.getbase.floatingactionbutton.R.id.fab_label)).setVisibility(View.GONE);
     }
 
     @Override
