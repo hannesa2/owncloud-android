@@ -75,6 +75,7 @@ dependencies {
     implementation "io.noties.markwon:html:$markwon"
 
     implementation 'com.github.hannesa2:CVScanner:1.10'
+    implementation 'com.github.hannesa2:edgeDetect:1.0'
 
     // Tests
     testImplementation project(":owncloudTestUtil")
