@@ -699,6 +699,7 @@
     <string name="no_browser_installed_alert">No browser installed. Please install a browser in order to allow a secure login.</string>
     <string name="common_not_found">it was not found</string>
     <string name="scan_document">Scan document</string>
+    <string name="scan_edge">Scan edge document</string>
 
     <string name="supports_oauth2_error">It was not possible to know if OAuth2 is supported.</string>
     <string name="get_base_url_error">It was not possible to know the server base URL.</string>
@@ -850,5 +851,8 @@
     <string name="text_preview_label">Text preview</string>
     <string name="release_notes_title_enhanced_bottom_nav_bar">Added text labels on bottom bar</string>
     <string name="release_notes_subtitle_bottom_nav_bar">Text labels were added and default active indicator is used to show which section is selected on the bottom bar</string>
+
+    <string name="rotate">Rotate</string>
+    <string name="send_as_pdf">Send as PDF</string>
 
 </resources>
