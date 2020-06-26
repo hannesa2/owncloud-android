@@ -166,7 +166,7 @@ public class Preferences extends PreferenceActivity {
         }
 
         final String appVersion =
-                BuildConfig.VERSION_NAME + " " + BuildConfig.BUILD_TYPE + " " + BuildConfig.COMMIT_SHA1;
+                BuildConfig.VERSION_NAME + " " + BuildConfig.BUILD_TYPE + " " + BuildConfig.COMMIT_SHA1 + " " + BuildConfig.VERSION_CODE;
 
         // Register context menu for list of preferences.
         registerForContextMenu(getListView());
