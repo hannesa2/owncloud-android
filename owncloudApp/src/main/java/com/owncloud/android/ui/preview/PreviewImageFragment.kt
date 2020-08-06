@@ -29,20 +29,22 @@ import android.accounts.Account
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.os.Handler
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.Nullable
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.target.Target
-import com.github.chrisbanes.photoview.PhotoView
+import com.bumptech.glide.request.transition.Transition
+import com.ortiz.touchview.TouchImageView
 import com.owncloud.android.R
 import com.owncloud.android.datamodel.OCFile
 import com.owncloud.android.files.FileMenuFilter
@@ -143,7 +145,7 @@ class PreviewImageFragment : FileFragment() {
         progressWheel.visibility = View.VISIBLE
     }
 
-    fun getImageView(): PhotoView = photo_view
+    fun getImageView(): TouchImageView = photo_view
 
     /**
      * {@inheritDoc}
@@ -277,7 +279,7 @@ class PreviewImageFragment : FileFragment() {
                 CoroutineScope(Dispatchers.Main).launch {
                     // obtain result by running given block on IO thread
                     // suspends coroutine until it's ready (without blocking the main thread)
-                    val bitmapRotate = withContext(Dispatchers.IO){
+                    val bitmapRotate = withContext(Dispatchers.IO) {
                         val rotatedBitmap = file.storagePath.decodeBitmapFromFile().rotate(90f)
                         rotatedBitmap.store(File(file.storagePath), requireContext())
                         rotatedBitmap
@@ -357,7 +359,15 @@ class PreviewImageFragment : FileFragment() {
                     return false
                 }
             })
-            .into(photo_view)
+            .into(object : CustomTarget<Drawable?>() {
+                override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable?>?) {
+                    Timber.d("Set image %s", getFile().getFileName());
+                    photo_view.setImageDrawable(resource);
+                }
+
+                override fun onLoadCleared(@Nullable placeholder: Drawable?) = Unit
+
+            })
         photo_view.visibility = View.VISIBLE
     }
 
