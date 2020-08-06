@@ -344,13 +344,7 @@ public class PreviewImageActivity extends FileActivity implements
         } else {
             // too soon! ; selection of page (first image) was faster than binding of FileOperationsService;
             // wait a bit!
-            final int fPosition = position;
-            getHandler().post(new Runnable() {
-                @Override
-                public void run() {
-                    onPageSelected(fPosition);
-                }
-            });
+            getHandler().post(() -> onPageSelected(position));
         }
     }
 

@@ -62,11 +62,10 @@ The third party software included and used by this project is:
     Included in the ownCloud client APK.
     See https://github.com/bumptech/glide
 
- * PhotoView, version 2.0.0
-    Copyright (C) 2017 Chris Banes
-    Licensed under Apache License, Version 2.0.
+ * TouchImageView, version 3.0.2
+    Licensed under MIT license
     Included in the ownCloud client APK.
-    See https://github.com/chrisbanes/PhotoView
+    See https://github.com/MikeOrtiz/TouchImageView
 
  * OkHttp, version 4.6.0
    Licensed under Apache License, Version 2.0.

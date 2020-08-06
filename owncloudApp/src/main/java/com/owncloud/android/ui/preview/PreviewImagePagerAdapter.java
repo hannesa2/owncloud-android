@@ -205,7 +205,7 @@ public class PreviewImagePagerAdapter extends FragmentStatePagerAdapter {
         while (entries.hasNext()) {
             FileFragment fileFragment = entries.next();
             if (fileFragment instanceof PreviewImageFragment) {
-                ((PreviewImageFragment) fileFragment).getImageView().setScale(1, true);
+                ((PreviewImageFragment) fileFragment).getImageView().resetZoom();
             }
         }
     }
