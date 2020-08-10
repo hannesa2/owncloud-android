@@ -131,15 +131,13 @@ public class FileDownloader extends Service
             String description = getString(R.string.download_notification_channel_description);
             // Set importance low: show the notification everywhere but with no sound
             int importance = NotificationManager.IMPORTANCE_LOW;
-            mNotificationChannel = new NotificationChannel(DOWNLOAD_NOTIFICATION_CHANNEL_ID,
-                    name, importance);
+            mNotificationChannel = new NotificationChannel(DOWNLOAD_NOTIFICATION_CHANNEL_ID, name, importance);
             // Configure the notification channel.
             mNotificationChannel.setDescription(description);
             mNotificationManager.createNotificationChannel(mNotificationChannel);
         }
 
-        HandlerThread thread = new HandlerThread("FileDownloaderThread",
-                Process.THREAD_PRIORITY_BACKGROUND);
+        HandlerThread thread = new HandlerThread("FileDownloaderThread", Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
         mServiceLooper = thread.getLooper();
         mServiceHandler = new ServiceHandler(mServiceLooper, this);
@@ -174,7 +172,7 @@ public class FileDownloader extends Service
 
     /**
      * Entry point to add one or several files to the queue of downloads.
-     *
+     * <p>
      * New downloads are added calling to startService(), resulting in a call to this method.
      * This ensures the service will keep on working although the caller activity goes away.
      */
@@ -301,7 +299,7 @@ public class FileDownloader extends Service
         /**
          * Cancels all the downloads for an account
          *
-         * @param account   ownCloud account.
+         * @param account ownCloud account.
          */
         public void cancel(Account account) {
             Timber.d("Account= %s", account.name);
@@ -323,7 +321,7 @@ public class FileDownloader extends Service
         /**
          * Returns True when the file described by 'file' in the ownCloud account 'account'
          * is downloading or waiting to download.
-         *
+         * <p>
          * If 'file' is a directory, returns 'true' if any of its descendant files is downloading or
          * waiting to download.
          *
@@ -356,9 +354,9 @@ public class FileDownloader extends Service
         /**
          * Removes a listener interested in the progress of the download for a concrete file.
          *
-         * @param listener      Object to notify about progress of transfer.
-         * @param account       ownCloud account holding the file of interest.
-         * @param file          {@link OCFile} of interest for listener.
+         * @param listener Object to notify about progress of transfer.
+         * @param account  ownCloud account holding the file of interest.
+         * @param file     {@link OCFile} of interest for listener.
          */
         public void removeDatatransferProgressListener(
                 OnDatatransferProgressListener listener, Account account, OCFile file
@@ -434,7 +432,8 @@ public class FileDownloader extends Service
 
             /// Check account existence
             if (!AccountUtils.exists(mCurrentDownload.getAccount().name, this)) {
-                Timber.w("Account " + mCurrentDownload.getAccount().name + " does not exist anymore -> cancelling all its downloads");
+                Timber.w("Account " + mCurrentDownload.getAccount().name + " does not exist anymore -> cancelling all" +
+                        " its downloads");
                 cancelDownloadsForAccount(mCurrentDownload.getAccount());
                 return;
             }
@@ -497,10 +496,12 @@ public class FileDownloader extends Service
                         downloadResult = new RemoteOperationResult(
                                 ResultCode.NO_NETWORK_CONNECTION);
                     } else {
-                        Timber.v("Exception in download, network is OK, no retry scheduled for %1s in %2s", mCurrentDownload.getRemotePath(), mCurrentAccount.name);
+                        Timber.v("Exception in download, network is OK, no retry scheduled for %1s in %2s",
+                                mCurrentDownload.getRemotePath(), mCurrentAccount.name);
                     }
                 } else {
-                    Timber.v("Success OR fail without exception for %1s in %2s", mCurrentDownload.getRemotePath(),mCurrentAccount.name);
+                    Timber.v("Success OR fail without exception for %1s in %2s", mCurrentDownload.getRemotePath(),
+                            mCurrentAccount.name);
                 }
 
                 /// notify result
@@ -514,7 +515,7 @@ public class FileDownloader extends Service
 
     /**
      * Updates the OC File after a successful download.
-     *
+     * <p>
      * TODO move to DownloadFileOperation
      */
     private void saveDownloadedFile() {
@@ -700,7 +701,7 @@ public class FileDownloader extends Service
     /**
      * Remove downloads of an account
      *
-     * @param account       Downloads account to remove
+     * @param account Downloads account to remove
      */
     private void cancelDownloadsForAccount(Account account) {
         // Cancel pending downloads
