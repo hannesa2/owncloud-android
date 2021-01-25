@@ -1,21 +1,17 @@
 version: 2
 updates:
-  - package-ecosystem: github-actions
-    directory: "/"
+  - package-ecosystem: "gradle"
+    directory: "/" # Location of package manifests
+    target-branch: "special"
     schedule:
-      interval: weekly
-      day: sunday
-      time: '22:00'
-      timezone: Etc/UTC
-    open-pull-requests-limit: 5
-    groups:
-      minor-and-patch:
-        update-types:
-          - minor
-          - patch
-
-  - package-ecosystem: gradle
-    directory: "/"
+      interval: "daily"
+    labels:
+      - "Dependencies"
+    commit-message:
+      prefix: "feat"
+  - package-ecosystem: "github-actions"
+    directory: "/" # Location of package manifests
+    target-branch: "special"
     schedule:
       interval: weekly
       day: wednesday
