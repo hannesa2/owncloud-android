@@ -53,6 +53,7 @@ import com.owncloud.android.ui.dialog.ConfirmationDialogFragment
 import com.owncloud.android.ui.dialog.RemoveFilesDialogFragment
 import com.owncloud.android.ui.fragment.FileFragment
 import com.owncloud.android.utils.PreferenceUtils
+import kotlinx.coroutines.CoroutineScope
 import timber.log.Timber
 import java.io.File
 
@@ -223,6 +224,16 @@ class PreviewImageFragment : FileFragment() {
             isVisible = false
             isEnabled = false
         }
+
+        menu.findItem(R.id.action_send_pdf)?.apply {
+            isVisible = true
+            isEnabled = true
+        }
+
+        menu.findItem(R.id.action_rotate)?.apply {
+            isVisible = true
+            isEnabled = true
+        }
     }
 
     /**
@@ -261,6 +272,27 @@ class PreviewImageFragment : FileFragment() {
             }
             R.id.action_unset_available_offline -> {
                 mContainerActivity.fileOperationsHelper.toggleAvailableOffline(file, false)
+                true
+            }
+            R.id.action_send_pdf -> {
+                requireContext().externalCacheDir?.let { path ->
+                    requireContext().viewPdf(File(file.storagePath).createPdf(path))
+                }
+                true
+            }
+            R.id.action_rotate -> {
+                CoroutineScope(Dispatchers.Main).launch {
+                    // obtain result by running given block on IO thread
+                    // suspends coroutine until it's ready (without blocking the main thread)
+                    val bitmapRotate = withContext(Dispatchers.IO) {
+                        val rotatedBitmap = file.storagePath.decodeBitmapFromFile().rotate(90f)
+                        rotatedBitmap.store(File(file.storagePath), requireContext())
+                        rotatedBitmap
+                    }
+                    // executed on main thread
+                    Timber.d("set rotate bitmap ${Thread.currentThread().name} bitmapRotate=$bitmapRotate")
+                    photo_view.setImageBitmap(bitmapRotate)
+                }
                 true
             }
             else -> super.onOptionsItemSelected(item)
