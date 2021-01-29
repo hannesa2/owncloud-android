@@ -694,4 +694,6 @@
     <string name="release_notes_title_6">Hidden files</string>
     <string name="release_notes_subtitle_6">Added a new option in settings to decide to show or not hidden files.</string>
 
+    <string name="rotate">Rotate</string>
+    <string name="send_as_pdf">Send as PDF</string>
 </resources>
