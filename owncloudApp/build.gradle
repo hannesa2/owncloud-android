@@ -38,9 +38,7 @@ dependencies {
     implementation "androidx.biometric:biometric:$biometricVersion"
 
     // Image loading
-    implementation('com.github.bumptech.glide:glide:4.6.1') {
-        exclude group: "com.android.support"
-    }
+    implementation 'com.github.bumptech.glide:glide:4.12.0'
 
     // AppAuth
     api 'net.openid:appauth:0.7.1'
@@ -68,7 +66,7 @@ dependencies {
     implementation 'com.github.hannesa2:CVScanner:1.2'
     implementation 'com.github.hannesa2:LiveEdgeDetection:1.8.6'
 
-// Tests
+    // Tests
     testImplementation project(':owncloudTestUtil')
     testImplementation "junit:junit:$junitVersion"
     testImplementation "androidx.arch.core:core-testing:$archLifecycleVersion"
