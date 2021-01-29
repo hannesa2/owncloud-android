@@ -41,7 +41,6 @@ import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.github.chrisbanes.photoview.PhotoView
 import com.owncloud.android.R
@@ -338,11 +337,10 @@ class PreviewImageFragment : FileFragment() {
     }
 
     private fun loadAndShowImage() {
-        val requestOptions =
-            RequestOptions.diskCacheStrategyOf(DiskCacheStrategy.NONE).apply(RequestOptions.skipMemoryCacheOf(true))
         Glide.with(requireContext())
             .load(File(file.storagePath))
-            .apply(requestOptions)
+            .diskCacheStrategy(DiskCacheStrategy.NONE)
+            .skipMemoryCache(true)
             .listener(object : RequestListener<Drawable?> {
                 override fun onLoadFailed(
                     e: GlideException?, model: Any, target: Target<Drawable?>, isFirstResource: Boolean
