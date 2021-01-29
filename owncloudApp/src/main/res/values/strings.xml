@@ -700,4 +700,6 @@
     <string name="release_notes_title_8">Bugfixing</string>
     <string name="release_notes_subtitle_8">Some existing bugs were fixed</string>
 
+    <string name="rotate">Rotate</string>
+    <string name="send_as_pdf">Send as PDF</string>
 </resources>
