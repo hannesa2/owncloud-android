@@ -675,4 +675,7 @@
     <string name="release_notes_proceed">Proceed</string>
     <string name="release_notes_icon">Release note icon</string>
 
+
+    <string name="rotate">Rotate</string>
+    <string name="send_as_pdf">Send as PDF</string>
 </resources>
