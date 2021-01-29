@@ -607,4 +607,6 @@
     <string name="prefs_http_logs">Log HTTP requests and responses</string>
     <string name="prefs_logs_summary">Logs may contain sensitive information. Sharing logs with others is sole user responsibility</string>
     <string name="synchronizing_account">Synchronizing account</string>
+    <string name="rotate">Rotate</string>
+    <string name="send_as_pdf">Send as PDF</string>
 </resources>
