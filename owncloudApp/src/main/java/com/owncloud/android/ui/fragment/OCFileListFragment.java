@@ -90,11 +90,11 @@ import com.owncloud.android.ui.preview.PreviewTextFragment;
 import com.owncloud.android.ui.preview.PreviewVideoFragment;
 import com.owncloud.android.utils.FileStorageUtils;
 import com.owncloud.android.utils.PreferenceUtils;
+import info.hannes.cvscanner.CVScanner;
 import info.hannes.liveedgedetection.ScanConstants;
 import info.hannes.liveedgedetection.activity.ScanActivity;
 import org.jetbrains.annotations.NotNull;
 import timber.log.Timber;
-import info.hannes.cvscanner.CVScanner;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -121,6 +121,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
     private static final long SCAN_HOLD_TINE = 600L;
 
     private static final String GRID_IS_PREFERED_PREFERENCE = "gridIsPrefered";
+    public static final String SHORTCUT_EXTRA = "key";
 
     private static String DIALOG_CREATE_FOLDER = "DIALOG_CREATE_FOLDER";
 
@@ -219,13 +220,13 @@ public class OCFileListFragment extends ExtendedListFragment implements
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Timber.i("onCreateView() start");
         View v = super.onCreateView(inflater, container, savedInstanceState);
-        Bundle args = getArguments();
-        boolean allowContextualActions = (args != null) && args.getBoolean(ARG_ALLOW_CONTEXTUAL_MODE, false);
-        if (allowContextualActions) {
-            setChoiceModeAsMultipleModal(savedInstanceState);
+        if (getArguments() != null) {
+            boolean allowContextualActions = getArguments().getBoolean(ARG_ALLOW_CONTEXTUAL_MODE, false);
+            if (allowContextualActions) {
+                setChoiceModeAsMultipleModal(savedInstanceState);
+            }
         }
 
-        Timber.i("onCreateView() end");
         return v;
     }
 
@@ -240,6 +241,11 @@ public class OCFileListFragment extends ExtendedListFragment implements
                 mSortOptionsView.setOnCreateFolderListener(this);
                 mSortOptionsView.selectAdditionalView(SortOptionsView.AdditionalView.CREATE_FOLDER);
             }
+        }
+
+        if (requireActivity().getIntent().getStringExtra(SHORTCUT_EXTRA) != null) {
+            requireActivity().getIntent().removeExtra(SHORTCUT_EXTRA);
+            openEdgeScanner();
         }
     }
 
@@ -375,7 +381,8 @@ public class OCFileListFragment extends ExtendedListFragment implements
             final View uploadBottomSheet = getLayoutInflater().inflate(R.layout.upload_bottom_sheet_fragment, null);
             final BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
             dialog.setContentView(uploadBottomSheet);
-            final BottomSheetFragmentItemView uploadFromFilesItemView = uploadBottomSheet.findViewById(R.id.upload_from_files_item_view);
+            final BottomSheetFragmentItemView uploadFromFilesItemView =
+                        uploadBottomSheet.findViewById(R.id.upload_from_files_item_view);
             BottomSheetFragmentItemView uploadFromCameraItemView =
                     uploadBottomSheet.findViewById(R.id.upload_from_camera_item_view);
             final BottomSheetFragmentItemView scan_document_upload_linear_layout =
@@ -406,10 +413,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
                     return false;
                 });
                 scan_edge_upload_linear_layout.setOnTouchListener((v1, event) -> {
-                    Intent intent = new Intent(getActivity(), ScanActivity.class);
-                    intent.putExtra(ScanConstants.IMAGE_PATH, getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString());
-                    intent.putExtra(ScanConstants.TIME_HOLD_STILL, SCAN_HOLD_TINE);
-                    getActivity().startActivityForResult(intent, FileDisplayActivity.REQUEST_CODE__UPLOAD_LIVEDGE_DOCUMENT);
+                    openEdgeScanner();
 
                     dialog.hide();
                     return false;
@@ -431,23 +435,18 @@ public class OCFileListFragment extends ExtendedListFragment implements
             return true;
         });
 
-        getFabScan().setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                CVScanner.INSTANCE.startScanner(requireActivity(), false,
-                        FileDisplayActivity.REQUEST_CODE__UPLOAD_SCANNED_DOCUMENT);
-            }
-        });
+        getFabScan().setOnClickListener(v -> CVScanner.INSTANCE.startScanner(requireActivity(), false,
+                FileDisplayActivity.REQUEST_CODE__UPLOAD_SCANNED_DOCUMENT));
 
-        getFabEdge().setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), ScanActivity.class);
-                intent.putExtra(ScanConstants.IMAGE_PATH, getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString());
-                intent.putExtra(ScanConstants.TIME_HOLD_STILL, SCAN_HOLD_TINE);
-                getActivity().startActivityForResult(intent, FileDisplayActivity.REQUEST_CODE__UPLOAD_LIVEDGE_DOCUMENT);
-            }
-        });
+        getFabEdge().setOnClickListener(v -> openEdgeScanner());
+    }
+
+    private void openEdgeScanner() {
+        Intent intent = new Intent(getActivity(), ScanActivity.class);
+        intent.putExtra(ScanConstants.IMAGE_PATH,
+                requireActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString());
+        intent.putExtra(ScanConstants.TIME_HOLD_STILL, SCAN_HOLD_TINE);
+        getActivity().startActivityForResult(intent, FileDisplayActivity.REQUEST_CODE__UPLOAD_LIVEDGE_DOCUMENT);
     }
 
     /**
@@ -569,7 +568,8 @@ public class OCFileListFragment extends ExtendedListFragment implements
 
     @Override
     public void onSortTypeListener(@NotNull SortType sortType, @NotNull SortOrder sortOrder) {
-        SortBottomSheetFragment sortBottomSheetFragment = SortBottomSheetFragment.Companion.newInstance(sortType, sortOrder);
+        SortBottomSheetFragment sortBottomSheetFragment = SortBottomSheetFragment.Companion.newInstance(sortType,
+                sortOrder);
         sortBottomSheetFragment.setSortDialogListener(this);
         sortBottomSheetFragment.show(getChildFragmentManager(), SortBottomSheetFragment.TAG);
     }
