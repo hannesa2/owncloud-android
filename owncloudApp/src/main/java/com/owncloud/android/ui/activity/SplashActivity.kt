@@ -23,12 +23,15 @@ package com.owncloud.android.ui.activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.owncloud.android.ui.fragment.OCFileListFragment
 
 class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        startActivity(Intent(this, FileDisplayActivity::class.java))
+        val intentLaunch = Intent(this, FileDisplayActivity::class.java)
+        intentLaunch.putExtra(OCFileListFragment.SHORTCUT_EXTRA, intent.getStringExtra(OCFileListFragment.SHORTCUT_EXTRA))
+        startActivity(intentLaunch)
         finish()
     }
 }
