@@ -41,7 +41,7 @@ jobs:
       - name: Build project
         run: ./gradlew clean assembleRelease
         env:
-          VERSION: ${{ github.ref }}
+          TAG_VERSION: ${{ github.ref }}
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
           ALIAS_NAME: ${{ secrets.ALIAS_NAME }}
           ALIAS_PASS: ${{ secrets.ALIAS_PASS }}
