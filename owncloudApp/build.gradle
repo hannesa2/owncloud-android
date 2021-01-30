@@ -179,11 +179,8 @@ android {
     }
 
     buildTypes {
-
         release {
-            if (System.env.OC_RELEASE_KEYSTORE) {
-                signingConfig signingConfigs.release
-            }
+            signingConfig signingConfigs.release
         }
 
         debug {
