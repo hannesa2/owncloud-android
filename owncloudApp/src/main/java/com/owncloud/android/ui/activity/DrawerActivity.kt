@@ -30,12 +30,14 @@ import android.accounts.OnAccountsUpdateListener
 import android.app.Activity
 import android.content.Intent
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -48,6 +50,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
+import com.google.zxing.integration.android.IntentIntegrator
 import com.owncloud.android.BuildConfig
 import com.owncloud.android.MainApp.Companion.initDependencyInjection
 import com.owncloud.android.R
@@ -182,6 +185,7 @@ abstract class DrawerActivity : ToolbarActivity() {
                     BuildConfig.GIT_REPOSITORY,
                     BuildConfig.VERSION_NAME
                 )
+                R.id.nav_qr -> IntentIntegrator(this).initiateScan()
                 R.id.drawer_menu_help -> openHelp()
                 Menu.NONE -> {
                     accountClicked(menuItem.title.toString())
@@ -598,6 +602,28 @@ abstract class DrawerActivity : ToolbarActivity() {
                 updateQuota()
             }
         }
+
+        val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
+        if (result != null) {
+            if (result.contents == null) {
+                displayToast("Cancelled from fragment")
+            } else {
+                var url = result.contents
+                if (!result.contents.startsWith("http://") && !result.contents.startsWith("https://"))
+                    url = "http://" + result.contents
+
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                startActivity(browserIntent)
+
+                displayToast(result.contents)
+            }
+            finish()
+        }
+
+    }
+
+    private fun displayToast(toast: String) {
+        Toast.makeText(this, toast, Toast.LENGTH_LONG).show()
     }
 
     override fun onAccountCreationSuccessful(future: AccountManagerFuture<Bundle?>?) {
