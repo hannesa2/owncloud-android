@@ -21,17 +21,56 @@
 package com.owncloud.android.ui.activity
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
+import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import com.google.zxing.integration.android.IntentIntegrator
 import com.owncloud.android.ui.fragment.OCFileListFragment
 
 class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val intentLaunch = Intent(this, FileDisplayActivity::class.java)
-        intentLaunch.putExtra(OCFileListFragment.SHORTCUT_EXTRA, intent.getStringExtra(OCFileListFragment.SHORTCUT_EXTRA))
+
+        intent.getStringExtra(OCFileListFragment.SHORTCUT_EXTRA)?.let {
+            if (it == "QR") {
+                IntentIntegrator(this).initiateScan()
+                return
+            } else {
+                intentLaunch.putExtra(
+                    OCFileListFragment.SHORTCUT_EXTRA,
+                    intent.getStringExtra(OCFileListFragment.SHORTCUT_EXTRA)
+                )
+            }
+        }
         startActivity(intentLaunch)
+        finish()
+    }
+
+    private fun displayToast(toast: String) {
+        Toast.makeText(this, toast, Toast.LENGTH_LONG).show()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
+        if (result != null) {
+            if (result.contents == null) {
+                displayToast("Cancelled from fragment")
+            } else {
+                var url = result.contents
+                if (!result.contents.startsWith("http://") && !result.contents.startsWith("https://"))
+                    url = "http://" + result.contents
+
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                startActivity(browserIntent)
+
+                displayToast(result.contents)
+            }
+        }
         finish()
     }
 }
