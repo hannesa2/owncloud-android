@@ -48,6 +48,7 @@ dependencies {
     implementation "androidx.core:core-ktx:$androidxCore"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$androidxLifecycle"
     implementation "androidx.fragment:fragment-ktx:$androidxFragment"
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
 
     // Image loading
     implementation "com.github.bumptech.glide:glide:4.15.0"
