@@ -49,10 +49,10 @@ import com.owncloud.android.BuildConfig;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.R;
 import com.owncloud.android.authentication.BiometricManager;
-import com.owncloud.android.datamodel.CameraUploadsSyncStorageManager;
-import com.owncloud.android.datamodel.OCCameraUploadSync;
 import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider;
 import com.owncloud.android.data.preferences.datasources.implementation.SharedPreferencesProviderImpl;
+import com.owncloud.android.datamodel.CameraUploadsSyncStorageManager;
+import com.owncloud.android.datamodel.OCCameraUploadSync;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.db.PreferenceManager.CameraUploadsConfiguration;
 import com.owncloud.android.files.services.CameraUploadsHandler;
@@ -77,6 +77,8 @@ import static com.owncloud.android.db.PreferenceManager.PREF__CAMERA_UPLOADS_SOU
 import static com.owncloud.android.db.PreferenceManager.PREF__CAMERA_VIDEO_UPLOADS_ENABLED;
 import static com.owncloud.android.db.PreferenceManager.PREF__CAMERA_VIDEO_UPLOADS_PATH;
 import static com.owncloud.android.db.PreferenceManager.PREF__CAMERA_VIDEO_UPLOADS_WIFI_ONLY;
+import static com.owncloud.android.db.PreferenceManager.PREF__SCANNER_UPLOADS_PATH;
+import static com.owncloud.android.db.PreferenceManager.PREF__SCANNER_UPLOADS_PATH_DEFAULT;
 
 /**
  * An Activity that allows the user to change the application's settings.
@@ -88,6 +90,7 @@ public class Preferences extends PreferenceActivity {
 
     public static final String PREFERENCE_TOUCHES_WITH_OTHER_VISIBLE_WINDOWS = "touches_with_other_visible_windows";
     private static final int ACTION_SELECT_UPLOAD_PATH = 1;
+    private static final int ACTION_SELECT_SCANNER_PATH = 19;
     private static final int ACTION_SELECT_UPLOAD_VIDEO_PATH = 2;
     private static final int ACTION_SELECT_SOURCE_PATH = 3;
     private static final int ACTION_REQUEST_PASSCODE = 5;
@@ -112,6 +115,7 @@ public class Preferences extends PreferenceActivity {
     private PreferenceCategory mPrefCameraUploadsCategory;
     private CheckBoxPreference mPrefCameraPictureUploads;
     private Preference mPrefCameraPictureUploadsPath;
+    private Preference mPrefScannerUploadsPath;
     private Preference mPrefCameraPictureUploadsWiFi;
     private CheckBoxPreference mPrefCameraVideoUploads;
     private Preference mPrefCameraVideoUploadsPath;
@@ -121,6 +125,7 @@ public class Preferences extends PreferenceActivity {
     private CheckBoxPreference mPrefLogHttpOption;
 
     private String mUploadPath;
+    private String mScannerUploadPath = "";
     private String mUploadVideoPath;
     private String mSourcePath;
 
@@ -200,6 +205,21 @@ public class Preferences extends PreferenceActivity {
             });
         }
 
+        // Scanner
+        mPrefScannerUploadsPath = findPreference(PREF__SCANNER_UPLOADS_PATH);
+        if (mPrefScannerUploadsPath != null) {
+
+            mPrefScannerUploadsPath.setOnPreferenceClickListener(preference -> {
+                if (!mScannerUploadPath.endsWith(File.separator)) {
+                    mScannerUploadPath += File.separator;
+                }
+                Intent intent = new Intent(Preferences.this, UploadPathActivity.class);
+                intent.putExtra(UploadPathActivity.KEY_CAMERA_UPLOAD_PATH, mScannerUploadPath);
+                startActivityForResult(intent, ACTION_SELECT_SCANNER_PATH);
+                return true;
+            });
+        }
+
         mPrefCameraUploadsCategory = (PreferenceCategory) findPreference(PREFERENCE_CAMERA_UPLOADS_CATEGORY);
 
         mPrefCameraPictureUploadsWiFi = findPreference(PREF__CAMERA_PICTURE_UPLOADS_WIFI_ONLY);
@@ -267,6 +287,7 @@ public class Preferences extends PreferenceActivity {
         );
 
         loadCameraUploadsPicturePath();
+        loadScannerUploadsPicturePath();
         loadCameraUploadsVideoPath();
         loadCameraUploadsSourcePath();
 
@@ -364,7 +385,8 @@ public class Preferences extends PreferenceActivity {
                                     .setMessage(getString(R.string.confirmation_touches_with_other_windows_message))
                                     .setNegativeButton(getString(R.string.common_no), null)
                                     .setPositiveButton(getString(R.string.common_yes), (dialog, which) -> {
-                                        mPreferencesProvider.putBoolean(PREFERENCE_TOUCHES_WITH_OTHER_VISIBLE_WINDOWS, true);
+                                        mPreferencesProvider.putBoolean(PREFERENCE_TOUCHES_WITH_OTHER_VISIBLE_WINDOWS
+                                                , true);
                                         mPrefTouchesWithOtherVisibleWindows.setChecked(true);
                                     })
                                     .show();
@@ -767,6 +789,12 @@ public class Preferences extends PreferenceActivity {
             );
             saveCameraUploadsPicturePathOnPreferences();
 
+        } else if (requestCode == ACTION_SELECT_SCANNER_PATH && resultCode == RESULT_OK) {
+            OCFile folderToUpload = data.getParcelableExtra(UploadPathActivity.EXTRA_FOLDER);
+            mScannerUploadPath = folderToUpload.getRemotePath();
+            mPrefScannerUploadsPath.setSummary(DisplayUtils.getPathWithoutLastSlash(mScannerUploadPath));
+            saveScannerUploadsPicturePathOnPreferences();
+
         } else if (requestCode == ACTION_SELECT_UPLOAD_VIDEO_PATH && resultCode == RESULT_OK) {
 
             OCFile folderToUploadVideo = data.getParcelableExtra(UploadPathActivity.EXTRA_FOLDER);
@@ -943,11 +971,21 @@ public class Preferences extends PreferenceActivity {
         );
     }
 
+    private void loadScannerUploadsPicturePath() {
+        mScannerUploadPath = mPreferencesProvider.getString(PREF__SCANNER_UPLOADS_PATH,
+                PREF__SCANNER_UPLOADS_PATH_DEFAULT);
+        mPrefScannerUploadsPath.setSummary(DisplayUtils.getPathWithoutLastSlash(mScannerUploadPath));
+    }
+
     /**
      * Save the "Picture upload path" on preferences
      */
     private void saveCameraUploadsPicturePathOnPreferences() {
         mPreferencesProvider.putString(PREF__CAMERA_PICTURE_UPLOADS_PATH, mUploadPath);
+    }
+
+    private void saveScannerUploadsPicturePathOnPreferences() {
+        mPreferencesProvider.putString(PREF__SCANNER_UPLOADS_PATH, mScannerUploadPath);
     }
 
     /**
