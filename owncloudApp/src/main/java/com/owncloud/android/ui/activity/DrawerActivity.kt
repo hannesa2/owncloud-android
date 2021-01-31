@@ -52,6 +52,8 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
+import com.google.zxing.integration.android.IntentIntegrator
+import com.owncloud.android.BuildConfig
 import com.owncloud.android.R
 import com.owncloud.android.domain.capabilities.model.OCCapability
 import com.owncloud.android.domain.files.model.FileListOption
@@ -192,6 +194,7 @@ abstract class DrawerActivity : ToolbarActivity() {
                     BuildConfig.GIT_REPOSITORY,
                     BuildConfig.VERSION_NAME
                 )
+                R.id.nav_qr -> IntentIntegrator(this).initiateScan()
                 R.id.drawer_menu_help -> openHelp()
                 R.id.drawer_menu_privacy_policy -> openPrivacyPolicy()
                 else -> Timber.i("Unknown drawer menu item clicked: %s", menuItem.title)
