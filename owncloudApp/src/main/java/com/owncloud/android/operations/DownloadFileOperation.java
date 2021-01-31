@@ -55,12 +55,10 @@ public class DownloadFileOperation extends RemoteOperation {
 
     public DownloadFileOperation(Account account, OCFile file) {
         if (account == null) {
-            throw new IllegalArgumentException("Illegal null account in DownloadFileOperation " +
-                    "creation");
+            throw new IllegalArgumentException("Illegal null account in DownloadFileOperation creation");
         }
         if (file == null) {
-            throw new IllegalArgumentException("Illegal null file in DownloadFileOperation " +
-                    "creation");
+            throw new IllegalArgumentException("Illegal null file in DownloadFileOperation creation");
         }
 
         mAccount = account;
@@ -119,7 +117,7 @@ public class DownloadFileOperation extends RemoteOperation {
     }
 
     public long getModificationTimestamp() {
-        return (mModificationTimestamp > 0) ? mModificationTimestamp :
+        return mModificationTimestamp > 0 ? mModificationTimestamp :
                 mFile.getModificationTimestamp();
     }
 
@@ -156,21 +154,20 @@ public class DownloadFileOperation extends RemoteOperation {
             mModificationTimestamp = mDownloadOperation.getModificationTimestamp();
             mEtag = mDownloadOperation.getEtag();
             if (FileStorageUtils.getUsableSpace() < tmpFile.length()) {
-                Timber.w("Not enough space to copy %s", tmpFile.getAbsolutePath());
+                Timber.e("Not enough space to copy %s", tmpFile.getAbsolutePath());
             }
             newFile = new File(getSavePath());
-            Timber.d("Save path: %s", newFile.getAbsolutePath());
             File parent = newFile.getParentFile();
             boolean created = parent.mkdirs();
-            Timber.d("Creation of parent folder " + parent.getAbsolutePath() + " succeeded: " + created);
-            Timber.d("Parent folder " + parent.getAbsolutePath() + " exists: " + parent.exists());
-            Timber.d("Parent folder " + parent.getAbsolutePath() + " is directory: " + parent.isDirectory());
+            Timber.d("Creation of parent folder=" + parent.getAbsolutePath() + " succeeded=" + created +
+                    " exists=" + parent.exists() +
+                    " directory=" + parent.isDirectory()
+            );
             moved = tmpFile.renameTo(newFile);
-            Timber.d("New file " + newFile.getAbsolutePath() + " exists: " + newFile.exists());
-            Timber.d("New file " + newFile.getAbsolutePath() + " is directory: " + newFile.isDirectory());
+            Timber.d("New file " + newFile.getAbsolutePath() + " exists: " + newFile.exists() +
+                    " is directory: " + newFile.isDirectory());
             if (!moved) {
-                result = new RemoteOperationResult<>(
-                        RemoteOperationResult.ResultCode.LOCAL_STORAGE_NOT_MOVED);
+                result = new RemoteOperationResult<>(RemoteOperationResult.ResultCode.LOCAL_STORAGE_NOT_MOVED);
             }
         }
         Timber.i("Download of " + mFile.getRemotePath() + " to " + getSavePath() + ": " + result.getLogMessage());
@@ -191,9 +188,4 @@ public class DownloadFileOperation extends RemoteOperation {
         }
     }
 
-    public void removeDatatransferProgressListener(OnDatatransferProgressListener listener) {
-        synchronized (mDataTransferListeners) {
-            mDataTransferListeners.remove(listener);
-        }
-    }
 }

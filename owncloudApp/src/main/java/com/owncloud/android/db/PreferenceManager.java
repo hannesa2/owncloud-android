@@ -34,6 +34,7 @@ import com.owncloud.android.utils.FileStorageUtils;
 
 import java.io.File;
 
+
 /**
  * Helper to simplify reading of Preferences all around the app
  */
@@ -52,6 +53,7 @@ public abstract class PreferenceManager {
     public static final String PREF__CAMERA_VIDEO_UPLOADS_ENABLED = "camera_video_uploads";
     public static final String PREF__CAMERA_PICTURE_UPLOADS_WIFI_ONLY = "camera_picture_uploads_on_wifi";
     public static final String PREF__CAMERA_VIDEO_UPLOADS_WIFI_ONLY = "camera_video_uploads_on_wifi";
+    public static final String PREF__SCANNER_UPLOADS_PATH = "scanner_uploads_path";
     private static final String PREF__CAMERA_UPLOADS_ACCOUNT_NAME = "camera_uploads_account_name";  // NEW - not
     // saved yet
     public static final String PREF__CAMERA_PICTURE_UPLOADS_PATH = "camera_picture_uploads_path";
@@ -60,6 +62,7 @@ public abstract class PreferenceManager {
     public static final String PREF__CAMERA_UPLOADS_SOURCE = "camera_uploads_source_path";
 
     public static final String PREF__CAMERA_UPLOADS_DEFAULT_PATH = "/CameraUpload";
+    public static final String PREF__SCANNER_UPLOADS_PATH_DEFAULT = "/";
 
     public static final String PREF__LEGACY_FINGERPRINT = "set_fingerprint";
 
@@ -118,8 +121,12 @@ public abstract class PreferenceManager {
                 PREF__CAMERA_PICTURE_UPLOADS_PATH,
                 PREF__CAMERA_UPLOADS_DEFAULT_PATH + File.separator
         );
+        String scannerPath = prefs.getString(PREF__SCANNER_UPLOADS_PATH, PREF__SCANNER_UPLOADS_PATH_DEFAULT + File.separator);
         result.setUploadPathForPictures(
                 uploadPath.endsWith(File.separator) ? uploadPath : uploadPath + File.separator
+        );
+        result.setScannerPathForPictures(
+                scannerPath.endsWith(File.separator) ? scannerPath : scannerPath + File.separator
         );
         uploadPath = prefs.getString(
                 PREF__CAMERA_VIDEO_UPLOADS_PATH,
@@ -261,6 +268,7 @@ public abstract class PreferenceManager {
         private boolean mWifiOnlyForVideos;
         private String mUploadAccountName;      // same for both audio & video
         private String mUploadPathForPictures;
+        private String mScannerPathForPictures;
         private String mUploadPathForVideos;
         private String mBehaviourAfterUpload;
         private String mSourcePath;             // same for both audio & video
@@ -311,6 +319,14 @@ public abstract class PreferenceManager {
 
         public void setUploadPathForPictures(String uploadPathForPictures) {
             mUploadPathForPictures = uploadPathForPictures;
+        }
+
+        public String getScannerPathForPictures() {
+            return mScannerPathForPictures;
+        }
+
+        public void setScannerPathForPictures(String scannerPathForPictures) {
+            mScannerPathForPictures = scannerPathForPictures;
         }
 
         public String getUploadPathForVideos() {
