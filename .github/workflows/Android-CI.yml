@@ -39,7 +39,7 @@ jobs:
       - name: Code checks
         run: ./gradlew check
       - name: Archive Lint report
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2.2.2
         if: ${{ always() }}
         with:
           name: ownCloud-Lint-report
@@ -65,13 +65,13 @@ jobs:
           api: 28
           tag: default
           abi: x86
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v2.2.2
         if: failure()
         with:
           name: owncloudApp-Espresso-test-report
           path: ${{ github.workspace }}/owncloudApp/build/reports/androidTests/connected/*
       - name: Save logcat output
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v2.2.2
         if: failure()
         with:
           name: ownCloud-logcat
