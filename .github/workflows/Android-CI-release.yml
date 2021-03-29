@@ -21,7 +21,7 @@ jobs:
           java-version: 1.8
       - name: "Build Changelog"
         id: changelog
-        uses: mikepenz/release-changelog-builder-action@v1.7.0
+        uses: mikepenz/release-changelog-builder-action@v1.7.1
         with:
           commitMode: true
         env:
