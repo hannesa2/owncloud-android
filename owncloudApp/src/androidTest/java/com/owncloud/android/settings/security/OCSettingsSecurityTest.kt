@@ -40,6 +40,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import com.owncloud.android.R
+import com.owncloud.android.testutil.annotation.FailsOnGithubAction
 import com.owncloud.android.ui.activity.PassCodeActivity
 import com.owncloud.android.ui.activity.PatternLockActivity
 import com.owncloud.android.ui.activity.Preferences
@@ -113,18 +114,21 @@ class OCSettingsSecurityTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun passcodeOpen() {
         onView(withText(R.string.prefs_passcode)).perform(click())
         intended(hasComponent(PassCodeActivity::class.java.name))
     }
 
     @Test
+    @FailsOnGithubAction
     fun patternOpen() {
         onView(withText(R.string.prefs_pattern)).perform(click())
         intended(hasComponent(PatternLockActivity::class.java.name))
     }
 
     @Test
+    @FailsOnGithubAction
     fun passcodeLockEnabled() {
         val result = Intent()
         result.putExtra(keyPassCode, passCodeValue)
@@ -136,6 +140,7 @@ class OCSettingsSecurityTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun patternLockEnabled() {
         val result = Intent()
         result.putExtra(keyPattern, patternValue)
@@ -153,12 +158,14 @@ class OCSettingsSecurityTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun enablePatternEnablesFingerprint() {
         firstEnablePattern()
         onView(withText(R.string.prefs_biometric)).check(matches(isEnabled()))
     }
 
     @Test
+    @FailsOnGithubAction
     fun onlyOneMethodEnabledPattern() {
         firstEnablePattern()
         onView(withText(R.string.prefs_passcode)).perform(click())
@@ -166,6 +173,7 @@ class OCSettingsSecurityTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun onlyOneMethodEnabledPasscode() {
         firstEnablePasscode()
         onView(withText(R.string.prefs_pattern)).perform(click())
@@ -173,6 +181,7 @@ class OCSettingsSecurityTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun disablePasscode() {
         firstEnablePasscode()
         val result = Intent()
@@ -199,6 +208,7 @@ class OCSettingsSecurityTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun touchesDialog() {
         onView(withText(R.string.prefs_touches_with_other_visible_windows)).perform(click())
         onView(withText(activityRule.activity.getString(R.string.confirmation_touches_with_other_windows_title)))
@@ -208,6 +218,7 @@ class OCSettingsSecurityTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun touchesEnable() {
         onView(withText(R.string.prefs_touches_with_other_visible_windows)).perform(click())
         onView(withText(R.string.common_yes)).perform(click())
@@ -222,6 +233,7 @@ class OCSettingsSecurityTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun disableTouches() {
         onView(withText(R.string.prefs_touches_with_other_visible_windows)).perform(click())
         onView(withText(R.string.common_yes)).perform(click())

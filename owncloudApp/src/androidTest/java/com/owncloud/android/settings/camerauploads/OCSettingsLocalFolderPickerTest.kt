@@ -28,6 +28,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.rule.ActivityTestRule
 import com.owncloud.android.R
+import com.owncloud.android.testutil.annotation.FailsOnGithubAction
 import com.owncloud.android.ui.activity.LocalFolderPickerActivity
 import org.junit.Assert.assertTrue
 import org.junit.Ignore
@@ -43,6 +44,7 @@ class OCSettingsLocalFolderPickerTest {
     private val errorMessage = "Activity not finished"
 
     @Test
+    @FailsOnGithubAction
     fun localFolderPickerView() {
         onView(withId(R.id.folder_picker_btn_cancel)).check(matches(isDisplayed()))
         onView(withId(R.id.folder_picker_btn_choose)).check(matches(isDisplayed()))
@@ -66,6 +68,7 @@ class OCSettingsLocalFolderPickerTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun homeButtonBrowsesToHome() {
         onView(withId(R.id.folder_picker_btn_home)).perform(click())
         val path = Environment.getExternalStoragePublicDirectory(
