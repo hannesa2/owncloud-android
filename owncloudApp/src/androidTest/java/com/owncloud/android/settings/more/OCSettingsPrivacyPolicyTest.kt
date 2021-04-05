@@ -29,6 +29,7 @@ import androidx.test.espresso.web.webdriver.DriverAtoms.getText
 import androidx.test.espresso.web.webdriver.Locator
 import androidx.test.rule.ActivityTestRule
 import com.owncloud.android.R
+import com.owncloud.android.testutil.annotation.FailsOnGithubAction
 import com.owncloud.android.ui.activity.PrivacyPolicyActivity
 import org.hamcrest.Matchers.containsString
 import org.junit.After
@@ -55,11 +56,13 @@ class OCSettingsPrivacyPolicyTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun checkTitle() {
         onView(withText(R.string.actionbar_privacy_policy)).check(matches(isDisplayed()))
     }
 
     @Test
+    @FailsOnGithubAction
     fun privacyPolicyLoaded() {
         onWebView().withElement(findElement(Locator.ID, introductionID))
             .check(webMatches(getText(), containsString(introductionText)))
