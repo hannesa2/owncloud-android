@@ -39,6 +39,7 @@ import androidx.test.rule.ActivityTestRule
 import com.owncloud.android.R
 import com.owncloud.android.ui.activity.LocalFolderPickerActivity
 import com.owncloud.android.ui.activity.Preferences
+import com.owncloud.android.testutil.annotation.FailsOnGithubAction
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -144,6 +145,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun disablePictureUploadsAccept() {
         enableCameraPictureUploads()
         onView(withText(R.string.prefs_camera_picture_upload)).perform(click())
@@ -166,6 +168,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun disableVideoUploadsAccept() {
         enableCameraVideoUploads()
         onView(withText(R.string.prefs_camera_video_upload)).perform(click())
@@ -177,6 +180,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun disableVideoUploadsRefuse() {
         enableCameraVideoUploads()
         onView(withText(R.string.prefs_camera_video_upload)).perform(click())
@@ -188,6 +192,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun cameraFolderView() {
         enableCameraPictureUploads()
         //Asserts
@@ -203,6 +208,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun cameraOpenPicker() {
         enableCameraPictureUploads()
         val cameraFolder = Environment.getExternalStoragePublicDirectory(
