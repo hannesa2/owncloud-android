@@ -39,6 +39,7 @@ import androidx.test.rule.ActivityTestRule
 import com.owncloud.android.R
 import com.owncloud.android.ui.activity.LocalFolderPickerActivity
 import com.owncloud.android.ui.activity.Preferences
+import com.owncloud.android.testutil.annotation.FailsOnGithubAction
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -84,6 +85,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun checkTitle() {
         //Asserts
         onView(withText(R.string.actionbar_settings)).check(matches(isDisplayed()))
@@ -124,6 +126,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun enablePictureUploads() {
         onView(withText(R.string.prefs_camera_picture_upload)).perform(click())
         onView(withText(android.R.string.ok)).perform(click())
@@ -134,6 +137,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun enableVideoUploads() {
         onView(withText(R.string.prefs_camera_video_upload)).perform(click())
         onView(withText(android.R.string.ok)).perform(click())
@@ -144,6 +148,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun disablePictureUploadsAccept() {
         enableCameraPictureUploads()
         onView(withText(R.string.prefs_camera_picture_upload)).perform(click())
@@ -155,6 +160,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun disablePictureUploadsRefuse() {
         enableCameraPictureUploads()
         onView(withText(R.string.prefs_camera_picture_upload)).perform(click())
@@ -166,6 +172,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun disableVideoUploadsAccept() {
         enableCameraVideoUploads()
         onView(withText(R.string.prefs_camera_video_upload)).perform(click())
@@ -177,6 +184,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun disableVideoUploadsRefuse() {
         enableCameraVideoUploads()
         onView(withText(R.string.prefs_camera_video_upload)).perform(click())
@@ -188,6 +196,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun cameraFolderView() {
         enableCameraPictureUploads()
         //Asserts
@@ -203,6 +212,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun cameraOpenPicker() {
         enableCameraPictureUploads()
         val cameraFolder = Environment.getExternalStoragePublicDirectory(
@@ -226,6 +236,7 @@ class OCSettingsCameraUploadsTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun switchOriginalFileWillBe() {
         enableCameraPictureUploads()
         onData(PreferenceMatchers.withTitle(R.string.prefs_camera_upload_behaviour_title)).perform(click())
