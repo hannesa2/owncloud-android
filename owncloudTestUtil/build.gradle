@@ -15,6 +15,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
 }
 
 dependencies {
@@ -22,5 +27,5 @@ dependencies {
     implementation project(':owncloud-android-library:owncloudComLibrary')
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
-    implementation "androidx.lifecycle:lifecycle-livedata:$lifecycleLiveData"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleLiveData"
 }
