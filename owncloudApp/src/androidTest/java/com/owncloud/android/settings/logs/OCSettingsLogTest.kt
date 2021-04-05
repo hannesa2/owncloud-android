@@ -29,6 +29,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import com.owncloud.android.R
+import com.owncloud.android.testutil.annotation.FailsOnGithubAction
 import com.owncloud.android.ui.activity.LogHistoryActivity
 import org.hamcrest.Matchers.allOf
 import org.junit.Rule
@@ -41,6 +42,7 @@ class OCSettingsLogTest {
     val activityRule = ActivityTestRule(LogHistoryActivity::class.java, true, true)
 
     @Test
+    @FailsOnGithubAction
     fun itemsToolbar() {
         onView(
             allOf(withId(R.id.search_button), isDescendantOfA(withId(R.id.standard_toolbar)))
@@ -53,6 +55,7 @@ class OCSettingsLogTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun itemsLogLevel() {
         openActionBarOverflowOrOptionsMenu(InstrumentationRegistry.getInstrumentation().targetContext)
         //Values not i18n
