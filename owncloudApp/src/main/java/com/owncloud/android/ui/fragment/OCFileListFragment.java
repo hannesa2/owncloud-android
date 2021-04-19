@@ -29,7 +29,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
@@ -88,8 +87,6 @@ import com.owncloud.android.ui.preview.PreviewVideoFragment;
 import com.owncloud.android.utils.FileStorageUtils;
 import com.owncloud.android.utils.PreferenceUtils;
 import info.hannes.cvscanner.CVScanner;
-import info.hannes.liveedgedetection.ScanConstants;
-import info.hannes.liveedgedetection.activity.ScanActivity;
 import org.jetbrains.annotations.NotNull;
 import timber.log.Timber;
 
@@ -429,11 +426,12 @@ public class OCFileListFragment extends ExtendedListFragment implements
     }
 
     private void openEdgeScanner() {
-        Intent intent = new Intent(getActivity(), ScanActivity.class);
-        intent.putExtra(ScanConstants.IMAGE_PATH,
-                requireActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString());
-        intent.putExtra(ScanConstants.TIME_HOLD_STILL, SCAN_HOLD_TINE);
-        getActivity().startActivityForResult(intent, FileDisplayActivity.REQUEST_CODE__UPLOAD_LIVEDGE_DOCUMENT);
+        moveToScannerDir();
+//        Intent intent = new Intent(getActivity(), ScanActivity.class);
+//        intent.putExtra(ScanConstants.IMAGE_PATH,
+//                getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString());
+//        intent.putExtra(ScanConstants.TIME_HOLD_STILL, SCAN_HOLD_TINE);
+//        getActivity().startActivityForResult(intent, FileDisplayActivity.REQUEST_CODE__UPLOAD_LIVEDGE_DOCUMENT);
     }
 
     /**
@@ -453,20 +451,14 @@ public class OCFileListFragment extends ExtendedListFragment implements
             return true;
         });
 
-        getFabScan().setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                showSnackMessage(R.string.scan_document);
-                return true;
-            }
+        getFabScan().setOnLongClickListener(v -> {
+            showSnackMessage(R.string.scan_document);
+            return true;
         });
 
-        getFabEdge().setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                showSnackMessage(R.string.scan_edge);
-                return true;
-            }
+        getFabEdge().setOnLongClickListener(v -> {
+            showSnackMessage(R.string.scan_edge);
+            return true;
         });
     }
 
@@ -893,6 +885,22 @@ public class OCFileListFragment extends ExtendedListFragment implements
             }, getResources().getInteger(R.integer.folder_animation_duration));
             getListView().startAnimation(fadeOutBack);
         }
+    }
+
+    private void moveToScannerDir() {
+        com.owncloud.android.db.PreferenceManager.CameraUploadsConfiguration cameraUploadsConfiguration = com.owncloud.android.db.PreferenceManager.
+                getCameraUploadsConfiguration(requireContext());
+
+        String folderName = cameraUploadsConfiguration.getScannerPathForPictures();
+
+        //if (FileUtils.isValidName(folderName)) {
+            OCFile file = new OCFile(folderName);
+//
+//            ((ComponentsGetter) requireActivity()).getFileOperationsHelper().createFolder(folderName, false);
+
+            listDirectoryWithAnimationDown(file);
+            mContainerActivity.onBrowsedDownTo(file);
+        //}
     }
 
     @Override
