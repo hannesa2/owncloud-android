@@ -44,7 +44,7 @@
         android:layout_centerInParent="true"
         />
 
-    <com.github.chrisbanes.photoview.PhotoView
+    <com.ortiz.touchview.TouchImageView
         android:id="@+id/photo_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
