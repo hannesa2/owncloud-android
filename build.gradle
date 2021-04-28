@@ -1,10 +1,8 @@
-import org.gradle.internal.jvm.Jvm
-
 buildscript {
     ext {
         // SDK
         sdkCompileVersion = 29
-        sdkMinVersion = 24
+        sdkMinVersion = 21
         sdkTargetVersion = 29
 
         // Android jetpack
@@ -65,7 +63,7 @@ ext {
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         maven {
             url "https://jitpack.io"
         }
