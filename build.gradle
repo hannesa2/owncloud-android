@@ -1,3 +1,5 @@
+import org.gradle.internal.jvm.Jvm
+
 buildscript {
     ext {
         // SDK
@@ -26,6 +28,8 @@ plugins {
     alias libs.plugins.detekt
     alias libs.plugins.cyclonedx
 }
+
+println "Gradle uses Java ${Jvm.current()}"
 
 allprojects {
     repositories {
