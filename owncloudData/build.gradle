@@ -54,8 +54,8 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
 
     // Room
-    implementation "androidx.room:room-runtime:$roomVersion"
-    kapt "androidx.room:room-compiler:$roomVersion"
+    implementation "androidx.room:room-runtime:2.2.6"
+    kapt "androidx.room:room-compiler:2.2.6"
 
     // Dependencies for unit tests
     testImplementation project(':owncloudTestUtil')
@@ -69,7 +69,7 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:$espressoTestVersion"
     androidTestImplementation "androidx.test.ext:junit:$extJunitVersion"
     androidTestImplementation "androidx.arch.core:core-testing:$archLifecycleVersion"
-    androidTestImplementation "android.arch.persistence.room:testing:$roomVersion"
+    androidTestImplementation "android.arch.persistence.room:testing:2.2.6"
     androidTestImplementation ("io.mockk:mockk-android:$mockkVersion") {
         exclude module: 'objenesis'
     }

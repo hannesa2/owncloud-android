@@ -53,7 +53,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$archLifecycleVersion"
     kapt "androidx.lifecycle:lifecycle-common-java8:$archLifecycleVersion"
 
-    implementation "androidx.room:room-runtime:$roomVersion"
+    implementation "androidx.room:room-runtime:2.2.6"
 
     // Koin dependency injector
     implementation "org.koin:koin-core:$koinVersion"
