@@ -1,3 +1,5 @@
+import org.gradle.internal.jvm.Jvm
+
 buildscript {
     ext {
         // SDK
@@ -58,6 +60,8 @@ buildscript {
 plugins {
     id "org.sonarqube" version "3.4.0.2513"
 }
+
+println "Gradle uses Java ${Jvm.current()}"
 
 allprojects {
     repositories {
