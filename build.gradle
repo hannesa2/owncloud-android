@@ -1,3 +1,5 @@
+import org.gradle.internal.jvm.Jvm
+
 buildscript {
     ext {
         // SDK
@@ -55,6 +57,8 @@ buildscript {
 plugins {
     id "org.sonarqube" version "3.3"
 }
+
+println "Gradle uses Java ${Jvm.current()}"
 
 ext {
     androidX = '1.0.0'
