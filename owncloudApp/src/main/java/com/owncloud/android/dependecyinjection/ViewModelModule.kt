@@ -32,7 +32,6 @@ import com.owncloud.android.presentation.viewmodels.settings.SettingsSecurityVie
 import com.owncloud.android.presentation.viewmodels.settings.SettingsVideoUploadsViewModel
 import com.owncloud.android.presentation.viewmodels.settings.SettingsViewModel
 import com.owncloud.android.presentation.viewmodels.sharing.OCShareViewModel
-import org.koin.android.ext.koin.androidApplication
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 

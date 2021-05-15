@@ -53,7 +53,15 @@ import com.owncloud.android.ui.dialog.ConfirmationDialogFragment
 import com.owncloud.android.ui.dialog.RemoveFilesDialogFragment
 import com.owncloud.android.ui.fragment.FileFragment
 import com.owncloud.android.utils.PreferenceUtils
+import info.hannes.liveedgedetection.utils.createPdf
+import info.hannes.liveedgedetection.utils.decodeBitmapFromFile
+import info.hannes.liveedgedetection.utils.rotate
+import info.hannes.liveedgedetection.utils.store
+import info.hannes.liveedgedetection.utils.viewPdf
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
 
@@ -101,13 +109,13 @@ class PreviewImageFragment : FileFragment() {
     /**
      * {@inheritDoc}
      */
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         super.onCreateView(inflater, container, savedInstanceState)
         // Inflate the layout for this fragment
         _binding = PreviewImageFragmentBinding.inflate(inflater, container, false)
         _bindingTopProgress = TopProgressBarBinding.bind(binding.root)
         return binding.root.apply {
-            // Allow or disallow touches with other visible windows
+            // Allow or disalloviewPdfw touches with other visible windows
             filterTouchesWhenObscured = PreferenceUtils.shouldDisallowTouchesWithOtherVisibleWindows(context)
         }
     }
@@ -291,7 +299,7 @@ class PreviewImageFragment : FileFragment() {
                     }
                     // executed on main thread
                     Timber.d("set rotate bitmap ${Thread.currentThread().name} bitmapRotate=$bitmapRotate")
-                    photo_view.setImageBitmap(bitmapRotate)
+                    binding.photoView.setImageBitmap(bitmapRotate)
                 }
                 true
             }

@@ -81,7 +81,7 @@ class SettingsPictureUploadsViewModelTest : ViewModelTest() {
 
     @Test
     fun `is picture upload enabled - ok - false`() {
-        every { preferencesProvider.getBoolean(any(), any())} returns false
+        every { preferencesProvider.getBoolean(any(), any()) } returns false
 
         val pictureUploadEnabled = picturesViewModel.isPictureUploadEnabled()
 

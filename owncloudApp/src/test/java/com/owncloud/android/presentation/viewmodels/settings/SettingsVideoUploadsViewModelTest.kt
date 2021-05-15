@@ -81,7 +81,7 @@ class SettingsVideoUploadsViewModelTest : ViewModelTest() {
 
     @Test
     fun `is video upload enabled - ok - false`() {
-        every { preferencesProvider.getBoolean(any(), any())} returns false
+        every { preferencesProvider.getBoolean(any(), any()) } returns false
 
         val videoUploadEnabled = videosViewModel.isVideoUploadEnabled()
 

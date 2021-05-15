@@ -475,10 +475,12 @@ class PublicShareCreationDialogFragmentTest {
             it.startFragment(publicShareDialogFragment)
         }
 
-        capabilitiesLiveData.postValue(Event(
-            UIResult.Success(
-                capabilities
-            ))
+        capabilitiesLiveData.postValue(
+            Event(
+                UIResult.Success(
+                    capabilities
+                )
+            )
         )
     }
 }
