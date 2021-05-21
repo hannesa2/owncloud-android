@@ -4,7 +4,7 @@ buildscript {
     ext {
         // SDK
         sdkCompileVersion = 31
-        sdkMinVersion = 21
+        sdkMinVersion = 24
         sdkTargetVersion = 31
 
         // Android jetpack
