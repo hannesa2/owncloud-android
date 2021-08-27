@@ -881,12 +881,8 @@ public class FileUploader extends Service
                             uploadResult = new RemoteOperationResult(
                                     ResultCode.NO_NETWORK_CONNECTION);
                         } else {
-                            String stringToLog = String.format(
-                                    "Exception in upload, network is OK, no retry scheduled for %1s in %2s",
-                                    mCurrentUpload.getRemotePath(),
-                                    mCurrentAccount.name
-                            );
-                            Timber.v(stringToLog);
+                            Timber.v("Exception in upload, network is OK, no retry scheduled for " + mCurrentUpload.getRemotePath() +
+                                    " in " + mCurrentAccount.name);
                         }
                     } else if (uploadResult.getCode() == ResultCode.DELAYED_FOR_WIFI) {
                         // if failed due to the upload is delayed for wifi, schedule automatic retry as well
@@ -898,12 +894,7 @@ public class FileUploader extends Service
                         );
                     }
                 } else {
-                    String stringToLog = String.format(
-                            "Success OR fail without exception for %1s in %2s",
-                            mCurrentUpload.getRemotePath(),
-                            mCurrentAccount.name
-                    );
-                    Timber.v(stringToLog);
+                    Timber.v("Success OR fail without exception for " + mCurrentUpload.getRemotePath() + " in " + mCurrentAccount.name);
                 }
 
                 if (uploadResult != null) {
