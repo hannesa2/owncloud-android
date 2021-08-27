@@ -143,6 +143,7 @@ android {
     }
 
     lintOptions {
+        disable 'UsingOnClickInXml'
         abortOnError true
         ignoreWarnings false
 
