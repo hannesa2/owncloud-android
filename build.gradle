@@ -3,9 +3,9 @@ import org.gradle.internal.jvm.Jvm
 buildscript {
     ext {
         // SDK
-        sdkCompileVersion = 30
+        sdkCompileVersion = 29
         sdkMinVersion = 24
-        sdkTargetVersion = 30
+        sdkTargetVersion = 29
 
         // Android jetpack
         archLifecycleVersion = "2.1.0"
@@ -20,7 +20,7 @@ buildscript {
         coroutinesVersion = "1.5.1"
 
         // Koin
-        koinVersion = '2.1.6'
+        koinVersion = '2.2.3'
 
         // Testing
         mockkVersion = '1.12.0'
@@ -48,7 +48,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.2.2'
+        classpath 'com.android.tools.build:gradle:7.0.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
         classpath 'com.google.gms:google-services:4.3.10'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:2.7.1'
