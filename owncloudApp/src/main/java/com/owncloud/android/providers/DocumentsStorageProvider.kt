@@ -32,6 +32,7 @@ import android.graphics.Point
 import android.net.Uri
 import android.os.CancellationSignal
 import android.os.Handler
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.preference.PreferenceManager
 import android.provider.DocumentsContract
@@ -124,7 +125,7 @@ class DocumentsStorageProvider : DocumentsProvider() {
 
         if (!isWrite) return ParcelFileDescriptor.open(fileToOpen, accessMode)
 
-        val handler = Handler(MainApp.appContext.mainLooper)
+        val handler = Handler(Looper.getMainLooper())
         // Attach a close listener if the document is opened in write mode.
         try {
             return ParcelFileDescriptor.open(fileToOpen, accessMode, handler) {

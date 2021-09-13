@@ -967,13 +967,11 @@ class FileDisplayActivity : FileActivity(), FileFragment.ContainerActivity, OnEn
          * [BroadcastReceiver] to enable upload feedback in UI
          */
         override fun onReceive(context: Context, intent: Intent) {
-            val uploadedRemotePath = intent.getStringExtra(Extras.EXTRA_REMOTE_PATH)
+            val uploadedRemotePath = intent.getStringExtra(Extras.EXTRA_REMOTE_PATH)!!
             val accountName = intent.getStringExtra(Extras.EXTRA_ACCOUNT_NAME)
             val sameAccount = account != null && accountName == account.name
             val currentDir = currentDir
-            val isDescendant = currentDir != null &&
-                    uploadedRemotePath != null &&
-                    uploadedRemotePath.startsWith(currentDir.remotePath)
+            val isDescendant = currentDir != null && uploadedRemotePath.startsWith(currentDir.remotePath)
             val renamedInUpload = file.remotePath == intent.getStringExtra(Extras.EXTRA_OLD_REMOTE_PATH)
             val sameFile = renamedInUpload || file.remotePath == uploadedRemotePath
             val success = intent.getBooleanExtra(Extras.EXTRA_UPLOAD_RESULT, false)
@@ -1050,7 +1048,7 @@ class FileDisplayActivity : FileActivity(), FileFragment.ContainerActivity, OnEn
 
         override fun onReceive(context: Context, intent: Intent) {
             val sameAccount = isSameAccount(intent)
-            val downloadedRemotePath = intent.getStringExtra(Extras.EXTRA_REMOTE_PATH)
+            val downloadedRemotePath = intent.getStringExtra(Extras.EXTRA_REMOTE_PATH)!!
             val isDescendant = isDescendant(downloadedRemotePath)
 
             if (sameAccount && isDescendant) {
@@ -1194,7 +1192,7 @@ class FileDisplayActivity : FileActivity(), FileFragment.ContainerActivity, OnEn
         }
     }
 
-    override fun newTransferenceServiceConnection(): ServiceConnection? {
+    override fun newTransferenceServiceConnection(): ServiceConnection {
         return ListServiceConnection()
     }
 
