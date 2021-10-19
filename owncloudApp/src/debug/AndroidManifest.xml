@@ -19,8 +19,8 @@
     package="com.owncloud.android">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <application tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name="com.owncloud.android.sharing.shares.ui.TestShareFileActivity"></activity>
+    <application tools:ignore="AllowBackup,GoogleAppIndexingWarning,MissingApplicationIcon">
+        <activity android:name="com.owncloud.android.sharing.shares.ui.TestShareFileActivity" />
     </application>
 
 </manifest>

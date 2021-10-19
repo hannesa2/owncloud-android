@@ -76,7 +76,8 @@
         <activity android:name=".presentation.ui.migration.StorageMigrationActivity" />
         <activity
             android:name=".ui.activity.SplashActivity"
-            android:theme="@style/Theme.ownCloud.Splash">
+            android:theme="@style/Theme.ownCloud.Splash"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -95,7 +96,8 @@
             android:name=".ui.activity.ReceiveExternalFilesActivity"
             android:excludeFromRecents="true"
             android:configChanges="orientation|screenSize"
-            android:taskAffinity="">
+            android:taskAffinity=""
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
 
@@ -117,7 +119,7 @@
 
         <service
             android:name=".authentication.AccountAuthenticatorService"
-            android:exported="true">
+            android:exported="false">
             <intent-filter android:priority="100">
                 <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
@@ -128,7 +130,7 @@
         </service>
         <service
             android:name=".syncadapter.FileSyncService"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.content.SyncAdapter" />
             </intent-filter>
@@ -153,7 +155,7 @@
             android:name=".providers.FileContentProvider"
             android:authorities="@string/authority"
             android:enabled="true"
-            android:exported="true"
+            android:exported="false"
             android:label="@string/sync_string_files"
             android:syncable="true" />
         <provider
@@ -216,7 +218,8 @@
             android:label="@string/share_dialog_title"
             android:launchMode="singleTop"
             android:theme="@style/Theme.ownCloud"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
