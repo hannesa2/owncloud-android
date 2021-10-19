@@ -31,7 +31,7 @@ dependencies {
     implementation 'com.andrognito.patternlockview:patternlockview:1.0.0'
     implementation "androidx.appcompat:appcompat:$appCompat"
     implementation 'com.getbase:floatingactionbutton:1.10.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
     implementation "androidx.browser:browser:1.3.0"
     implementation 'commons-io:commons-io:2.11.0'
     implementation "androidx.sqlite:sqlite-ktx:$sqliteVersion"
@@ -73,7 +73,7 @@ dependencies {
     // Preferences
     implementation 'androidx.preference:preference-ktx:1.1.1'
 
-    implementation 'com.github.hannesa2:CVScanner:1.5'
+    implementation 'com.github.hannesa2:CVScanner:1.6'
     implementation 'com.github.hannesa2:LiveEdgeDetection:1.8.11'
 
     // Tests
