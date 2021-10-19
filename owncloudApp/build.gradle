@@ -75,7 +75,7 @@ dependencies {
     // MDM feedback
     implementation 'androidx.enterprise:enterprise-feedback:1.1.0'
 
-    implementation 'com.github.hannesa2:CVScanner:1.5'
+    implementation 'com.github.hannesa2:CVScanner:1.6'
     implementation 'com.github.hannesa2:LiveEdgeDetection:1.8.11'
 
     // Tests
