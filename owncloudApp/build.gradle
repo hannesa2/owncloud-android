@@ -71,8 +71,8 @@ dependencies {
     // Preferences
     implementation 'androidx.preference:preference-ktx:1.2.0'
 
-    implementation 'com.github.hannesa2:CVScanner:1.6'
-    implementation 'com.github.hannesa2:LiveEdgeDetection:1.8.14'
+    implementation 'com.github.hannesa2:CVScanner:1.7'
+    implementation 'com.github.hannesa2:LiveEdgeDetection:1.8.15'
 
     // Tests
     testImplementation project(':owncloudTestUtil')
