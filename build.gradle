@@ -3,7 +3,7 @@ import org.gradle.internal.jvm.Jvm
 buildscript {
     ext {
         // SDK
-        sdkCompileVersion = 29
+        sdkCompileVersion = 30
         sdkMinVersion = 24
         sdkTargetVersion = 29
 
