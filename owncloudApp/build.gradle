@@ -31,7 +31,7 @@ dependencies {
     implementation 'com.github.aritraroy.PatternLockView:patternlockview:a90b0d4bf0'
     implementation "androidx.appcompat:appcompat:$appCompat"
     implementation 'com.getbase:floatingactionbutton:1.10.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
     implementation "androidx.sqlite:sqlite-ktx:$sqliteVersion"
     implementation "androidx.biometric:biometric:$biometricVersion"
     implementation 'com.github.journeyapps:zxing-android-embedded:4.1.0'
@@ -50,7 +50,7 @@ dependencies {
 
     implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$archLifecycleVersion"
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.3.1"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.4.0"
     kapt "androidx.lifecycle:lifecycle-common-java8:$archLifecycleVersion"
 
     kapt "org.xerial:sqlite-jdbc:3.36.0.3" // fix kapt for Apple Silicon https://stackoverflow.com/a/68285501/1079990
@@ -61,7 +61,7 @@ dependencies {
     implementation "io.insert-koin:koin-androidx-viewmodel:$koinVersion"
 
     // WorkManager
-    implementation "androidx.work:work-runtime-ktx:2.5.0"
+    implementation "androidx.work:work-runtime-ktx:2.7.1"
 
     // KTX extensions, see https://developer.android.com/kotlin/ktx.html
     implementation "androidx.core:core-ktx:$ktxCoreVersion"
@@ -100,9 +100,8 @@ dependencies {
         exclude module: 'objenesis'
     }
     androidTestImplementation 'com.github.tmurakami:dexopener:2.0.5'
-    androidTestImplementation 'androidx.test:runner:1.3.0'
-    debugImplementation "androidx.fragment:fragment-testing:1.3.6"
-
+    androidTestImplementation 'androidx.test:runner:1.4.0'
+    debugImplementation "androidx.fragment:fragment-testing:1.4.0"
 }
 
 android {
