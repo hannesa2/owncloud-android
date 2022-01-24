@@ -6,7 +6,6 @@ import android.accounts.OperationCanceledException;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Handler;
 import android.util.Base64;
 
 import com.google.android.exoplayer2.MediaItem;
@@ -16,7 +15,7 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.datamodel.OCFile;
@@ -36,21 +35,18 @@ import java.util.Map;
  */
 public class PrepareVideoPlayerAsyncTask extends AsyncTask<Object, Void, MediaSource> {
 
-    private Context mContext;
+    private final Context mContext;
     private final WeakReference<OnPrepareVideoPlayerTaskListener> mListener;
-    private OCFile mFile;
-    private Account mAccount;
-    private Handler mHandler;
+    private final OCFile mFile;
+    private final Account mAccount;
 
     private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
 
-    public PrepareVideoPlayerAsyncTask(Context context, OnPrepareVideoPlayerTaskListener listener,
-                                       OCFile file, Account account, Handler mainHandler) {
+    public PrepareVideoPlayerAsyncTask(Context context, OnPrepareVideoPlayerTaskListener listener, OCFile file, Account account) {
         mContext = context;
         mListener = new WeakReference<>(listener);
         mFile = file;
         mAccount = account;
-        mHandler = mainHandler;
     }
 
     @Override
@@ -112,18 +108,17 @@ public class PrepareVideoPlayerAsyncTask extends AsyncTask<Object, Void, MediaSo
 
         if (file.isDown()) {
 
-            return new DefaultHttpDataSourceFactory(MainApp.Companion.getUserAgent(), bandwidthMeter);
+            return new DefaultHttpDataSource.Factory();
 
         } else {
 
             try {
-                OwnCloudCredentials credentials = AccountUtils.
-                        getCredentialsForAccount(MainApp.Companion.getAppContext(), account);
+                OwnCloudCredentials credentials = AccountUtils.getCredentialsForAccount(MainApp.Companion.getAppContext(), account);
 
                 String login = credentials.getUsername();
                 String password = credentials.getAuthToken();
 
-                Map<String, String> params = new HashMap<String, String>(1);
+                Map<String, String> params = new HashMap<>(1);
 
                 if (credentials instanceof OwnCloudBasicCredentials) { // Basic auth
                     String cred = login + ":" + password;
