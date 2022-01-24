@@ -1,5 +1,5 @@
 [submodule "owncloud-android-library"]
 	path = owncloud-android-library
-	url = https://github.com/owncloud/android-library.git
+	url = git@github.com:hannesa2/android-library.git
 	branch = master
 	
