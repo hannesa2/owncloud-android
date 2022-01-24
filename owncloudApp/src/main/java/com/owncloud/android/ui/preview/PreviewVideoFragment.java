@@ -428,7 +428,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
 
         // Prepare video player asynchronously
         new PrepareVideoPlayerAsyncTask(getActivity(), this,
-                getFile(), mAccount, mainHandler).execute();
+                getFile(), mAccount).execute();
     }
 
     /**
