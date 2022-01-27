@@ -26,7 +26,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -35,6 +34,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -48,6 +48,8 @@ import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
+import com.google.android.gms.cast.framework.CastButtonFactory;
+import com.google.android.gms.cast.framework.CastContext;
 import com.owncloud.android.R;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
@@ -99,6 +101,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     private long mPlaybackPosition;
 
     private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
+    private CastContext castContext;
 
     /**
      * Public factory method to create new PreviewVideoFragment instances.
@@ -179,6 +182,14 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        // Getting the cast context later than onStart can cause device discovery not to take place.
+        try {
+            castContext = CastContext.getSharedInstance(requireContext());
+        } catch (RuntimeException e) {
+            Toast.makeText(requireContext(), "Error during cast init " + e.getClass().getSimpleName(), Toast.LENGTH_LONG).show();
+            Timber.e(e);
+        }
 
         OCFile file;
         if (savedInstanceState == null) {
@@ -309,7 +320,8 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.file_actions_menu, menu);
+        inflater.inflate(R.menu.video_actions_menu, menu);
+        CastButtonFactory.setUpMediaRouteButton(requireContext(), menu, R.id.action_cast);
     }
 
     /**
