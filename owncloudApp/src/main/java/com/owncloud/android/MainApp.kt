@@ -159,8 +159,8 @@ class MainApp : Application() {
         initDependencyInjection()
     }
 
-    fun startLogsIfEnabled() {
-        enabledLogging = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+    private fun startLogsIfEnabled() {
+        enabledLogging = BuildConfig.DEBUG || PreferenceManager.getDefaultSharedPreferences(applicationContext)
             .getBoolean(SettingsLogsFragment.PREFERENCE_ENABLE_LOGGING, false)
 
         if (enabledLogging) {
