@@ -75,7 +75,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 true
             }
         } else {
-            settingsScreen?.removePreferenceFromScreen(prefPrivacyPolicy)
+            prefPrivacyPolicy?.let { settingsScreen?.removePreferenceFromScreen(it) }
         }
 
         subsectionWhatsNew?.setOnPreferenceClickListener {
