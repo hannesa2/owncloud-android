@@ -64,7 +64,9 @@ class SettingsMoreFragment : PreferenceFragmentCompat() {
                 true
             }
         } else {
-            moreScreen?.removePreferenceFromScreen(prefHelp)
+            prefHelp?.let {
+                moreScreen?.removePreferenceFromScreen(it)
+            }
         }
 
         // Sync contacts, calendars and tasks
@@ -75,7 +77,9 @@ class SettingsMoreFragment : PreferenceFragmentCompat() {
                 true
             }
         } else {
-            moreScreen?.removePreferenceFromScreen(prefSync)
+            prefSync?.let {
+                moreScreen?.removePreferenceFromScreen(it)
+            }
         }
 
         // Access document provider
@@ -103,7 +107,9 @@ class SettingsMoreFragment : PreferenceFragmentCompat() {
                 true
             }
         } else {
-            moreScreen?.removePreferenceFromScreen(prefRecommend)
+            prefRecommend?.let {
+                moreScreen?.removePreferenceFromScreen(it)
+            }
         }
 
         // Feedback
@@ -113,7 +119,9 @@ class SettingsMoreFragment : PreferenceFragmentCompat() {
                 true
             }
         } else {
-            moreScreen?.removePreferenceFromScreen(prefFeedback)
+            prefFeedback?.let {
+                moreScreen?.removePreferenceFromScreen(it)
+            }
         }
 
         // Imprint
@@ -124,7 +132,9 @@ class SettingsMoreFragment : PreferenceFragmentCompat() {
                 true
             }
         } else {
-            moreScreen?.removePreferenceFromScreen(prefImprint)
+            prefImprint?.let {
+                moreScreen?.removePreferenceFromScreen(it)
+            }
         }
     }
 
