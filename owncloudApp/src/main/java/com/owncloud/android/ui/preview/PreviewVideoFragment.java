@@ -1,4 +1,4 @@
-/**
+/*
  * ownCloud Android client application
  *
  * @author David A. Velasco
@@ -22,9 +22,12 @@
 package com.owncloud.android.ui.preview;
 
 import android.accounts.Account;
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -32,32 +35,45 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.ui.PlayerView;
+import com.google.android.exoplayer2.ui.StyledPlayerView;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
+import com.google.android.exoplayer2.util.MimeTypes;
+import com.google.android.gms.cast.framework.CastButtonFactory;
+import com.google.android.gms.cast.framework.CastContext;
 import com.owncloud.android.R;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.files.FileMenuFilter;
+import com.owncloud.android.lib.common.SingleSessionManager;
+import com.owncloud.android.lib.common.http.HttpConstants;
 import com.owncloud.android.ui.activity.FileActivity;
 import com.owncloud.android.ui.activity.FileDisplayActivity;
 import com.owncloud.android.ui.controller.TransferProgressController;
 import com.owncloud.android.ui.dialog.ConfirmationDialogFragment;
 import com.owncloud.android.ui.dialog.RemoveFilesDialogFragment;
 import com.owncloud.android.ui.fragment.FileFragment;
+import com.owncloud.android.ui.preview.video.PlayerManager;
 import timber.log.Timber;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This fragment shows a preview of a downloaded video file, or starts streaming if file is not
@@ -67,10 +83,14 @@ import timber.log.Timber;
  * produce an {@link IllegalStateException}.
  */
 public class PreviewVideoFragment extends FileFragment implements View.OnClickListener,
-        ExoPlayer.EventListener, PrepareVideoPlayerAsyncTask.OnPrepareVideoPlayerTaskListener {
+        ExoPlayer.EventListener, PrepareVideoPlayerAsyncTask.OnPrepareVideoPlayerTaskListener, PlayerManager.Listener {
 
     public static final String EXTRA_FILE = "FILE";
     public static final String EXTRA_ACCOUNT = "ACCOUNT";
+    public static final String MIME_TYPE_DASH = MimeTypes.APPLICATION_MPD;
+    public static final String MIME_TYPE_HLS = MimeTypes.APPLICATION_M3U8;
+    public static final String MIME_TYPE_SS = MimeTypes.APPLICATION_SS;
+    public static final String MIME_TYPE_VIDEO_MP4 = MimeTypes.VIDEO_MP4;
 
     /**
      * Key to receive a flag signaling if the video should be started immediately
@@ -86,7 +106,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     private ProgressBar mProgressBar;
     private TransferProgressController mProgressController;
 
-    private PlayerView exoPlayerView;
+    private StyledPlayerView playerView;
 
     private SimpleExoPlayer player;
     private DefaultTrackSelector trackSelector;
@@ -98,6 +118,8 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     private long mPlaybackPosition;
 
     private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
+    private CastContext castContext;
+    private PlayerManager playerManager;
 
     /**
      * Public factory method to create new PreviewVideoFragment instances.
@@ -140,8 +162,6 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
         mAutoplay = true;
     }
 
-    // Fragment and activity lifecycle
-
     /**
      * {@inheritDoc}
      */
@@ -163,11 +183,29 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
         mProgressBar = view.findViewById(R.id.syncProgressBar);
         mProgressBar.setVisibility(View.GONE);
 
-        exoPlayerView = view.findViewById(R.id.video_player);
+        playerView = view.findViewById(R.id.player_view);
 
         fullScreenButton = view.findViewById(R.id.fullscreen_button);
 
         fullScreenButton.setOnClickListener(this);
+
+        //        playerView.getPlayer().addListener(new Player.Listener() {
+        //            @Override
+        //            public void onPlaybackStateChanged(@Player.State int state) {
+        //                // If player is already, show full screen button
+        //                if (state == ExoPlayer.STATE_READY) {
+        //                    fullScreenButton.setVisibility(View.VISIBLE);
+        //                    if (player != null && !mExoPlayerBooted) {
+        //                        mExoPlayerBooted = true;
+        //                        player.seekTo(mPlaybackPosition);
+        //                        player.setPlayWhenReady(mAutoplay);
+        //                    }
+        //
+        //                } else if (state == ExoPlayer.STATE_ENDED) {
+        //                    fullScreenButton.setVisibility(View.GONE);
+        //                }
+        //            }
+        //        });
 
         return view;
     }
@@ -178,6 +216,14 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        // Getting the cast context later than onStart can cause device discovery not to take place.
+        try {
+            castContext = CastContext.getSharedInstance(requireContext());
+        } catch (RuntimeException e) {
+            Toast.makeText(requireContext(), "Error during cast init " + e.getClass().getSimpleName(), Toast.LENGTH_LONG).show();
+            Timber.e(e);
+        }
 
         OCFile file;
         if (savedInstanceState == null) {
@@ -217,8 +263,17 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
 
         OCFile file = getFile();
 
+        if (castContext == null) {
+            // There is no Cast context to work with. Do nothing.
+            return;
+        }
+        playerManager = new PlayerManager(requireContext(), this, playerView, castContext);
+        //        mediaQueueList.setAdapter(mediaQueueListAdapter);
+
         if (file != null) {
             mProgressController.startListeningProgressFor(file, mAccount);
+            // Prepare video player asynchronously
+            new PrepareVideoPlayerAsyncTask(requireActivity(), this, getFile(), mAccount).execute();
         }
     }
 
@@ -226,14 +281,20 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     public void onResume() {
         super.onResume();
         Timber.v("onResume");
-
-        preparePlayer();
+        //        preparePlayer();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        releasePlayer();
+        //        releasePlayer();
+        if (castContext == null) {
+            return;
+        }
+        //        mediaQueueListAdapter.notifyItemRangeRemoved(0, mediaQueueListAdapter.getItemCount());
+        //        mediaQueueList.setAdapter(null);
+        playerManager.release();
+        playerManager = null;
     }
 
     /**
@@ -275,8 +336,8 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     private void startFullScreenVideo() {
 
         Intent i = new Intent(getActivity(), PreviewVideoActivity.class);
-        i.putExtra(EXTRA_AUTOPLAY, player.getPlayWhenReady());
-        i.putExtra(EXTRA_PLAY_POSITION, player.getCurrentPosition());
+        i.putExtra(EXTRA_AUTOPLAY, playerView.getPlayer().getPlayWhenReady());
+        i.putExtra(EXTRA_PLAY_POSITION, playerView.getPlayer().getCurrentPosition());
         i.putExtra(FileActivity.EXTRA_FILE, getFile());
 
         startActivityForResult(i, FileActivity.REQUEST_CODE__LAST_SHARED + 1);
@@ -300,20 +361,13 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
         mProgressController.hideProgressBar();
     }
 
-    // Menu options
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.file_actions_menu, menu);
+        inflater.inflate(R.menu.video_actions_menu, menu);
+        CastButtonFactory.setUpMediaRouteButton(requireContext(), menu, R.id.action_cast);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void onPrepareOptionsMenu(@NonNull Menu menu) {
         super.onPrepareOptionsMenu(menu);
@@ -338,6 +392,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     /**
      * {@inheritDoc}
      */
+    @SuppressLint("NonConstantResourceId")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -406,21 +461,45 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
         player.addListener(this);
 
         // Bind the player to the view.
-        exoPlayerView.setPlayer(player);
+        playerView.setPlayer(player);
 
         // Prepare video player asynchronously
         new PrepareVideoPlayerAsyncTask(requireActivity(), this, getFile(), mAccount).execute();
     }
 
+    public String getMimeType(Uri uri) {
+        String mimeType;
+        if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
+            ContentResolver cr = requireContext().getContentResolver();
+            mimeType = cr.getType(uri);
+        } else {
+            String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
+            mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.toLowerCase());
+        }
+        return mimeType;
+    }
+
     /**
      * Called after preparing the player asynchronously
      *
-     * @param mediaSource media to be played
+     * @param mediaItem media to be played
      */
     @Override
-    public void OnPrepareVideoPlayerTaskCallback(MediaSource mediaSource) {
+    public void OnPrepareVideoPlayerTaskCallback(MediaItem mediaItem) {
         Timber.v("playerPrepared");
-        player.prepare(mediaSource);
+
+        MediaItem mediaItemX = new MediaItem.Builder()
+                //                .setUri("https://www.mxtracks.info/owncloud/remote.php/dav/files/hannes/Filme/Doku/Alpha%20Centauri-071-Was%20ist%20Gleichzeitigkeit.mp4")
+                //                .setUri("https://storage.googleapis.com/wvmedia/clear/h264/tears/tears.mpd")
+                .setMimeType(MimeTypes.VIDEO_MP4)
+                .setUri(mediaItem.localConfiguration.uri)
+                .build();
+
+        Timber.d("mimeType:" + mediaItemX.localConfiguration.mimeType + " uri:" + mediaItemX.localConfiguration.uri);
+
+        playerManager.addItem(mediaItemX);
+        playerManager.selectLast();
+        //        player.prepare(mediaSource);
     }
 
     public void releasePlayer() {
@@ -441,9 +520,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
 
     @Override
     public void onPlayerError(@NonNull PlaybackException error) {
-
         Timber.e(error, "Error in video player");
-
         showAlertDialog(PreviewVideoErrorAdapter.handlePreviewVideoError((ExoPlaybackException) error, getContext()));
     }
 
@@ -476,21 +553,21 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
                 .show();
     }
 
-    @Override
-    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-        // If player is already, show full screen button
-        if (playbackState == ExoPlayer.STATE_READY) {
-            fullScreenButton.setVisibility(View.VISIBLE);
-            if (player != null && !mExoPlayerBooted) {
-                mExoPlayerBooted = true;
-                player.seekTo(mPlaybackPosition);
-                player.setPlayWhenReady(mAutoplay);
-            }
-
-        } else if (playbackState == ExoPlayer.STATE_ENDED) {
-            fullScreenButton.setVisibility(View.GONE);
-        }
-    }
+    //    @Override
+    //    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+    //        // If player is already, show full screen button
+    //        if (playbackState == ExoPlayer.STATE_READY) {
+    //            fullScreenButton.setVisibility(View.VISIBLE);
+    //            if (player != null && !mExoPlayerBooted) {
+    //                mExoPlayerBooted = true;
+    //                player.seekTo(mPlaybackPosition);
+    //                player.setPlayWhenReady(mAutoplay);
+    //            }
+    //
+    //        } else if (playbackState == ExoPlayer.STATE_ENDED) {
+    //            fullScreenButton.setVisibility(View.GONE);
+    //        }
+    //    }
 
     // File extra methods
     @Override
@@ -514,7 +591,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     public void onFileContentChanged() {
         // Reset the player with the updated file
         releasePlayer();
-        preparePlayer();
+        //        preparePlayer();
 
         if (player != null) {
             mPlaybackPosition = 0;
@@ -555,5 +632,26 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
      */
     public static boolean canBePreviewed(OCFile file) {
         return (file != null && file.isVideo());
+    }
+
+    @Override
+    public void onQueuePositionChanged(int previousIndex, int newIndex) {
+        //        if (previousIndex != C.INDEX_UNSET) {
+        //            mediaQueueListAdapter.notifyItemChanged(previousIndex);
+        //        }
+        //        if (newIndex != C.INDEX_UNSET) {
+        //            mediaQueueListAdapter.notifyItemChanged(newIndex);
+        //        }
+    }
+
+    @Override
+    public void onUnsupportedTrack(int trackType) {
+        if (trackType == C.TRACK_TYPE_AUDIO) {
+            Timber.e("$trackType %s", getString(R.string.error_unsupported_audio));
+            Toast.makeText(requireContext(), R.string.error_unsupported_audio, Toast.LENGTH_LONG).show();
+        } else if (trackType == C.TRACK_TYPE_VIDEO) {
+            Timber.e("$trackType %s", getString(R.string.error_unsupported_video));
+            Toast.makeText(requireContext(), R.string.error_unsupported_video, Toast.LENGTH_LONG).show();
+        }
     }
 }

@@ -28,6 +28,21 @@
         android:paddingTop="4dp"
         android:orientation="horizontal">
 
+        <!-- This are the custom buttons START-->
+
+        <ImageButton
+            android:id="@+id/fullscreen_button"
+            style="@style/ExoMediaButton"
+            android:src="@drawable/ic_fullscreen"
+            android:visibility="visible" />
+
+        <ImageButton
+            android:id="@+id/exit_fullscreen_button"
+            style="@style/ExoMediaButton"
+            android:src="@drawable/ic_fullscreen_exit"
+            android:visibility="gone" />
+        <!-- This are the custom buttons END-->
+
         <ImageButton
             android:id="@id/exo_prev"
             style="@style/ExoMediaButton.Previous" />
@@ -47,20 +62,6 @@
         <ImageButton
             android:id="@id/exo_ffwd"
             style="@style/ExoMediaButton.FastForward" />
-
-        <!-- This are the custom buttons-->
-
-        <ImageButton
-            android:id="@+id/fullscreen_button"
-            style="@style/ExoMediaButton"
-            android:src="@drawable/ic_fullscreen"
-            android:visibility="gone" />
-
-        <ImageButton
-            android:id="@+id/exit_fullscreen_button"
-            style="@style/ExoMediaButton"
-            android:src="@drawable/ic_fullscreen_exit"
-            android:visibility="gone" />
 
     </LinearLayout>
 
