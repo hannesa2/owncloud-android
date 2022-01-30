@@ -34,6 +34,7 @@
     <string name="drawer_item_uploads_list">Uploads</string>
     <string name="drawer_close">Close</string>
     <string name="drawer_open">Open</string>
+    <string name="cast">Cast</string>
     <string name="drawer_loading_quota">Loading quota</string>
     <string name="drawer_quota">%1$s of %2$s used (%3$s %%)</string>
     <string name="drawer_unavailable_free_storage">%1$s in use</string>
@@ -653,6 +654,9 @@
     <string name="scoped_storage_wizard_migration_in_progress">Migrating your files. Please don’t turn your device off.</string>
     <string name="scoped_storage_wizard_migration_in_progress_button">Working… Please wait</string>
     <string name="scoped_storage_wizard_title">More security for your files</string>
+
+    <string name="error_unsupported_video">Media includes video tracks, but none are playable by this device</string>
+    <string name="error_unsupported_audio">Media includes audio tracks, but none are playable by this device</string>
 
     <!-- Security Enforced -->
     <string name="security_enforced_title">Please, select an option to lock the app:</string>

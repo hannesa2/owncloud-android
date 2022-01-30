@@ -1,4 +1,4 @@
-/**
+/*
  * ownCloud Android client application
  *
  * @author David A. Velasco
@@ -40,7 +40,7 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-import com.google.android.exoplayer2.ui.PlayerView;
+import com.google.android.exoplayer2.ui.StyledPlayerView;
 import com.owncloud.android.R;
 import com.owncloud.android.ui.activity.FileActivity;
 import timber.log.Timber;
@@ -61,11 +61,10 @@ public class PreviewVideoActivity extends FileActivity implements ExoPlayer.Even
      */
     public static final String EXTRA_START_POSITION = "START_POSITION";
 
-    private PlayerView exoPlayerView;
-
     private boolean mExoPlayerBooted = false;
     private SimpleExoPlayer player;
     private DefaultTrackSelector trackSelector;
+    private StyledPlayerView playerView;
 
     private boolean mAutoplay; // when 'true', the playback starts immediately with the activity
     private long mPlaybackPosition; // continue the playback in the specified position
@@ -81,7 +80,7 @@ public class PreviewVideoActivity extends FileActivity implements ExoPlayer.Even
 
         setContentView(R.layout.video_preview);
 
-        exoPlayerView = findViewById(R.id.video_player);
+        playerView = findViewById(R.id.player_view);
 
         // Hide sync bar
         ProgressBar syncProgressBar = findViewById(R.id.syncProgressBar);
@@ -153,7 +152,7 @@ public class PreviewVideoActivity extends FileActivity implements ExoPlayer.Even
         trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
         player = new SimpleExoPlayer.Builder(this).setTrackSelector(trackSelector).setLoadControl(new DefaultLoadControl()).build();
         player.addListener(this);
-        exoPlayerView.setPlayer(player);
+        playerView.setPlayer(player);
         // Prepare video player asynchronously
         new PrepareVideoPlayerAsyncTask(getApplicationContext(), this, getFile(), getAccount()
         ).execute();

@@ -28,6 +28,8 @@ dependencies {
     implementation 'com.google.android.material:material:1.5.0'
     implementation 'com.jakewharton:disklrucache:2.0.2'
     implementation 'com.google.android.exoplayer:exoplayer:2.16.1'
+    implementation 'com.google.android.exoplayer:extension-cast:2.16.1'
+    implementation 'com.google.android.gms:play-services-cast-framework:21.0.1' // TODO a version of exoplayer > 2.16.1 is needed to remove this line
     implementation 'com.github.aritraroy.PatternLockView:patternlockview:a90b0d4bf0'
     implementation "androidx.appcompat:appcompat:$appCompat"
     implementation 'com.getbase:floatingactionbutton:1.10.1'
