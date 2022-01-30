@@ -98,7 +98,10 @@ class PrepareVideoPlayerAsyncTask(
                     val auth = "Bearer $bearerToken"
                     params["Authorization"] = auth
                 }
-                return CustomHttpDataSourceFactory(userAgent, bandwidthMeter, params)
+                return CustomHttpDataSourceFactory(
+                    userAgent,
+                    bandwidthMeter, params
+                )
             } catch (e: AuthenticatorException) {
                 Timber.e(e)
             } catch (e: IOException) {
