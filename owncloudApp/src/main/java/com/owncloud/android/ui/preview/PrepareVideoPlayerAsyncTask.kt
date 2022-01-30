@@ -8,16 +8,15 @@ import android.net.Uri
 import android.os.AsyncTask
 import android.util.Base64
 import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory
+import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.owncloud.android.MainApp.Companion.appContext
 import com.owncloud.android.MainApp.Companion.userAgent
 import com.owncloud.android.datamodel.OCFile
-import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter
 import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import timber.log.Timber
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.owncloud.android.lib.common.accounts.AccountUtils
@@ -33,11 +32,11 @@ import java.util.HashMap
 class PrepareVideoPlayerAsyncTask(
     private val context: Context,
     listener: OnPrepareVideoPlayerTaskListener, private val ocFile: OCFile, private val account: Account
-) : AsyncTask<Any, Void?, MediaSource>() {
+) : AsyncTask<Any, Void?, MediaItem>() {
     private val weakListener: WeakReference<OnPrepareVideoPlayerTaskListener> = WeakReference(listener)
 
-    override fun doInBackground(vararg params: Any): MediaSource? {
-        var mediaSource: MediaSource? = null
+    override fun doInBackground(vararg params: Any): MediaItem? {
+        var mediaItem: MediaItem? = null
         val uri: Uri
         try {
             // If the file is already downloaded, reproduce it locally, if not, do streaming
@@ -53,11 +52,11 @@ class PrepareVideoPlayerAsyncTask(
             val mediaDataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(context, bandwidthMeter, httpDataSourceFactory!!)
 
             // This represents the media to be played.
-            mediaSource = buildMediaSource(mediaDataSourceFactory, uri)
+            mediaItem = buildMediaItem(mediaDataSourceFactory, uri)
         } catch (e: AccountUtils.AccountNotFoundException) {
             Timber.e(e)
         }
-        return mediaSource
+        return mediaItem
     }
 
     /**
@@ -67,10 +66,10 @@ class PrepareVideoPlayerAsyncTask(
      * @param uri
      * @return media to be played
      */
-    private fun buildMediaSource(mediaDataSourceFactory: DataSource.Factory, uri: Uri): MediaSource {
+    private fun buildMediaItem(mediaDataSourceFactory: DataSource.Factory, uri: Uri): MediaItem {
         return ProgressiveMediaSource.Factory(mediaDataSourceFactory, DefaultExtractorsFactory()).createMediaSource(
             MediaItem.fromUri(uri)
-        )
+        ).mediaItem
     }
 
     /**
@@ -113,7 +112,7 @@ class PrepareVideoPlayerAsyncTask(
         return null
     }
 
-    override fun onPostExecute(mediaSource: MediaSource?) {
+    override fun onPostExecute(mediaSource: MediaItem?) {
         super.onPostExecute(mediaSource)
         if (mediaSource != null) {
             val listener = weakListener.get()
@@ -125,11 +124,11 @@ class PrepareVideoPlayerAsyncTask(
      * Interface to retrieve data from prepare video player task
      */
     interface OnPrepareVideoPlayerTaskListener {
-        fun OnPrepareVideoPlayerTaskCallback(mediaSource: MediaSource?)
+        fun OnPrepareVideoPlayerTaskCallback(mediaSource: MediaItem?)
     }
 
     companion object {
-        private val BANDWIDTH_METER = DefaultBandwidthMeter()
+        val BANDWIDTH_METER = DefaultBandwidthMeter()
     }
 
 }

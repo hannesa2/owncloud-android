@@ -33,6 +33,7 @@ import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.MediaSource;
@@ -164,9 +165,9 @@ public class PreviewVideoActivity extends FileActivity implements ExoPlayer.Even
      * @param mediaSource media to be played
      */
     @Override
-    public void OnPrepareVideoPlayerTaskCallback(MediaSource mediaSource) {
+    public void OnPrepareVideoPlayerTaskCallback(MediaItem mediaSource) {
         Timber.v("playerPrepared");
-        player.prepare(mediaSource);
+//        player.prepare(mediaSource);
     }
 
     private void releasePlayer() {

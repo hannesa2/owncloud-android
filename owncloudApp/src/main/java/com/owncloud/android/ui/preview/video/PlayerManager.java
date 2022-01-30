@@ -44,7 +44,7 @@ public class PlayerManager implements Player.Listener, SessionAvailabilityListen
     private final StyledPlayerView playerView;
     private final Player localPlayer;
     private final CastPlayer castPlayer;
-    private final ArrayList<MediaItem> mediaQueue;
+    private final ArrayList<MediaItem> mMediaItems;
     private final Listener listener;
 
     private TracksInfo lastSeenTrackGroupInfo;
@@ -64,7 +64,7 @@ public class PlayerManager implements Player.Listener, SessionAvailabilityListen
         this.context = context;
         this.listener = listener;
         this.playerView = playerView;
-        mediaQueue = new ArrayList<>();
+        mMediaItems = new ArrayList<>();
         currentItemIndex = C.INDEX_UNSET;
 
         localPlayer = new ExoPlayer.Builder(context).build();
@@ -79,24 +79,8 @@ public class PlayerManager implements Player.Listener, SessionAvailabilityListen
 
     // Queue manipulation methods.
 
-    /**
-     * Plays a specified queue item in the current player.
-     *
-     * @param itemIndex The index of the item to play.
-     */
-    public void selectQueueItem(int itemIndex) {
-        setCurrentItem(itemIndex);
-    }
-
     public void selectLast() {
-        setCurrentItem(mediaQueue.size() - 1);
-    }
-
-    /**
-     * Returns the index of the currently played item.
-     */
-    public int getCurrentItemIndex() {
-        return currentItemIndex;
+        setCurrentItem(mMediaItems.size() - 1);
     }
 
     /**
@@ -105,15 +89,8 @@ public class PlayerManager implements Player.Listener, SessionAvailabilityListen
      * @param item The {@link MediaItem} to append.
      */
     public void addItem(MediaItem item) {
-        mediaQueue.add(item);
+        mMediaItems.add(item);
         currentPlayer.addMediaItem(item);
-    }
-
-    /**
-     * Returns the size of the media queue.
-     */
-    public int getMediaQueueSize() {
-        return mediaQueue.size();
     }
 
     /**
@@ -123,7 +100,7 @@ public class PlayerManager implements Player.Listener, SessionAvailabilityListen
      * @return The item at the given index in the media queue.
      */
     public MediaItem getItem(int position) {
-        return mediaQueue.get(position);
+        return mMediaItems.get(position);
     }
 
     /**
@@ -133,13 +110,13 @@ public class PlayerManager implements Player.Listener, SessionAvailabilityListen
      * @return Whether the removal was successful.
      */
     public boolean removeItem(MediaItem item) {
-        int itemIndex = mediaQueue.indexOf(item);
+        int itemIndex = mMediaItems.indexOf(item);
         if (itemIndex == -1) {
             return false;
         }
         currentPlayer.removeMediaItem(itemIndex);
-        mediaQueue.remove(itemIndex);
-        if (itemIndex == currentItemIndex && itemIndex == mediaQueue.size()) {
+        mMediaItems.remove(itemIndex);
+        if (itemIndex == currentItemIndex && itemIndex == mMediaItems.size()) {
             maybeSetCurrentItemAndNotify(C.INDEX_UNSET);
         } else if (itemIndex < currentItemIndex) {
             maybeSetCurrentItemAndNotify(currentItemIndex - 1);
@@ -155,14 +132,14 @@ public class PlayerManager implements Player.Listener, SessionAvailabilityListen
      * @return Whether the item move was successful.
      */
     public boolean moveItem(MediaItem item, int newIndex) {
-        int fromIndex = mediaQueue.indexOf(item);
+        int fromIndex = mMediaItems.indexOf(item);
         if (fromIndex == -1) {
             return false;
         }
 
         // Player update.
         currentPlayer.moveMediaItem(fromIndex, newIndex);
-        mediaQueue.add(newIndex, mediaQueue.remove(fromIndex));
+        mMediaItems.add(newIndex, mMediaItems.remove(fromIndex));
 
         // Index update.
         if (fromIndex == currentItemIndex) {
@@ -191,7 +168,7 @@ public class PlayerManager implements Player.Listener, SessionAvailabilityListen
      */
     public void release() {
         currentItemIndex = C.INDEX_UNSET;
-        mediaQueue.clear();
+        mMediaItems.clear();
         castPlayer.setSessionAvailabilityListener(null);
         castPlayer.release();
         playerView.setPlayer(null);
@@ -207,14 +184,14 @@ public class PlayerManager implements Player.Listener, SessionAvailabilityListen
 
     @Override
     public void onPositionDiscontinuity(
-            Player.PositionInfo oldPosition,
-            Player.PositionInfo newPosition,
+            @NonNull Player.PositionInfo oldPosition,
+            @NonNull Player.PositionInfo newPosition,
             @DiscontinuityReason int reason) {
         updateCurrentItemIndex();
     }
 
     @Override
-    public void onTimelineChanged(Timeline timeline, @TimelineChangeReason int reason) {
+    public void onTimelineChanged(@NonNull Timeline timeline, @TimelineChangeReason int reason) {
         updateCurrentItemIndex();
     }
 
@@ -297,7 +274,7 @@ public class PlayerManager implements Player.Listener, SessionAvailabilityListen
         this.currentPlayer = currentPlayer;
 
         // Media queue management.
-        currentPlayer.setMediaItems(mediaQueue, currentItemIndex, playbackPositionMs);
+        currentPlayer.setMediaItems(mMediaItems, currentItemIndex, playbackPositionMs);
         currentPlayer.setPlayWhenReady(playWhenReady);
         currentPlayer.prepare();
     }
@@ -309,10 +286,10 @@ public class PlayerManager implements Player.Listener, SessionAvailabilityListen
      */
     private void setCurrentItem(int itemIndex) {
         maybeSetCurrentItemAndNotify(itemIndex);
-        if (currentPlayer.getCurrentTimeline().getWindowCount() != mediaQueue.size()) {
+        if (currentPlayer.getCurrentTimeline().getWindowCount() != mMediaItems.size()) {
             // This only happens with the cast player. The receiver app in the cast device clears the
             // timeline when the last item of the timeline has been played to end.
-            currentPlayer.setMediaItems(mediaQueue, itemIndex, C.TIME_UNSET);
+            currentPlayer.setMediaItems(mMediaItems, itemIndex, C.TIME_UNSET);
         } else {
             currentPlayer.seekTo(itemIndex, C.TIME_UNSET);
         }

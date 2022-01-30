@@ -24,8 +24,10 @@ package com.owncloud.android.ui.preview;
 import android.accounts.Account;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -33,6 +35,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -44,7 +47,6 @@ import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
-import com.google.android.exoplayer2.MediaMetadata;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.MediaSource;
@@ -155,8 +157,6 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
         mAutoplay = true;
     }
 
-    // Fragment and activity lifecycle
-
     /**
      * {@inheritDoc}
      */
@@ -183,6 +183,24 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
         fullScreenButton = view.findViewById(R.id.fullscreen_button);
 
         fullScreenButton.setOnClickListener(this);
+
+        //        playerView.getPlayer().addListener(new Player.Listener() {
+        //            @Override
+        //            public void onPlaybackStateChanged(@Player.State int state) {
+        //                // If player is already, show full screen button
+        //                if (state == ExoPlayer.STATE_READY) {
+        //                    fullScreenButton.setVisibility(View.VISIBLE);
+        //                    if (player != null && !mExoPlayerBooted) {
+        //                        mExoPlayerBooted = true;
+        //                        player.seekTo(mPlaybackPosition);
+        //                        player.setPlayWhenReady(mAutoplay);
+        //                    }
+        //
+        //                } else if (state == ExoPlayer.STATE_ENDED) {
+        //                    fullScreenButton.setVisibility(View.GONE);
+        //                }
+        //            }
+        //        });
 
         return view;
     }
@@ -249,15 +267,8 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
 
         if (file != null) {
             mProgressController.startListeningProgressFor(file, mAccount);
-
-            MediaItem mediaItem = new MediaItem.Builder()
-                    .setUri("https://storage.googleapis.com/wvmedia/clear/h264/tears/tears.mpd")
-                    .setMediaMetadata(new MediaMetadata.Builder().setTitle("Clear DASH: Tears").build())
-                    .setMimeType(MIME_TYPE_DASH)
-                    .build();
-
-            playerManager.addItem(mediaItem);
-            playerManager.selectLast();
+            // Prepare video player asynchronously
+            new PrepareVideoPlayerAsyncTask(requireActivity(), this, getFile(), mAccount).execute();
         }
     }
 
@@ -265,19 +276,18 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     public void onResume() {
         super.onResume();
         Timber.v("onResume");
-
-//        preparePlayer();
+        //        preparePlayer();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-//        releasePlayer();
+        //        releasePlayer();
         if (castContext == null) {
             return;
         }
-//        mediaQueueListAdapter.notifyItemRangeRemoved(0, mediaQueueListAdapter.getItemCount());
-//        mediaQueueList.setAdapter(null);
+        //        mediaQueueListAdapter.notifyItemRangeRemoved(0, mediaQueueListAdapter.getItemCount());
+        //        mediaQueueList.setAdapter(null);
         playerManager.release();
         playerManager = null;
     }
@@ -321,8 +331,8 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     private void startFullScreenVideo() {
 
         Intent i = new Intent(getActivity(), PreviewVideoActivity.class);
-        i.putExtra(EXTRA_AUTOPLAY, player.getPlayWhenReady());
-        i.putExtra(EXTRA_PLAY_POSITION, player.getCurrentPosition());
+        i.putExtra(EXTRA_AUTOPLAY, playerView.getPlayer().getPlayWhenReady());
+        i.putExtra(EXTRA_PLAY_POSITION, playerView.getPlayer().getCurrentPosition());
         i.putExtra(FileActivity.EXTRA_FILE, getFile());
 
         startActivityForResult(i, FileActivity.REQUEST_CODE__LAST_SHARED + 1);
@@ -346,11 +356,6 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
         mProgressController.hideProgressBar();
     }
 
-    // Menu options
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
@@ -358,9 +363,6 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
         CastButtonFactory.setUpMediaRouteButton(requireContext(), menu, R.id.action_cast);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void onPrepareOptionsMenu(@NonNull Menu menu) {
         super.onPrepareOptionsMenu(menu);
@@ -460,15 +462,39 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
         new PrepareVideoPlayerAsyncTask(getActivity(), this, getFile(), mAccount).execute();
     }
 
+    public String getMimeType(Uri uri) {
+        String mimeType;
+        if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
+            ContentResolver cr = requireContext().getContentResolver();
+            mimeType = cr.getType(uri);
+        } else {
+            String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString());
+            mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.toLowerCase());
+        }
+        return mimeType;
+    }
+
     /**
      * Called after preparing the player asynchronously
      *
-     * @param mediaSource media to be played
+     * @param mediaItem media to be played
      */
     @Override
-    public void OnPrepareVideoPlayerTaskCallback(MediaSource mediaSource) {
+    public void OnPrepareVideoPlayerTaskCallback(MediaItem mediaItem) {
         Timber.v("playerPrepared");
-        player.prepare(mediaSource);
+        //
+        MediaItem mediaItemX = new MediaItem.Builder()
+                .setUri("https://storage.googleapis.com/wvmedia/clear/h264/tears/tears.mpd")
+                // .setUri(mediaItem.localConfiguration.uri)
+                .setMimeType(MimeTypes.VIDEO_MP4)
+                .build();
+
+        Timber.d("mimeTypeT:" + mediaItemX.localConfiguration.mimeType + " uri:" + mediaItemX.localConfiguration.uri);
+        Timber.d("mimeTypeO:" + getMimeType(mediaItem.localConfiguration.uri) + " uri:" + mediaItemX.localConfiguration.uri);
+
+        playerManager.addItem(mediaItemX);
+        playerManager.selectLast();
+        //        player.prepare(mediaSource);
     }
 
     public void releasePlayer() {
@@ -489,9 +515,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
 
     @Override
     public void onPlayerError(@NonNull PlaybackException error) {
-
         Timber.e(error, "Error in video player");
-
         showAlertDialog(PreviewVideoErrorAdapter.handlePreviewVideoError((ExoPlaybackException) error, getContext()));
     }
 
@@ -524,21 +548,21 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
                 .show();
     }
 
-    @Override
-    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-        // If player is already, show full screen button
-        if (playbackState == ExoPlayer.STATE_READY) {
-            fullScreenButton.setVisibility(View.VISIBLE);
-            if (player != null && !mExoPlayerBooted) {
-                mExoPlayerBooted = true;
-                player.seekTo(mPlaybackPosition);
-                player.setPlayWhenReady(mAutoplay);
-            }
-
-        } else if (playbackState == ExoPlayer.STATE_ENDED) {
-            fullScreenButton.setVisibility(View.GONE);
-        }
-    }
+    //    @Override
+    //    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+    //        // If player is already, show full screen button
+    //        if (playbackState == ExoPlayer.STATE_READY) {
+    //            fullScreenButton.setVisibility(View.VISIBLE);
+    //            if (player != null && !mExoPlayerBooted) {
+    //                mExoPlayerBooted = true;
+    //                player.seekTo(mPlaybackPosition);
+    //                player.setPlayWhenReady(mAutoplay);
+    //            }
+    //
+    //        } else if (playbackState == ExoPlayer.STATE_ENDED) {
+    //            fullScreenButton.setVisibility(View.GONE);
+    //        }
+    //    }
 
     // File extra methods
     @Override
