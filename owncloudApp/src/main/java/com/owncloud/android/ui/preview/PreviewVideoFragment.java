@@ -180,9 +180,8 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
 
         playerView = view.findViewById(R.id.player_view);
 
-        fullScreenButton = view.findViewById(R.id.fullscreen_button);
-
-        fullScreenButton.setOnClickListener(this);
+//        fullScreenButton = view.findViewById(R.id.fullscreen_button);
+//        fullScreenButton.setOnClickListener(this);
 
         //        playerView.getPlayer().addListener(new Player.Listener() {
         //            @Override
