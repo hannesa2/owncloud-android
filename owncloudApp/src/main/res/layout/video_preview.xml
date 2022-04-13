@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Copyright (C) 2016 The Android Open Source Project
+<?xml version="1.0" encoding="UTF-8"?><!-- Copyright (C) 2016 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -18,16 +17,26 @@
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:keepScreenOn="true"
-    android:background="@color/black">
+    android:background="@color/black"
+    android:keepScreenOn="true">
 
-    <com.google.android.exoplayer2.ui.PlayerView
-        android:id="@+id/video_player"
+    <com.google.android.exoplayer2.ui.StyledPlayerView
+        android:id="@+id/player_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:controller_layout_id="@layout/custom_playback_control" />
+        android:background="@android:color/black"
+        app:controller_layout_id="@layout/custom_playback_control"
+        app:repeat_toggle_modes="all|one" />
+
+    <!--    <com.google.android.exoplayer2.ui.PlayerView-->
+    <!--        android:id="@+id/video_player"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        app:controller_layout_id="@layout/custom_playback_control" />-->
 
     <!-- last to draw, will be top in Z axis -->
-    <include layout="@layout/top_progress_bar" />
+    <include
+        android:id="@+id/progressContainer"
+        layout="@layout/top_progress_bar" />
 
 </FrameLayout>

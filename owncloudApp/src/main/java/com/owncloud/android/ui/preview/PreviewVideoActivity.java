@@ -1,4 +1,4 @@
-/**
+/*
  * ownCloud Android client application
  *
  * @author David A. Velasco
@@ -33,6 +33,7 @@ import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.MediaSource;
@@ -40,7 +41,7 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-import com.google.android.exoplayer2.ui.PlayerView;
+import com.google.android.exoplayer2.ui.StyledPlayerView;
 import com.owncloud.android.R;
 import com.owncloud.android.ui.activity.FileActivity;
 import timber.log.Timber;
@@ -61,11 +62,10 @@ public class PreviewVideoActivity extends FileActivity implements ExoPlayer.Even
      */
     public static final String EXTRA_START_POSITION = "START_POSITION";
 
-    private PlayerView exoPlayerView;
-
     private boolean mExoPlayerBooted = false;
     private SimpleExoPlayer player;
     private DefaultTrackSelector trackSelector;
+    private StyledPlayerView playerView;
 
     private boolean mAutoplay; // when 'true', the playback starts immediately with the activity
     private long mPlaybackPosition; // continue the playback in the specified position
@@ -81,7 +81,7 @@ public class PreviewVideoActivity extends FileActivity implements ExoPlayer.Even
 
         setContentView(R.layout.video_preview);
 
-        exoPlayerView = findViewById(R.id.video_player);
+        playerView = findViewById(R.id.player_view);
 
         // Hide sync bar
         ProgressBar syncProgressBar = findViewById(R.id.syncProgressBar);
@@ -151,9 +151,9 @@ public class PreviewVideoActivity extends FileActivity implements ExoPlayer.Even
         // Create a default TrackSelector
         AdaptiveTrackSelection.Factory videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory();
         trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
-        player = new SimpleExoPlayer.Builder(this).setTrackSelector(trackSelector).setLoadControl(new DefaultLoadControl()).build();
-        player.addListener(this);
-        exoPlayerView.setPlayer(player);
+//        player = new SimpleExoPlayer.Builder(this).setTrackSelector(trackSelector).setLoadControl(new DefaultLoadControl()).build();
+//        player.addListener(this);
+        playerView.setPlayer(player);
         // Prepare video player asynchronously
         new PrepareVideoPlayerAsyncTask(getApplicationContext(), this, getFile(), getAccount()
         ).execute();
@@ -165,9 +165,9 @@ public class PreviewVideoActivity extends FileActivity implements ExoPlayer.Even
      * @param mediaSource media to be played
      */
     @Override
-    public void OnPrepareVideoPlayerTaskCallback(MediaSource mediaSource) {
+    public void OnPrepareVideoPlayerTaskCallback(MediaItem mediaSource) {
         Timber.v("playerPrepared");
-        player.prepare(mediaSource);
+//        player.prepare(mediaSource);
     }
 
     private void releasePlayer() {
