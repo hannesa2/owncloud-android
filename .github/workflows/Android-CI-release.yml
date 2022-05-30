@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3.0.0
+        uses: actions/checkout@v3.0.2
         with:
           submodules: true
           fetch-depth: 0
@@ -22,7 +22,7 @@ jobs:
           java-version: 11
       - name: "Build Changelog"
         id: changelog
-        uses: mikepenz/release-changelog-builder-action@v2.9.0
+        uses: mikepenz/release-changelog-builder-action@v3.1.0
         with:
           commitMode: true
         env:
