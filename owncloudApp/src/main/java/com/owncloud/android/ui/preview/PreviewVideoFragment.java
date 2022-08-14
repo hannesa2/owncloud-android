@@ -43,7 +43,6 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.owncloud.android.R;
@@ -392,8 +391,7 @@ public class PreviewVideoFragment extends FileFragment implements View.OnClickLi
     // Video player internal methods
     private void preparePlayer() {
 
-        AdaptiveTrackSelection.Factory videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory();
-        trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
+        trackSelector = new DefaultTrackSelector(requireContext());
 
         // Video streaming is only supported at Jelly Bean or higher Android versions (>= API 16)
 
