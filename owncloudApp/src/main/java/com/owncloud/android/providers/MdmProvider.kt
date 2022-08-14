@@ -27,8 +27,6 @@ import androidx.annotation.IntegerRes
 import androidx.annotation.StringRes
 import androidx.enterprise.feedback.KeyedAppState
 import androidx.enterprise.feedback.KeyedAppStatesReporter
-import com.owncloud.android.BuildConfig
-import com.owncloud.android.MainApp.Companion.MDM_FLAVOR
 import com.owncloud.android.data.preferences.datasources.implementation.SharedPreferencesProviderImpl
 import com.owncloud.android.utils.MDMConfigurations
 import timber.log.Timber
@@ -152,7 +150,7 @@ class MdmProvider(
         reporter.setStates(states, null)
     }
 
-    private fun isMdmFlavor() = BuildConfig.FLAVOR == MDM_FLAVOR
+    private fun isMdmFlavor() = false
 
     companion object {
         // Use this key if only interested in setup value. When all keys added to MDM, remove this
