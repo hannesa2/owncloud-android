@@ -26,18 +26,13 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.zxing.integration.android.IntentIntegrator
-import com.owncloud.android.BuildConfig
-import com.owncloud.android.MainApp
 import com.owncloud.android.R
 import com.owncloud.android.data.preferences.datasources.implementation.SharedPreferencesProviderImpl
 import com.owncloud.android.presentation.ui.security.LockTimeout
 import com.owncloud.android.presentation.ui.security.PREFERENCE_LOCK_TIMEOUT
 import com.owncloud.android.providers.MdmProvider
 import com.owncloud.android.ui.fragment.OCFileListFragment
-import com.owncloud.android.utils.CONFIGURATION_ALLOW_SCREENSHOTS
 import com.owncloud.android.utils.CONFIGURATION_LOCK_DELAY_TIME
-import com.owncloud.android.utils.CONFIGURATION_SERVER_URL
-import com.owncloud.android.utils.CONFIGURATION_SERVER_URL_INPUT_VISIBILITY
 
 class SplashActivity : AppCompatActivity() {
 
@@ -45,15 +40,6 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val mdmProvider = MdmProvider(this)
-
-        if (BuildConfig.FLAVOR == MainApp.MDM_FLAVOR) {
-            with(mdmProvider) {
-                cacheStringRestriction(CONFIGURATION_SERVER_URL, R.string.server_url_configuration_feedback_ok)
-                cacheBooleanRestriction(CONFIGURATION_SERVER_URL_INPUT_VISIBILITY, R.string.server_url_input_visibility_configuration_feedback_ok)
-                cacheIntegerRestriction(CONFIGURATION_LOCK_DELAY_TIME, R.string.lock_delay_configuration_feedback_ok)
-                cacheBooleanRestriction(CONFIGURATION_ALLOW_SCREENSHOTS, R.string.allow_screenshots_configuration_feedback_ok)
-            }
-        }
 
         checkLockDelayEnforced(mdmProvider)
 
