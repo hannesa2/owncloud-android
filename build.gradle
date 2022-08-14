@@ -9,7 +9,7 @@ buildscript {
 
         // Android jetpack
         archLifecycleVersion = "2.1.0"
-        roomVersion = "2.4.2"
+        roomVersion = "2.4.3"
         appCompat = "1.4.2"
         sqliteVersion = "2.2.0"
         lifecycleLiveData = "2.4.1"
@@ -49,7 +49,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.2.1'
+        classpath 'com.android.tools.build:gradle:7.2.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
         classpath 'com.google.gms:google-services:4.3.13'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.1'
