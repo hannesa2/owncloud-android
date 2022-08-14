@@ -3,9 +3,9 @@ import org.gradle.internal.jvm.Jvm
 buildscript {
     ext {
         // SDK
-        sdkCompileVersion = 31
+        sdkCompileVersion = 32
         sdkMinVersion = 24
-        sdkTargetVersion = 30
+        sdkTargetVersion = 32
 
         // Android jetpack
         archLifecycleVersion = "2.1.0"
