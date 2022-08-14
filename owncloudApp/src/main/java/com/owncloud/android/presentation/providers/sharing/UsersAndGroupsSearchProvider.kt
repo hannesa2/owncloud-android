@@ -229,6 +229,7 @@ class UsersAndGroupsSearchProvider : ContentProvider() {
                             icon = R.drawable.ic_user
                             dataUri = Uri.withAppendedPath(userBaseUri, shareWith)
                         }
+                        else -> Timber.e("Nothing to do with ${type.name}")
                     }
 
                     if (displayName != null && dataUri != null) {
