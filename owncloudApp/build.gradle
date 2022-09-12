@@ -76,7 +76,7 @@ dependencies {
     implementation 'androidx.enterprise:enterprise-feedback:1.1.0'
 
     implementation 'com.github.hannesa2:CVScanner:1.10'
-    implementation 'com.github.hannesa2:LiveEdgeDetection:1.8.17'
+    implementation 'com.github.hannesa2:LiveEdgeDetection:1.8.19'
 
     // Tests
     testImplementation project(':owncloudTestUtil')
