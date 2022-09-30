@@ -17,7 +17,7 @@ buildscript {
         androidX = '1.0.0'
 
         // Kotlin
-        kotlinVersion = "1.7.10"
+        kotlinVersion = "1.7.20"
         coroutinesVersion = "1.6.4"
 
         // Koin
