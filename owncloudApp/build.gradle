@@ -37,7 +37,7 @@ dependencies {
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
 
     // Image loading
-    implementation 'com.github.bumptech.glide:glide:4.14.0'
+    implementation 'com.github.bumptech.glide:glide:4.14.1'
     implementation 'com.github.corouteam:GlideToVectorYou:v2.0.0'
 
     // CustomTabs required for OAuth2 and OIDC.
