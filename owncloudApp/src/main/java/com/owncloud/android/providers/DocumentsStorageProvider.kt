@@ -244,6 +244,10 @@ class DocumentsStorageProvider : DocumentsProvider() {
         return result
     }
 
+    override fun isChildDocument(parentDocumentId: String?, documentId: String?): Boolean {
+        return super.isChildDocument(parentDocumentId, documentId)
+    }
+
     override fun openDocumentThumbnail(
         documentId: String,
         sizeHint: Point?,
