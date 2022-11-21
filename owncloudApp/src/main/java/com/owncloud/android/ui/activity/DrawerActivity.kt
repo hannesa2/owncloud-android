@@ -190,8 +190,7 @@ abstract class DrawerActivity : ToolbarActivity() {
                 R.id.drawer_menu_feedback -> openFeedback()
                 R.id.nav_check_update -> checkForNewVersion(
                     this@DrawerActivity,
-                    BuildConfig.GIT_REPOSITORY,
-                    BuildConfig.VERSION_NAME
+                    BuildConfig.GIT_REPOSITORY
                 )
                 R.id.nav_qr -> IntentIntegrator(this).initiateScan()
                 R.id.drawer_menu_help -> openHelp()
