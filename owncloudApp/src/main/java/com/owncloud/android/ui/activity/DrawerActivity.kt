@@ -66,7 +66,7 @@ import com.owncloud.android.presentation.viewmodels.drawer.DrawerViewModel
 import com.owncloud.android.utils.AvatarUtils
 import com.owncloud.android.utils.DisplayUtils
 import com.owncloud.android.utils.PreferenceUtils
-import info.hannes.github.AppUpdateHelper.checkForNewVersion
+import info.hannes.github.AppUpdateHelper.checkWithDialog
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 import kotlin.math.ceil
@@ -188,10 +188,9 @@ abstract class DrawerActivity : ToolbarActivity() {
                     startActivityForResult(manageAccountsIntent, ACTION_MANAGE_ACCOUNTS)
                 }
                 R.id.drawer_menu_feedback -> openFeedback()
-                R.id.nav_check_update -> checkForNewVersion(
+                R.id.nav_check_update -> checkWithDialog(
                     this@DrawerActivity,
-                    BuildConfig.GIT_REPOSITORY,
-                    BuildConfig.VERSION_NAME
+                    BuildConfig.GIT_REPOSITORY
                 )
                 R.id.nav_qr -> IntentIntegrator(this).initiateScan()
                 R.id.drawer_menu_help -> openHelp()
