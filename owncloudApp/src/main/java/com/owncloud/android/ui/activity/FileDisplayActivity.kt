@@ -258,7 +258,10 @@ class FileDisplayActivity : FileActivity(),
         }
 
         checkNotificationPermission()
-        AppUpdateHelper.checkForNewVersion(this, BuildConfig.GIT_REPOSITORY, BuildConfig.VERSION_NAME)
+        AppUpdateHelper.checkForNewVersion(
+            this,
+            BuildConfig.GIT_REPOSITORY
+        )
         Timber.v("onCreate() end")
     }
 
