@@ -243,7 +243,10 @@ class FileDisplayActivity : FileActivity(),
             AppRater.appLaunched(this, packageName)
         }
 
-        AppUpdateHelper.checkForNewVersion(this, BuildConfig.GIT_REPOSITORY, BuildConfig.VERSION_NAME)
+        AppUpdateHelper.checkForNewVersion(
+            this,
+            BuildConfig.GIT_REPOSITORY
+        )
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
