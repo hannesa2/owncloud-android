@@ -28,7 +28,7 @@ buildscript {
         junitVersion = "4.13.2"
         extJunitVersion = '1.1.4'
         androidTestVersion = '1.4.0'
-        espressoTestVersion = '3.5.0'
+        espressoTestVersion = '3.5.1'
         fragmentTestVersion = "1.1.0"
         uiAutomatorTestVersion = "2.2.0"
         annotationTestVersion = "1.5.0"
