@@ -105,7 +105,7 @@ dependencies {
     }
     androidTestImplementation 'com.github.tmurakami:dexopener:2.0.5'
     androidTestImplementation 'androidx.test:runner:1.4.0'
-    debugImplementation "androidx.fragment:fragment-testing:1.5.4"
+    debugImplementation "androidx.fragment:fragment-testing:1.5.5"
     debugImplementation 'com.facebook.stetho:stetho:1.6.0'
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.10'
 }
