@@ -11,7 +11,7 @@ buildscript {
         archLifecycleVersion = "2.1.0"
         roomVersion = "2.4.3"
         appCompat = "1.5.1"
-        sqliteVersion = "2.2.0"
+        sqliteVersion = "2.3.0"
         lifecycleLiveData = "2.4.1"
         biometricVersion="1.1.0"
         androidX = '1.0.0'
