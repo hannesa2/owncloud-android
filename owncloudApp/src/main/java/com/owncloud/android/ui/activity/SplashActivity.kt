@@ -28,10 +28,10 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.zxing.integration.android.IntentIntegrator
 import com.owncloud.android.R
 import com.owncloud.android.data.preferences.datasources.implementation.OCSharedPreferencesProvider
+import com.owncloud.android.presentation.files.filelist.MainFileListFragment
 import com.owncloud.android.presentation.security.LockTimeout
 import com.owncloud.android.presentation.security.PREFERENCE_LOCK_TIMEOUT
 import com.owncloud.android.providers.MdmProvider
-import com.owncloud.android.ui.fragment.OCFileListFragment
 import com.owncloud.android.utils.CONFIGURATION_LOCK_DELAY_TIME
 import com.owncloud.android.utils.CONFIGURATION_OAUTH2_OPEN_ID_PROMPT
 import com.owncloud.android.utils.CONFIGURATION_OAUTH2_OPEN_ID_SCOPE
@@ -59,14 +59,14 @@ class SplashActivity : AppCompatActivity() {
         checkLockDelayEnforced(mdmProvider)
 
         val intentLaunch = Intent(this, FileDisplayActivity::class.java)
-        intentLaunch.getStringExtra(OCFileListFragment.SHORTCUT_EXTRA)?.let {
+        intentLaunch.getStringExtra(MainFileListFragment.SHORTCUT_EXTRA)?.let {
             if (it == "QR") {
                 IntentIntegrator(this).initiateScan()
                 return
             } else {
                 intentLaunch.putExtra(
-                    OCFileListFragment.SHORTCUT_EXTRA,
-                    intent.getStringExtra(OCFileListFragment.SHORTCUT_EXTRA)
+                    MainFileListFragment.SHORTCUT_EXTRA,
+                    intent.getStringExtra(MainFileListFragment.SHORTCUT_EXTRA)
                 )
             }
         }
