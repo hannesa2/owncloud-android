@@ -33,6 +33,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -124,6 +125,8 @@ import com.owncloud.android.utils.PreferenceUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okio.Path.Companion.toPath
+import info.hannes.edgedetection.ScanConstants
+import info.hannes.edgedetection.activity.ScanActivity
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -325,6 +328,11 @@ class MainFileListFragment : Fragment(),
         isMultiPersonal = capabilityViewModel.checkMultiPersonal()
         initViews()
         subscribeToViewModels()
+
+        if (requireActivity().intent.getStringExtra(SHORTCUT_EXTRA) != null) {
+            requireActivity().intent.removeExtra(SHORTCUT_EXTRA)
+            openEdgeScanner()
+        }
     }
 
     override fun onResume() {
@@ -338,6 +346,16 @@ class MainFileListFragment : Fragment(),
                 )
             )
         }
+    }
+
+    private fun openEdgeScanner() {
+        val intent = Intent(activity, ScanActivity::class.java)
+        intent.putExtra(
+            ScanConstants.IMAGE_PATH,
+            requireActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString()
+        )
+        intent.putExtra(ScanConstants.TIME_HOLD_STILL, SCAN_HOLD_TINE)
+        requireActivity().startActivityForResult(intent, FileDisplayActivity.REQUEST_CODE__UPLOAD_LIVEDGE_DOCUMENT)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -1619,6 +1637,8 @@ class MainFileListFragment : Fragment(),
         val ARG_ACCOUNT_NAME = "${MainFileListFragment::class.java.canonicalName}.ARG_ACCOUNT_NAME}"
         const val MAX_FILENAME_LENGTH = 223
         val forbiddenChars = listOf('/', '\\')
+        val SHORTCUT_EXTRA = "key"
+        val SCAN_HOLD_TINE = 600L;
 
         private const val DIALOG_CREATE_FOLDER = "DIALOG_CREATE_FOLDER"
         private const val DIALOG_CREATE_SHORTCUT = "DIALOG_CREATE_SHORTCUT"
