@@ -32,6 +32,7 @@ import com.owncloud.android.presentation.files.filelist.MainFileListFragment
 import com.owncloud.android.presentation.security.LockTimeout
 import com.owncloud.android.presentation.security.PREFERENCE_LOCK_TIMEOUT
 import com.owncloud.android.providers.MdmProvider
+import com.owncloud.android.utils.CONFIGURATION_ALLOW_SCREENSHOTS
 import com.owncloud.android.utils.CONFIGURATION_LOCK_DELAY_TIME
 import com.owncloud.android.utils.CONFIGURATION_OAUTH2_OPEN_ID_PROMPT
 import com.owncloud.android.utils.CONFIGURATION_OAUTH2_OPEN_ID_SCOPE
@@ -45,7 +46,7 @@ class SplashActivity : AppCompatActivity() {
 
         val mdmProvider = MdmProvider(this)
 
-        if (BuildConfig.FLAVOR == MainApp.MDM_FLAVOR) {
+        if (mdmProvider.isMdmFlavor()) {
             with(mdmProvider) {
                 cacheStringRestriction(CONFIGURATION_SERVER_URL, R.string.server_url_configuration_feedback_ok)
                 cacheBooleanRestriction(CONFIGURATION_SERVER_URL_INPUT_VISIBILITY, R.string.server_url_input_visibility_configuration_feedback_ok)
