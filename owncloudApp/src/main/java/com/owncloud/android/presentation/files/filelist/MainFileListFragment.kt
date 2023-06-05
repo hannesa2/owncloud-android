@@ -24,6 +24,7 @@ package com.owncloud.android.presentation.files.filelist
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.os.Environment
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -77,6 +78,8 @@ import com.owncloud.android.ui.activity.FileActivity
 import com.owncloud.android.ui.activity.FileDisplayActivity
 import com.owncloud.android.ui.activity.FolderPickerActivity
 import com.owncloud.android.ui.dialog.ConfirmationDialogFragment
+import info.hannes.edgedetection.ScanConstants
+import info.hannes.edgedetection.activity.ScanActivity
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -127,6 +130,21 @@ class MainFileListFragment : Fragment(),
         subscribeToViewModels()
 
         mainFileListViewModel.updateFileListOption(requireArguments().getParcelable(ARG_LIST_FILE_OPTION) ?: FileListOption.ALL_FILES)
+
+        if (requireActivity().intent.getStringExtra(SHORTCUT_EXTRA) != null) {
+            requireActivity().intent.removeExtra(SHORTCUT_EXTRA)
+            openEdgeScanner()
+        }
+    }
+
+    private fun openEdgeScanner() {
+        val intent = Intent(activity, ScanActivity::class.java)
+        intent.putExtra(
+            ScanConstants.IMAGE_PATH,
+            requireActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString()
+        )
+        intent.putExtra(ScanConstants.TIME_HOLD_STILL, SCAN_HOLD_TINE)
+        requireActivity().startActivityForResult(intent, FileDisplayActivity.REQUEST_CODE__UPLOAD_LIVEDGE_DOCUMENT)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -753,6 +771,8 @@ class MainFileListFragment : Fragment(),
         val ARG_LIST_FILE_OPTION = "${MainFileListFragment::class.java.canonicalName}.LIST_FILE_OPTION}"
         val ARG_ACCOUNT_NAME = "${MainFileListFragment::class.java.canonicalName}.ARG_ACCOUNT_NAME}"
         val ARG_INITIAL_FOLDER_TO_DISPLAY = "${MainFileListFragment::class.java.canonicalName}.ARG_INITIAL_FOLDER_TO_DISPLAY}"
+        val SHORTCUT_EXTRA = "key"
+        val SCAN_HOLD_TINE = 600L;
 
         private const val DIALOG_CREATE_FOLDER = "DIALOG_CREATE_FOLDER"
 

@@ -28,10 +28,10 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.zxing.integration.android.IntentIntegrator
 import com.owncloud.android.R
 import com.owncloud.android.data.preferences.datasources.implementation.OCSharedPreferencesProvider
+import com.owncloud.android.presentation.files.filelist.MainFileListFragment
 import com.owncloud.android.presentation.security.LockTimeout
 import com.owncloud.android.presentation.security.PREFERENCE_LOCK_TIMEOUT
 import com.owncloud.android.providers.MdmProvider
-import com.owncloud.android.ui.fragment.OCFileListFragment
 import com.owncloud.android.utils.CONFIGURATION_LOCK_DELAY_TIME
 import com.owncloud.android.utils.CONFIGURATION_OAUTH2_OPEN_ID_SCOPE
 import com.owncloud.android.utils.CONFIGURATION_SERVER_URL
@@ -44,27 +44,17 @@ class SplashActivity : AppCompatActivity() {
 
         val mdmProvider = MdmProvider(this)
 
-        if (BuildConfig.FLAVOR == MainApp.MDM_FLAVOR) {
-            with(mdmProvider) {
-                cacheStringRestriction(CONFIGURATION_SERVER_URL, R.string.server_url_configuration_feedback_ok)
-                cacheBooleanRestriction(CONFIGURATION_SERVER_URL_INPUT_VISIBILITY, R.string.server_url_input_visibility_configuration_feedback_ok)
-                cacheIntegerRestriction(CONFIGURATION_LOCK_DELAY_TIME, R.string.lock_delay_configuration_feedback_ok)
-                cacheBooleanRestriction(CONFIGURATION_ALLOW_SCREENSHOTS, R.string.allow_screenshots_configuration_feedback_ok)
-                cacheStringRestriction(CONFIGURATION_OAUTH2_OPEN_ID_SCOPE, R.string.oauth2_open_id_scope_configuration_feedback_ok)
-            }
-        }
-
         checkLockDelayEnforced(mdmProvider)
 
         val intentLaunch = Intent(this, FileDisplayActivity::class.java)
-        intentLaunch.getStringExtra(OCFileListFragment.SHORTCUT_EXTRA)?.let {
+        intentLaunch.getStringExtra(MainFileListFragment.SHORTCUT_EXTRA)?.let {
             if (it == "QR") {
                 IntentIntegrator(this).initiateScan()
                 return
             } else {
                 intentLaunch.putExtra(
-                    OCFileListFragment.SHORTCUT_EXTRA,
-                    intent.getStringExtra(OCFileListFragment.SHORTCUT_EXTRA)
+                    MainFileListFragment.SHORTCUT_EXTRA,
+                    intent.getStringExtra(MainFileListFragment.SHORTCUT_EXTRA)
                 )
             }
         }
