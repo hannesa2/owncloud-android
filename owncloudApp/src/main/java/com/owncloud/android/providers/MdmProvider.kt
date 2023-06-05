@@ -152,5 +152,5 @@ class MdmProvider(
         reporter.setStates(states, null)
     }
 
-    private fun isMdmFlavor() = BuildConfig.FLAVOR == MDM_FLAVOR
+    internal fun isMdmFlavor() = false
 }
