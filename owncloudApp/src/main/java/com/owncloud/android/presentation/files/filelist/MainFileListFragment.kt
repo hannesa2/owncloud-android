@@ -772,7 +772,7 @@ class MainFileListFragment : Fragment(),
         val ARG_ACCOUNT_NAME = "${MainFileListFragment::class.java.canonicalName}.ARG_ACCOUNT_NAME}"
         val ARG_INITIAL_FOLDER_TO_DISPLAY = "${MainFileListFragment::class.java.canonicalName}.ARG_INITIAL_FOLDER_TO_DISPLAY}"
         val SHORTCUT_EXTRA = "key"
-        val SCAN_HOLD_TINE = 600L;
+        val SCAN_HOLD_TINE = 600L
 
         private const val DIALOG_CREATE_FOLDER = "DIALOG_CREATE_FOLDER"
 

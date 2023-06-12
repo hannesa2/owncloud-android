@@ -33,9 +33,6 @@ import com.owncloud.android.presentation.security.LockTimeout
 import com.owncloud.android.presentation.security.PREFERENCE_LOCK_TIMEOUT
 import com.owncloud.android.providers.MdmProvider
 import com.owncloud.android.utils.CONFIGURATION_LOCK_DELAY_TIME
-import com.owncloud.android.utils.CONFIGURATION_OAUTH2_OPEN_ID_SCOPE
-import com.owncloud.android.utils.CONFIGURATION_SERVER_URL
-import com.owncloud.android.utils.CONFIGURATION_SERVER_URL_INPUT_VISIBILITY
 
 class SplashActivity : AppCompatActivity() {
 
