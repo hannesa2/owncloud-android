@@ -1540,7 +1540,7 @@ class MainFileListFragment : Fragment(),
         const val MAX_FILENAME_LENGTH = 223
         val forbiddenChars = listOf('/', '\\')
         val SHORTCUT_EXTRA = "key"
-        val SCAN_HOLD_TINE = 600L;
+        val SCAN_HOLD_TINE = 600L
 
         private const val DIALOG_CREATE_FOLDER = "DIALOG_CREATE_FOLDER"
         private const val DIALOG_CREATE_SHORTCUT = "DIALOG_CREATE_SHORTCUT"
