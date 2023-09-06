@@ -33,7 +33,7 @@ buildscript {
         ioMockk = "1.13.3"
         junitVersion = "4.13.2"
         androidxTestExt = "1.1.5"
-        androidxTest = "1.4.0"
+        androidxTest = "1.5.0"
         androidxTestEspresso = "3.5.1"
         androidxTestUiautomator = "2.2.0"
         androidxAnnotation = "1.6.0"
