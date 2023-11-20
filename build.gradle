@@ -14,11 +14,11 @@ buildscript {
     }
 
     dependencies {
-        classpath "com.android.tools.build:gradle:7.4.2"
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$orgJetbrainsKotlin"
+        classpath libs.android.gradlePlugin
+        classpath libs.kotlin.gradlePlugin
         classpath 'com.google.gms:google-services:4.3.14'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.2'
-        classpath "org.jlleitschuh.gradle:ktlint-gradle:11.1.0"
+        classpath libs.ktlint.gradlePlugin
     }
 }
 
