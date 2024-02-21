@@ -31,6 +31,7 @@ package com.owncloud.android.ui.activity
 
 import android.Manifest.permission.POST_NOTIFICATIONS
 import android.accounts.Account
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -1659,6 +1660,7 @@ class FileDisplayActivity : FileActivity(),
          * @param startPlaybackPosition Media position where the playback will be started,
          * in milliseconds.
          */
+        @SuppressLint("SuspiciousIndentation")
         fun startVideoPreview(file: OCFile, startPlaybackPosition: Int) {
             val videoActivityIntent = Intent(this, PreviewVideoActivity::class.java)
                videoActivityIntent.putExtra(PreviewVideoActivity.EXTRA_FILE, file)
