@@ -16,7 +16,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<resources xmlns:android="http://schemas.android.com/apk/res/android">
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android">
 
     <style name="Animations" />
 
@@ -75,7 +75,7 @@
     <!-- Extends Theme.ownCloud for video in full screen mode -->
     <style name="Theme.ownCloud.Video">
         <item name="windowActionBarOverlay">true</item>
-        <item name="android:windowLayoutInDisplayCutoutMode">never</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">never</item>
         <item name="actionBarTheme">@style/ownCloud.Appbar.Transparent</item>
         <item name="android:windowBackground">@android:color/background_dark</item>
     </style>
