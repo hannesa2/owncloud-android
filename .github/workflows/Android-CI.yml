@@ -20,11 +20,11 @@ jobs:
           distribution: 'adopt'
           java-version: 11
       - name: Install Android SDK
-        uses: malinskiy/action-android/install-sdk@release/0.1.2
+        uses: hannesa2/action-android/install-sdk@0.1.16.7
       - name: Build with Gradle
         run: ./gradlew assembleDebug
 #      - name: Run instrumentation tests
-#        uses: malinskiy/action-android/emulator-run-cmd@release/0.1.2
+#        uses: hannesa2/action-android/emulator-run-cmd@0.1.16.7
 #        with:
 #          cmd: ./gradlew cAT -Pandroid.testInstrumentationRunnerArguments.notAnnotation=com.owncloud.android.testutil.annotation.FailsOnGithubAction --continue
 #          api: 28
@@ -57,7 +57,7 @@ jobs:
           java-version: 11
       - uses: gradle/wrapper-validation-action@v2
       - name: Install Android SDK
-        uses: malinskiy/action-android/install-sdk@release/0.1.2
+        uses: hannesa2/action-android/install-sdk@0.1.16.7
       - name: Code checks
         run: ./gradlew check
       - name: Archive Lint report
