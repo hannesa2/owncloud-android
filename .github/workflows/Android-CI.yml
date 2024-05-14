@@ -6,8 +6,8 @@ on:
 
 jobs:
   Build:
-    name: Build & Test
-    runs-on: macOS-latest
+    name: Build
+    runs-on: macOS-14
     steps:
       - uses: actions/checkout@v4.0.0
         with:
@@ -55,6 +55,7 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: 11
+      - uses: gradle/wrapper-validation-action@v2
       - name: Install Android SDK
         uses: malinskiy/action-android/install-sdk@release/0.1.2
       - name: Code checks
