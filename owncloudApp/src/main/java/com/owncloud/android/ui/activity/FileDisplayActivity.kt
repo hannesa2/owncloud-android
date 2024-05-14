@@ -954,7 +954,7 @@ class FileDisplayActivity : FileActivity(),
                         FileListOption.ALL_FILES -> getString(R.string.default_display_name_for_root_folder)
                         FileListOption.SPACES_LIST -> getString(R.string.bottom_nav_spaces)
                     }
-                setupRootToolbar(title, isSearchEnabled = fileListOption != FileListOption.SPACES_LIST)
+                setupRootToolbar(title , isSearchEnabled = fileListOption != FileListOption.SPACES_LIST)
             mainFileListFragment?.setSearchListener(findViewById(R.id.root_toolbar_search_view))
         } else if (space?.isProject == true && chosenFile.remotePath == OCFile.ROOT_PATH) {
             updateStandardToolbar(title = space.name, displayHomeAsUpEnabled = true, homeButtonEnabled = true)
