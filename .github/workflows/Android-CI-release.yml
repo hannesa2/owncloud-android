@@ -19,7 +19,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'adopt'
-          java-version: 11
+          java-version: 17
       - name: "Build Changelog"
         id: changelog
         uses: mikepenz/release-changelog-builder-action@v4.1.1
