@@ -4,7 +4,7 @@
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2023 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -57,6 +57,7 @@ class UploadFilesFromContentUriUseCase(
                 documentFile = documentFile,
                 uploadPath = params.uploadFolderPath.plus(documentFile.name),
                 accountName = params.accountName,
+                spaceId = params.spaceId,
             )
 
             enqueueSingleUpload(
@@ -73,6 +74,7 @@ class UploadFilesFromContentUriUseCase(
         documentFile: DocumentFile,
         uploadPath: String,
         accountName: String,
+        spaceId: String?,
     ): Long {
         val ocTransfer = OCTransfer(
             localPath = documentFile.uri.toString(),
@@ -80,9 +82,10 @@ class UploadFilesFromContentUriUseCase(
             accountName = accountName,
             fileSize = documentFile.length(),
             status = TransferStatus.TRANSFER_QUEUED,
-            localBehaviour = UploadBehavior.COPY,
+            localBehaviour = UploadBehavior.MOVE,
             forceOverwrite = false,
-            createdBy = UploadEnqueuedBy.ENQUEUED_BY_USER
+            createdBy = UploadEnqueuedBy.ENQUEUED_BY_USER,
+            spaceId = spaceId,
         )
 
         return transferRepository.saveTransfer(ocTransfer).also {
@@ -107,12 +110,13 @@ class UploadFilesFromContentUriUseCase(
             wifiOnly = false,
             chargingOnly = false
         )
-        uploadFileFromContentUriUseCase.execute(uploadFileParams)
+        uploadFileFromContentUriUseCase(uploadFileParams)
     }
 
     data class Params(
         val accountName: String,
         val listOfContentUris: List<Uri>,
         val uploadFolderPath: String,
+        val spaceId: String?,
     )
 }

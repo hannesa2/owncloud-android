@@ -16,6 +16,7 @@
   <string name="actionbar_send_file">寄出</string>
   <string name="actionbar_descending">降序</string>
   <string name="actionbar_sort_title">排序依照</string>
+  <string name="fab_new_file">新文件</string>
   <string name="drawer_item_all_files">所有檔案</string>
   <string name="drawer_item_only_available_offline">離線可使用</string>
   <string name="drawer_item_shared_by_link_files">由連結分享</string>
@@ -99,9 +100,11 @@
   <string name="illegal_argument_exception_message">傳遞給的Intent中需要有效的ACTION</string>
   <!--Bottom navigation bar-->
   <string name="bottom_nav_files">檔案</string>
+  <string name="bottom_nav_personal">個人</string>
   <string name="bottom_nav_uploads">上傳</string>
   <string name="bottom_nav_offline">下線</string>
   <string name="bottom_nav_links">連結</string>
+  <string name="bottom_nav_shares">分享</string>
   <string name="recommend_subject">在您的手機中試用%1$s!</string>
   <string name="recommend_text">我想邀起您也在智慧型手機上使用%1$s!\n下載:%2$s</string>
   <string name="error_reason">因為</string>
@@ -151,6 +154,7 @@
   <string name="filedetails_size">容量:</string>
   <string name="filedetails_type">類型:</string>
   <string name="filedetails_created">建立:</string>
+  <string name="filedetails_last_sync">最後同步:</string>
   <string name="filedetails_modified">修改:</string>
   <string name="filedetails_download">下載</string>
   <string name="filedetails_sync_file">同步</string>
@@ -185,7 +189,6 @@
   <string name="uploader_upload_failed_ssl_certificate_not_trusted">伺服器憑證不是可信的</string>
   <string name="uploader_upload_text_dialog_title">插入新檔案的名稱</string>
   <string name="uploader_upload_text_dialog_filename_error_empty">檔名不能為空</string>
-  <string name="uploader_upload_text_dialog_filename_error_length_max">檔名不能超過%d個字元</string>
   <string name="uploader_upload_text_filename_hint">檔案名稱</string>
   <string name="uploader_upload_camera_upload_files">上傳相機上傳文件</string>
   <string name="uploader_upload_picture_upload_files">%d將上傳新圖片</string>
@@ -322,7 +325,6 @@
   <string name="sync_file_fail_msg">無法檢查遠端的檔案</string>
   <string name="sync_file_nothing_to_do_msg">檔案與同步</string>
   <string name="create_dir_fail_msg">資料夾無法建立</string>
-  <string name="filename_forbidden_characters">禁止使用字符: / \\ &lt; &gt; : \" | ? *</string>
   <string name="filename_forbidden_characters_from_server">檔案名稱含有不合法的字元</string>
   <string name="filename_empty">檔名不能為空的</string>
   <string name="wait_a_moment">請稍後</string>
@@ -371,7 +373,6 @@
   <string name="confirmation_disable_videos_upload_message">您確定您要停用此功能嗎？ 待處理的視頻將不會上傳</string>
   <string name="proper_pics_folder_warning_camera_upload">請確保選擇的目錄是您正在使用的相機保存所拍攝照片的位置。 否則，該功能將無法檢測您的照片。 請記住，照片將在拍攝後至少15分鐘內上傳。</string>
   <string name="proper_videos_folder_warning_camera_upload">請確保選擇的目錄是您正在使用的相機保存錄製的視頻的位置。 否則，該功能將無法檢測您的視頻。 請記住，視頻將在錄製後至少15分鐘內上傳。</string>
-  <string name="conflict_title">檔案衝突</string>
   <string name="conflict_description">檔案%1$s中存在衝突點擊解決</string>
   <string name="conflict_message">您要保留那個檔案? 如果您同時選擇兩個版本, 本地的檔案將在檔案名稱後面會加上編號</string>
   <string name="conflict_keep_both">都保留</string>
@@ -500,12 +501,7 @@
   <string name="edit_share_done">完成</string>
   <string name="action_upload_retry">重試</string>
   <string name="action_upload_clear">清除</string>
-  <string name="manage_space_title">管理空間</string>
-  <string name="manage_space_description">來自 %1$s 的設定, 資料庫與伺服器的憑證將被永久的刪除.\n\n下載的檔案也將無法存取.\n\n這個動作將花費一些時間.</string>
-  <string name="manage_space_clear_data">清除資料</string>
-  <string name="manage_space_error">某些檔案無法被刪除.</string>
   <string name="local_file_not_found_toast">在本地的檔案系統中找不到這個檔案</string>
-  <string name="confirmation_remove_files_alert">您真的要移除所選取的項目?</string>
   <string name="confirmation_remove_folders_alert">您真的要移除所選取的項目與裡面的文件?</string>
   <string name="failed_upload_quota_exceeded_text">此帳戶無足夠儲存空間</string>
   <string name="auth_forbidden">禁用的驗證</string>
@@ -578,4 +574,7 @@
   <string name="release_notes_footer">感謝您使用 %1$s.\n❤</string>
   <string name="release_notes_proceed">已執行</string>
   <!--Open in web-->
+  <!--oCIS accounts warning-->
+  <string name="ocis_accounts_warning_checkbox_message">不再顯示</string>
+  <string name="tab_label_ascii">文字</string>
 </resources>

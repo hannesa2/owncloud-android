@@ -3,7 +3,7 @@
  *
  * @author Juan Carlos Garrote Gascón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2023 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -33,6 +33,8 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.owncloud.android.R
 import com.owncloud.android.databinding.UploadListGroupBinding
 import com.owncloud.android.databinding.UploadListItemBinding
+import com.owncloud.android.domain.files.model.OCFile
+import com.owncloud.android.domain.spaces.model.OCSpace
 import com.owncloud.android.domain.transfers.model.OCTransfer
 import com.owncloud.android.domain.transfers.model.TransferStatus
 import com.owncloud.android.extensions.statusToStringRes
@@ -84,7 +86,20 @@ class TransfersAdapter(
                     }
                     uploadName.text = fileName
 
-                    uploadRemotePath.text = holder.itemView.context.getString(R.string.app_name) + remoteFile.parent
+                    transferItem.space?.let {
+                        spacePathLine.spaceName.isVisible = true
+                        spacePathLine.spaceIcon.isVisible = true
+                        if (it.isPersonal) {
+                            spacePathLine.spaceIcon.setImageResource(R.drawable.ic_folder)
+                            spacePathLine.spaceName.setText(R.string.bottom_nav_personal)
+                        } else {
+                            spacePathLine.spaceName.text = it.name
+                        }
+                    }
+
+                    remoteFile.parent?.let {
+                        spacePathLine.path.text = if (it.endsWith("${OCFile.PATH_SEPARATOR}")) it else "$it${OCFile.PATH_SEPARATOR}"
+                    }
 
                     uploadFileSize.text = DisplayUtils.bytesToHumanReadable(transferItem.transfer.fileSize, holder.itemView.context)
 
@@ -220,13 +235,15 @@ class TransfersAdapter(
         }
     }
 
-    fun setData(transfers: List<OCTransfer>) {
-        val transfersGroupedByStatus = transfers.groupBy { it.status }
+    fun setData(transfersWithSpace: List<Pair<OCTransfer, OCSpace?>>) {
+        val transfersGroupedByStatus = transfersWithSpace.groupBy { it.first.status }
         val newTransferItemsList = mutableListOf<TransferRecyclerItem>()
         transfersGroupedByStatus.forEach { transferMap ->
             val headerItem = HeaderItem(transferMap.key, transferMap.value.size)
             newTransferItemsList.add(headerItem)
-            val transferItems = transferMap.value.sortedByDescending { it.transferEndTimestamp ?: it.id }.map(::TransferItem)
+            val transferItems = transferMap.value.sortedByDescending { it.first.transferEndTimestamp ?: it.first.id }.map { transfersWithSpace ->
+                TransferItem(transfersWithSpace.first, transfersWithSpace.second)
+            }
             newTransferItemsList.addAll(transferItems)
         }
         val diffCallback = TransfersDiffUtil(transferItemsList, newTransferItemsList)
@@ -260,12 +277,16 @@ class TransfersAdapter(
 
     fun getItem(position: Int) = transferItemsList[position]
 
-    sealed class TransferRecyclerItem {
-        data class TransferItem(val transfer: OCTransfer) : TransferRecyclerItem()
+    sealed interface TransferRecyclerItem {
+        data class TransferItem(
+            val transfer: OCTransfer,
+            val space: OCSpace?,
+        ) : TransferRecyclerItem
+
         data class HeaderItem(
             val status: TransferStatus,
             val numberTransfers: Int,
-        ) : TransferRecyclerItem()
+        ) : TransferRecyclerItem
     }
 
     class TransferItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

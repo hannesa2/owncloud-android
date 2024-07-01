@@ -16,6 +16,7 @@
   <string name="actionbar_send_file">Envia</string>
   <string name="actionbar_descending">Descendent</string>
   <string name="actionbar_sort_title">Ordena per</string>
+  <string name="fab_new_file">Document nou</string>
   <string name="drawer_item_all_files">Tots els fitxers</string>
   <string name="drawer_item_only_available_offline">Disponible fora de línia</string>
   <string name="drawer_item_shared_by_link_files">Compartit amb enllaç</string>
@@ -76,9 +77,11 @@
   <string name="illegal_argument_exception_message">Una ACCIÓ vàlida es requereix per passar a</string>
   <!--Bottom navigation bar-->
   <string name="bottom_nav_files">Arxius</string>
+  <string name="bottom_nav_personal">Personal</string>
   <string name="bottom_nav_uploads">Càrrega</string>
   <string name="bottom_nav_offline">Fora de línia </string>
   <string name="bottom_nav_links">Enllaços</string>
+  <string name="bottom_nav_shares">Compartits</string>
   <string name="recommend_subject">Proveu %1$s a un telèfon avançat!</string>
   <string name="recommend_text">Vull invitar-te a utilitzar %1$s al teu smartphone!\nDescarrega-ho aqui: %2$s</string>
   <string name="error_reason">ja que</string>
@@ -129,6 +132,7 @@
   <string name="filedetails_size">Mida:</string>
   <string name="filedetails_type">Tipus:</string>
   <string name="filedetails_created">Creat:</string>
+  <string name="filedetails_last_sync">Última sincronització:</string>
   <string name="filedetails_modified">Modificat:</string>
   <string name="filedetails_download">Baixa</string>
   <string name="filedetails_sync_file">Sincronitza</string>
@@ -163,7 +167,6 @@
   <string name="uploader_upload_failed_ssl_certificate_not_trusted">El certificat del servidor no és de confiança</string>
   <string name="uploader_upload_text_dialog_title">Introdueix un nom pel fitxer</string>
   <string name="uploader_upload_text_dialog_filename_error_empty">EL nom no es pot deixar en blanc</string>
-  <string name="uploader_upload_text_dialog_filename_error_length_max">El nom no pot ser més llarg de %d caràcters</string>
   <string name="uploader_upload_text_filename_hint">Nom del fitxer</string>
   <string name="uploader_upload_camera_upload_files">Pujant arxius pujats desde càmera</string>
   <string name="uploader_upload_available_offline_files">Pujant arxius disponibles offline</string>
@@ -291,7 +294,6 @@
   <string name="sync_file_fail_msg">L\'arxiu remot no ha pogut ser comprovat</string>
   <string name="sync_file_nothing_to_do_msg">Contingut de l\'arxiu ja sincronitzat</string>
   <string name="create_dir_fail_msg">La carpeta no s\'ha pogut crear</string>
-  <string name="filename_forbidden_characters">Caràcters no permesos: / \\ &lt; &gt; : \" | ? *</string>
   <string name="filename_forbidden_characters_from_server">El nom del fitxer conté al menys un caràcter invàlid</string>
   <string name="filename_empty">El Nom de l\'arxiu no pot estar buit</string>
   <string name="wait_a_moment">Espereu</string>
@@ -340,7 +342,6 @@
   <string name="confirmation_disable_videos_upload_message">Estàs segur que vols desactivar aquesta funció? Les fotos pendents no es carregaran.</string>
   <string name="proper_pics_folder_warning_camera_upload">Si us plau assegura\'t de que la carpeta que has seleccionat és on la càmara que estàs fent servir guarda les fotografies fetes. En cas contrari l\'aplicació no podrà detectar les vostres imatges. Tingueu en compte que les imatges es penjarant al menys 15 minuts després de fer-les.</string>
   <string name="proper_videos_folder_warning_camera_upload">Si us plau assegura\'t de que la carpeta que has seleccionat és on la càmara que estàs fent servir guarda els videos fets. En cas contrari l\'aplicació no podrà detectar els vostres videos. Tingueu en compte que els videos es penjarant al menys 15 minuts després de fer-los.</string>
-  <string name="conflict_title">Conflicte de fitxers</string>
   <string name="conflict_description">Hi ha un conflicte en l\'arxiu 1%1$s, clicka per arreglar-ho</string>
   <string name="conflict_message">Quins fitxers vols mantenir? Si seleccioneu les dues versions, el fitxer local tindrà un número afegit al seu nom.</string>
   <string name="conflict_keep_both">Mantén-los ambdós</string>
@@ -464,12 +465,7 @@
   <string name="edit_share_done">Fet</string>
   <string name="action_upload_retry">Torna-ho a intentar</string>
   <string name="action_upload_clear">Neteja</string>
-  <string name="manage_space_title">Gestió d\'espai</string>
-  <string name="manage_space_description">La configuració, base de dades i certificats del servidor %1$s s\'esborraran de forma permanent.\n\nEls arxius descarregats quedaran intactes.\n\nAquest procés tardarà una mica.</string>
-  <string name="manage_space_clear_data">Neteja dades</string>
-  <string name="manage_space_error">Alguns fitxers no s\'han pogut esborrar</string>
   <string name="local_file_not_found_toast">El fitxer no s\'ha trobat entre els fitxers locals</string>
-  <string name="confirmation_remove_files_alert">Segur que vols esborrar els elements seleccionats?</string>
   <string name="confirmation_remove_folders_alert">Segur que voleu esborrar els elements seleccionats i els seus continguts?</string>
   <string name="failed_upload_quota_exceeded_text">No hi ha prou espai en el compte</string>
   <string name="auth_forbidden">Autentificació no autoritzada</string>
@@ -540,4 +536,6 @@
   <!--Release Notes-->
   <string name="release_notes_proceed">Procedeix</string>
   <!--Open in web-->
+  <!--oCIS accounts warning-->
+  <string name="tab_label_ascii">Text</string>
 </resources>

@@ -24,8 +24,8 @@ import android.view.LayoutInflater
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import com.owncloud.android.R
-import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider
-import com.owncloud.android.data.preferences.datasources.implementation.OCSharedPreferencesProvider
+import com.owncloud.android.data.providers.SharedPreferencesProvider
+import com.owncloud.android.data.providers.implementation.OCSharedPreferencesProvider
 import com.owncloud.android.databinding.SortOptionsLayoutBinding
 import com.owncloud.android.presentation.files.SortOrder.Companion.PREF_FILE_LIST_SORT_ORDER
 import com.owncloud.android.presentation.files.SortType.Companion.PREF_FILE_LIST_SORT_TYPE
@@ -92,18 +92,27 @@ class SortOptionsView @JvmOverloads constructor(
     fun selectAdditionalView(additionalView: AdditionalView) {
         when (additionalView) {
             AdditionalView.CREATE_FOLDER -> {
-                binding.viewTypeSelector.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_action_create_dir))
-                binding.viewTypeSelector.setOnClickListener {
-                    onCreateFolderListener?.onCreateFolderListener()
+                binding.viewTypeSelector.apply {
+                    visibility = VISIBLE
+                    setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_action_create_dir))
+                    setOnClickListener {
+                        onCreateFolderListener?.onCreateFolderListener()
+                    }
                 }
             }
             AdditionalView.VIEW_TYPE -> {
                 viewTypeSelected = viewTypeSelected
-                binding.viewTypeSelector.setOnClickListener {
-                    onSortOptionsListener?.onViewTypeListener(
-                        viewTypeSelected.getOppositeViewType()
-                    )
+                binding.viewTypeSelector.apply {
+                    visibility = VISIBLE
+                    setOnClickListener {
+                        onSortOptionsListener?.onViewTypeListener(
+                            viewTypeSelected.getOppositeViewType()
+                        )
+                    }
                 }
+            }
+            AdditionalView.HIDDEN -> {
+                binding.viewTypeSelector.visibility = INVISIBLE
             }
         }
     }
@@ -118,6 +127,6 @@ class SortOptionsView @JvmOverloads constructor(
     }
 
     enum class AdditionalView {
-        CREATE_FOLDER, VIEW_TYPE
+        CREATE_FOLDER, VIEW_TYPE, HIDDEN
     }
 }

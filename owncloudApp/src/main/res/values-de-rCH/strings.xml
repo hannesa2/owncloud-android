@@ -16,6 +16,7 @@
   <string name="actionbar_send_file">Senden</string>
   <string name="actionbar_descending">Absteigend</string>
   <string name="actionbar_sort_title">Sortieren nach</string>
+  <string name="fab_new_file">Neues Dokument</string>
   <string name="drawer_item_all_files">Alle Dateien</string>
   <string name="drawer_item_only_available_offline">Offline verfügbar</string>
   <string name="drawer_item_shared_by_link_files">Über einen Link geteilt</string>
@@ -86,9 +87,11 @@
   <string name="illegal_argument_exception_message">Eine gültige AKTION wird zur Weitergabe benötigt</string>
   <!--Bottom navigation bar-->
   <string name="bottom_nav_files">Dateien</string>
+  <string name="bottom_nav_personal">Persönlich</string>
   <string name="bottom_nav_uploads">Hochgeladen</string>
   <string name="bottom_nav_offline">Offline</string>
   <string name="bottom_nav_links">Links</string>
+  <string name="bottom_nav_shares">Freigaben</string>
   <string name="recommend_subject">Probiere %1$s auf Deinem Smartphone!</string>
   <string name="recommend_text">Kennst Du schon %1$s? Ich benutze die App um auch mobil Zugriff auf meinen eigenen Cloud-Server zu haben. \nHier kommst Du direkt zum Download: %2$s</string>
   <string name="error_reason">weil</string>
@@ -138,6 +141,7 @@
   <string name="filedetails_size">Grösse:</string>
   <string name="filedetails_type">Art:</string>
   <string name="filedetails_created">Erstellt:</string>
+  <string name="filedetails_last_sync">Letzte Synchronisation:</string>
   <string name="filedetails_modified">Geändert:</string>
   <string name="filedetails_download">Herunterladen</string>
   <string name="filedetails_sync_file">Synchronisation</string>
@@ -172,7 +176,6 @@
   <string name="uploader_upload_failed_ssl_certificate_not_trusted">Das Zertifikat des Servers ist nicht vertrauenswürdig</string>
   <string name="uploader_upload_text_dialog_title">Einen Namen für die neue Datei eingeben</string>
   <string name="uploader_upload_text_dialog_filename_error_empty">Der Dateiname muss angegeben werden</string>
-  <string name="uploader_upload_text_dialog_filename_error_length_max">Der Dateiname darf nicht mehr als %d Zeichen haben</string>
   <string name="uploader_upload_text_filename_hint">Dateiname</string>
   <string name="uploader_upload_camera_upload_files">Hochladen von Hochladedateien der Kamera</string>
   <string name="uploader_upload_available_offline_files">Hochladen von verfügbaren Offline-Dateien</string>
@@ -301,7 +304,6 @@
   <string name="sync_file_fail_msg">Die entfernte Datei konnte nicht überprüft werden</string>
   <string name="sync_file_nothing_to_do_msg">Dateiinhalte wurden bereits synchronisiert</string>
   <string name="create_dir_fail_msg">Das Verzeichnis konnte nicht erstellt werden</string>
-  <string name="filename_forbidden_characters">Verbotene Zeichen sind: / \\ &lt; &gt; : \" | ? *</string>
   <string name="filename_forbidden_characters_from_server">Der Dateiname enthält mindestens ein ungültiges Zeichen</string>
   <string name="filename_empty">Der Dateiname darf nicht leer sein</string>
   <string name="wait_a_moment">Bitte warte einen Moment.</string>
@@ -350,7 +352,6 @@
   <string name="confirmation_disable_videos_upload_message">Bist du dir sicher, dass du dieses Feature deaktivieren möchtest? Alle Videos in der Warteschlange werden nicht hochgeladen</string>
   <string name="proper_pics_folder_warning_camera_upload">Bitte stelle sicher, dass sich der ausgewählte Ordner an der Stelle befindet, an der die von Ihnen verwendete Kamera die aufgenommenen Bilder speichert. Andernfalls kann die Funktion Ihre Bilder nicht erkennen. Beachte, dass die Bilder innerhalb von mindestens 15 Minuten nach der Aufnahme hochgeladen werden.</string>
   <string name="proper_videos_folder_warning_camera_upload">Bitte stelle sicher, dass sich der ausgewählte Ordner an der Stelle befindet, an der die von Ihnen verwendete Kamera die aufgenommenen Videos speichert. Andernfalls kann die Funktion Ihre Videos nicht erkennen. Beachte, dass Videos innerhalb von mindestens 15 Minuten nach der Aufnahme hochgeladen werden.</string>
-  <string name="conflict_title">Dateikonfilikt</string>
   <string name="conflict_description">Ein Konflikt ist in der Datei %1$s aufgetreten, hier tippen um dies zu lösen</string>
   <string name="conflict_message">Welche Datei möchtest du behalten? Wenn du beide Versionen auswählst, wird der lokalen Datei eine Zahl am Ende Ihres Dateiname angehangen.</string>
   <string name="conflict_keep_both">Beide behalten</string>
@@ -476,12 +477,7 @@
   <string name="edit_share_done">Erledigt</string>
   <string name="action_upload_retry">Wiederholen</string>
   <string name="action_upload_clear">Leeren</string>
-  <string name="manage_space_title">Speicher verwalten</string>
-  <string name="manage_space_description">Einstellungen, Datenbank und Server-Zertifikate von %1$s\'s Daten werden dauerhaft gelöscht.\n\nHerunter geladene Dateien bleiben unangetastet.\n\nDieser Vorgang kann eine Zeit dauern.</string>
-  <string name="manage_space_clear_data">Daten löschen</string>
-  <string name="manage_space_error">Einige Dateien konnten nicht gelöscht werden.</string>
   <string name="local_file_not_found_toast">Die Datei wurde im lokalen Dateisystem nicht gefunden</string>
-  <string name="confirmation_remove_files_alert">Möchtest du die ausgewählten Elemente wirklich löschen?</string>
   <string name="confirmation_remove_folders_alert">Möchtest du die ausgewählten Elemente und dessen Inhalt wirklich löschen?</string>
   <string name="failed_upload_quota_exceeded_text">Nicht genügend Speicherplatz im Konto verfügbar</string>
   <string name="auth_forbidden">Authentifizierung verweigert</string>
@@ -551,4 +547,7 @@
   <!--Release Notes-->
   <string name="release_notes_proceed">Fortfahren</string>
   <!--Open in web-->
+  <!--oCIS accounts warning-->
+  <string name="ocis_accounts_warning_checkbox_message">Nicht mehr anzeigen</string>
+  <string name="tab_label_ascii">Text</string>
 </resources>

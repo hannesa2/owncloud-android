@@ -10,12 +10,14 @@
   <string name="actionbar_upload_from_apps">Innehåll från andra program</string>
   <string name="actionbar_upload_files">Filer</string>
   <string name="actionbar_open_with">Öppna med</string>
+  <string name="actionbar_open_with_read_only">Öppna med (endast läsning)</string>
   <string name="actionbar_mkdir">Ny mapp</string>
   <string name="actionbar_settings">Inställningar</string>
   <string name="actionbar_see_details">Detaljer</string>
   <string name="actionbar_send_file">Skicka</string>
   <string name="actionbar_descending">Nedåtgående</string>
   <string name="actionbar_sort_title">Sortera efter</string>
+  <string name="fab_new_file">Nytt dokument</string>
   <string name="drawer_item_all_files">Alla filer</string>
   <string name="drawer_item_only_available_offline">Tillgänglig offline</string>
   <string name="drawer_item_shared_by_link_files">Delad som länk</string>
@@ -33,6 +35,8 @@
   <string name="prefs_subsection_logging">Loggande</string>
   <string name="prefs_subsection_more">Mer</string>
   <string name="prefs_subsection_security">Säkerhet</string>
+  <string name="prefs_subsection_whatsnew">Vad är nytt i den senaste versionen?</string>
+  <string name="prefs_subsection_logging_summary">Håll koll på loggar producerade av exekveringen av appen</string>
   <string name="prefs_subsection_more_summary">Appinformation, respons och annat</string>
   <string name="prefs_accounts">Konton</string>
   <string name="prefs_manage_accounts">Hantera konton</string>
@@ -50,11 +54,13 @@
   <string name="prefs_camera_picture_upload">Bilduppladdningar</string>
   <string name="prefs_camera_picture_upload_summary">Ladda upp bilder tagna av kameran automatiskt </string>
   <string name="prefs_camera_picture_upload_on_wifi">Ladda upp bilder endast via wifi</string>
+  <string name="prefs_camera_picture_upload_on_charging">Ladda upp bilder endast vid laddning</string>
   <string name="prefs_camera_video_upload">Videouppladdningar</string>
   <string name="prefs_camera_video_upload_summary">Ladda upp videor filmade av kameran automatiskt </string>
   <string name="prefs_camera_video_upload_on_wifi">Ladda upp videor endast via wifi</string>
   <string name="prefs_camera_video_upload_on_charging">Ladda endast upp videor under laddning</string>
   <string name="prefs_subsection_advanced">Avancerad</string>
+  <string name="prefs_subsection_notifications">Hantera notifikationer</string>
   <string name="prefs_show_hidden_files">Visa dolda filer</string>
   <string name="prefs_log_open_logs_list_view">Logfiler</string>
   <string name="prefs_log_no_logs_list_view">Tom logmapp!</string>
@@ -89,9 +95,11 @@
   <string name="document_provider_locked">Låst</string>
   <!--Bottom navigation bar-->
   <string name="bottom_nav_files">Filer</string>
+  <string name="bottom_nav_personal">Personligt</string>
   <string name="bottom_nav_uploads">Uppladdningar</string>
   <string name="bottom_nav_offline">Offline</string>
   <string name="bottom_nav_links">Länkar</string>
+  <string name="bottom_nav_shares">Delningar</string>
   <string name="recommend_subject">Prova %1$s på din smartphone!</string>
   <string name="recommend_text">Jag skullje vilja bjuda in dig till att prova %1$s på din smartphone!\nLadda ner appen från Google Play här: %2$s</string>
   <string name="error_reason">för att</string>
@@ -123,6 +131,7 @@
   <string name="file_list_empty_title_all_files">Inga filer kunde hittas</string>
   <string name="file_list_empty_title_shared_by_links">Inga delade länkar</string>
   <string name="file_list_empty_subtitle_all_files">Ladda upp innehåll eller synkronisera med dina enheter!</string>
+  <string name="shares_list_empty_title">Inga delningar</string>
   <string name="file_list_empty_subtitle_shared_by_links">Filer och mappar du delar som länkar kommer visas här</string>
   <string name="file_list_loading">Laddar...</string>
   <string name="file_list_no_app_for_file_type">Ingen app hittades för filtypen</string>
@@ -136,10 +145,12 @@
   <string name="file_list_files">fil</string>
   <string name="filedetails_select_file">Peka på en fil för att visa mer information.</string>
   <string name="upload_to">Ladda upp till %1$s</string>
+  <string name="pick_document_type">Välj en dokumenttyp att skapa:</string>
   <string name="upload_files_title">Filer</string>
   <string name="filedetails_size">Storlek:</string>
   <string name="filedetails_type">Typ:</string>
   <string name="filedetails_created">Skapad:</string>
+  <string name="filedetails_last_sync">Senaste synk:</string>
   <string name="filedetails_modified">Ändrad:</string>
   <string name="filedetails_download">Ladda ner</string>
   <string name="filedetails_file_image_content_description">Fil bild</string>
@@ -176,11 +187,12 @@
   <string name="uploader_upload_failed_ssl_certificate_not_trusted">Litar inte på servercertifikat</string>
   <string name="uploader_upload_text_dialog_title">Välj ett namn för den nya filen</string>
   <string name="uploader_upload_text_dialog_filename_error_empty">Filnamnet får inte vara tomt</string>
-  <string name="uploader_upload_text_dialog_filename_error_length_max">Filnamnet får inte ha fler än %d tecken</string>
+  <string name="uploader_upload_text_dialog_filename_error_length_max">Filnamn får inte vara längre än %d karaktärer</string>
   <string name="uploader_upload_text_filename_hint">Filnamn</string>
   <string name="uploader_upload_picture_upload_files">%d nya bilder kommer att laddas upp</string>
   <string name="uploader_upload_video_upload_files">%d nya videor kommer att laddas upp</string>
   <string name="uploader_upload_camera_upload_source_path_error">Kamerauppladdning misslyckades</string>
+  <string name="uploader_upload_available_offline_files">Laddar upp tillgängliga offlinefiler</string>
   <string name="ssl_certificate_not_trusted">Litar inte på servercertifikat</string>
   <string name="uploads_view_title">Uppladdningar</string>
   <string name="uploads_view_group_current_uploads">Nuvarande</string>
@@ -205,6 +217,8 @@
   <string name="uploads_view_upload_status_waiting_for_wifi">Väntar på anslutning till trådlöst nätverk</string>
   <string name="uploads_view_later_waiting_to_upload">Väntar på att ladda upp</string>
   <string name="uploads_view_unsupported_media_type">Saknar stöd för denna mediatyp</string>
+  <string name="uploader_upload_canceled_ticker">Uppladdning avbryten</string>
+  <string name="downloader_download_canceled_ticker">Nedladdning avbruten</string>
   <string name="downloader_download_in_progress_ticker">Laddar ner...</string>
   <string name="downloader_download_in_progress_content">%1$d%% Laddar ner %2$s</string>
   <string name="downloader_download_succeeded_ticker">Nedladdning klar</string>
@@ -307,7 +321,6 @@
   <string name="sync_file_fail_msg">Fjärrfilen kunde inte kontrolleras</string>
   <string name="sync_file_nothing_to_do_msg">Filinnehåll redan synkroniserat</string>
   <string name="create_dir_fail_msg">Mapp kunde inte skapas</string>
-  <string name="filename_forbidden_characters">Förbjudna tecken är: / \\ &lt; &gt; : \" | ? *</string>
   <string name="filename_forbidden_characters_from_server">Filnamnet innehåller minst ett ogiltigt tecken</string>
   <string name="filename_empty">Filnamnet får inte lämnas blankt</string>
   <string name="wait_a_moment">Var god vänta</string>
@@ -352,7 +365,6 @@
   <string name="placeholder_timestamp">2012/05/18 12:23 PM</string>
   <string name="placeholder_media_time">12:23:45</string>
   <string name="confirmation_disable_camera_uploads_title">Bekräfta</string>
-  <string name="conflict_title">Filkonflikt</string>
   <string name="conflict_description">Det är en konflikt i filen %1$s, klicka för att lösa den</string>
   <string name="conflict_message">Vilka filer vill du behålla? Om du markerar båda kommer den lokala filen få ett nummer tillagt i slutet på filnamnet.</string>
   <string name="conflict_keep_both">Behåll båda</string>
@@ -476,12 +488,7 @@
   <string name="edit_share_done">färdig</string>
   <string name="action_upload_retry">Försök igen</string>
   <string name="action_upload_clear">Rensa</string>
-  <string name="manage_space_title">Hantera utrymme</string>
-  <string name="manage_space_description">Inställningar, databas och servercertifikat från %1$s\'s data kommer att raderas permanent. \n\nNedladdade filer kommer inte påverkas.\n\nDetta kan ta ett tag.</string>
-  <string name="manage_space_clear_data">Rensa data</string>
-  <string name="manage_space_error">Vissa filer kunde inte raderas.</string>
   <string name="local_file_not_found_toast">Filen hittades inte i det lokala filsystemet</string>
-  <string name="confirmation_remove_files_alert">Vill du verkligen ta bort de markerade objekten?</string>
   <string name="confirmation_remove_folders_alert">Vill du verkligen ta bort de markerade objekten och deras innehåll?</string>
   <string name="failed_upload_quota_exceeded_text">Inte tillräckligt med utrymme på ditt konto</string>
   <string name="auth_forbidden">Förbjuden autentisering</string>
@@ -555,4 +562,7 @@
   <!--Release Notes-->
   <string name="release_notes_proceed">Fortsätt</string>
   <!--Open in web-->
+  <!--oCIS accounts warning-->
+  <string name="ocis_accounts_warning_checkbox_message">Visa inte igen</string>
+  <string name="tab_label_ascii">Text</string>
 </resources>

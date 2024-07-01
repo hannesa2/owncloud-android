@@ -72,9 +72,11 @@
   <string name="pattern_not_same_pattern">Mynstrin eru ekki eins</string>
   <!--Bottom navigation bar-->
   <string name="bottom_nav_files">Skrár</string>
+  <string name="bottom_nav_personal">Einka</string>
   <string name="bottom_nav_uploads">Innsendingar</string>
   <string name="bottom_nav_offline">Ónettengt</string>
   <string name="bottom_nav_links">Tenglar</string>
+  <string name="bottom_nav_shares">Sameignir</string>
   <string name="recommend_subject">Prófaðu %1$s á snjallsímanum þínum!</string>
   <string name="recommend_text">Ég vil gjarnan bjóða þér að nota %1$s á snjallsímanum þínum!\nSæktu það hér: %2$s</string>
   <string name="auth_failure_snackbar">Auðkenning mistókst</string>
@@ -318,7 +320,6 @@
   <string name="placeholder_timestamp">2012/05/18 12:23 EH</string>
   <string name="placeholder_media_time">12:23:45</string>
   <string name="confirmation_disable_camera_uploads_title">Staðfesta</string>
-  <string name="conflict_title">Árekstur skráa</string>
   <string name="conflict_message">Ef þú velur báðar útgáfur, þá mun verða bætt tölustaf aftan við heiti skrárinnar á tölvunni.</string>
   <string name="conflict_keep_both">Halda báðum</string>
   <string name="conflict_use_local_version">útgáfu á tölvu</string>
@@ -400,7 +401,7 @@
   <string name="upload_copy_files">Afrita skrá</string>
   <string name="upload_move_files">Færa skrá</string>
   <string name="pref_behaviour_entries_keep_file">áfram í upprunalegri möppu</string>
-    <string name="share_dialog_title">Deila</string>
+  <string name="share_dialog_title">Deila</string>
   <string name="share_file">Deila %1$s</string>
   <string name="share_with_user_section_title">Notendur og hópar</string>
   <string name="share_no_users">Engum gögnum ennþá deilt með notendum</string>
@@ -436,12 +437,7 @@
   <string name="edit_share_done">lokið</string>
   <string name="action_upload_retry">Reyna aftur</string>
   <string name="action_upload_clear">Hreinsa</string>
-  <string name="manage_space_title">Sýsla með geymslurými</string>
-  <string name="manage_space_description">Stillingar, gagnagrunnur og skilríki þjóna úr gögnum %1$s verður eytt endanlega. \n\nSóttar skrár verða skildar eftir ósnertar.\n\nÞetta ferli getur tekið drjúgan tíma.</string>
-  <string name="manage_space_clear_data">Hreinsa gögn</string>
-  <string name="manage_space_error">Ekki tókst að eyða öllum skrám.</string>
   <string name="local_file_not_found_toast">Skráin fannst ekki á tölvunni þinni</string>
-  <string name="confirmation_remove_files_alert">Ertu viss um að þú viljir fjarlægja valin atriði?</string>
   <string name="confirmation_remove_folders_alert">Ertu viss um að þú viljir fjarlægja valin atriði og innihald þeirra?</string>
   <string name="failed_upload_quota_exceeded_text">Ekki nægt pláss tiltækt á aðgangnum</string>
   <string name="auth_forbidden">Auðkenning bönnuð</string>

@@ -16,6 +16,7 @@
   <string name="actionbar_send_file">Versturen</string>
   <string name="actionbar_descending">Aflopend</string>
   <string name="actionbar_sort_title">Sorteer op</string>
+  <string name="fab_new_file">Nieuw document</string>
   <string name="drawer_item_all_files">Alle bestanden</string>
   <string name="drawer_item_only_available_offline">Beschikbaar off-line</string>
   <string name="drawer_item_shared_by_link_files">Gedeeld via een link</string>
@@ -86,9 +87,11 @@
   <string name="illegal_argument_exception_message">Een geldige ACTIE is nodig in de Intentie die wordt doorgegeven aan</string>
   <!--Bottom navigation bar-->
   <string name="bottom_nav_files">Bestanden</string>
+  <string name="bottom_nav_personal">Persoonlijk</string>
   <string name="bottom_nav_uploads">Uploads</string>
   <string name="bottom_nav_offline">Offline</string>
   <string name="bottom_nav_links">Links</string>
+  <string name="bottom_nav_shares">Gedeeld</string>
   <string name="recommend_subject">Probeer %1$s op uw smartphone!</string>
   <string name="recommend_text">Uitnodiging om %1$s op uw smartphone uit te proberen!
 Download hier: %2$s</string>
@@ -139,6 +142,7 @@ Download hier: %2$s</string>
   <string name="filedetails_size">Grootte:</string>
   <string name="filedetails_type">Type:</string>
   <string name="filedetails_created">Aangemaakt:</string>
+  <string name="filedetails_last_sync">Laatste sync:</string>
   <string name="filedetails_modified">Aangepast:</string>
   <string name="filedetails_download">Download</string>
   <string name="filedetails_sync_file">Synchroniseren</string>
@@ -173,7 +177,6 @@ Download hier: %2$s</string>
   <string name="uploader_upload_failed_ssl_certificate_not_trusted">Het servercertificaat is niet vertrouwd</string>
   <string name="uploader_upload_text_dialog_title">Voer de naam in van het nieuwe bestand</string>
   <string name="uploader_upload_text_dialog_filename_error_empty">Bestandsnaam mag niet leeg zijn</string>
-  <string name="uploader_upload_text_dialog_filename_error_length_max">De bestandsnaam mag niet langer zijn dan %d tekens</string>
   <string name="uploader_upload_text_filename_hint">Bestandsnaam</string>
   <string name="uploader_upload_camera_upload_files">Camera bestanden worden geupload</string>
   <string name="uploader_upload_available_offline_files">Uploaden van beschikbare offline bestanden</string>
@@ -306,7 +309,6 @@ Download hier: %2$s</string>
   <string name="sync_file_fail_msg">Extern bestand kon niet worden gecontroleerd</string>
   <string name="sync_file_nothing_to_do_msg">Bestandsinhoud is al gesynchroniseerd</string>
   <string name="create_dir_fail_msg">Map kon niet worden aangemaakt</string>
-  <string name="filename_forbidden_characters">Verboden tekens: / \\ &lt; &gt; : \" | ? *</string>
   <string name="filename_forbidden_characters_from_server">De bestandsnaam bevat ten minste één ongeldig teken</string>
   <string name="filename_empty">Bestandsnaam mag niet leeg zijn</string>
   <string name="wait_a_moment">Even geduld</string>
@@ -355,7 +357,6 @@ Download hier: %2$s</string>
   <string name="confirmation_disable_videos_upload_message">Weet u zeker dat u deze optie uit wilt schakelen? Klaarstaande video’s worden niet geuploade</string>
   <string name="proper_pics_folder_warning_camera_upload">Zorg ervoor dat de map is geselecteerd waar de camera foto\'s opslaat na het opnemen. Anders is deze functionaliteit niet in staat om de foto\'s te detecteren. Houd er rekening mee dat uploaden van video\'s tot 15 minuten kan duren.</string>
   <string name="proper_videos_folder_warning_camera_upload">Zorg ervoor dat de map is geselecteerd waar de camera video\'s opslaat na het opnemen. Anders is deze functionaliteit niet in staat om de video\'s te detecteren. Houd er rekening mee dat uploaden van video\'s tot 15 minuten kan duren.</string>
-  <string name="conflict_title">Bestandsconflict</string>
   <string name="conflict_description">Er is een conflict in bestand %1$s, klik om het op te lossen</string>
   <string name="conflict_message">Welke bestanden wilt u bewaren? Als u beide versies selecteert zal het lokale bestand een nummer aan de naam toegevoegd krijgen.</string>
   <string name="conflict_keep_both">Beide bewaren</string>
@@ -481,12 +482,7 @@ Neem contact op met uw beheerder</string>
   <string name="edit_share_done">gedaan</string>
   <string name="action_upload_retry">Opniew</string>
   <string name="action_upload_clear">Opschonen</string>
-  <string name="manage_space_title">Beheer ruimte</string>
-  <string name="manage_space_description">Instellingen, database en servercertificaten van %1$s\'s data zullen permanent worden verwijderd. \n\nGedownloade bestanden blijven onaangeroerd.\n\nDit proces kan even duren.</string>
-  <string name="manage_space_clear_data">Verwijder data</string>
-  <string name="manage_space_error">Sommige bestanden konden niet worden verwijderd</string>
   <string name="local_file_not_found_toast">Het bestand is niet te vinden binnen het lokale bestandssysteem.</string>
-  <string name="confirmation_remove_files_alert">Wilt u werkelijk de geselecteerde onderwerpen verwijderen?</string>
   <string name="confirmation_remove_folders_alert">Wilt u werkelijk de geselecteerde onderwerpen en de inhoud ervan verwijderen?</string>
   <string name="failed_upload_quota_exceeded_text">Niet genoeg ruimte in dit account</string>
   <string name="auth_forbidden">Verboden authenticatie</string>
@@ -556,4 +552,7 @@ Neem contact op met uw beheerder</string>
   <!--Release Notes-->
   <string name="release_notes_proceed">Ga verder</string>
   <!--Open in web-->
+  <!--oCIS accounts warning-->
+  <string name="ocis_accounts_warning_checkbox_message">Toon niet nogmaals</string>
+  <string name="tab_label_ascii">Tekst</string>
 </resources>

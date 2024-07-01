@@ -58,7 +58,7 @@ class ShareViewModel(
     private val _shares = MediatorLiveData<Event<UIResult<List<OCShare>>>>()
     val shares: LiveData<Event<UIResult<List<OCShare>>>> = _shares
 
-    private var sharesLiveData: LiveData<List<OCShare>> = getSharesAsLiveDataUseCase.execute(
+    private var sharesLiveData: LiveData<List<OCShare>> = getSharesAsLiveDataUseCase(
         GetSharesAsLiveDataUseCase.Params(filePath = filePath, accountName = accountName)
     )
 
@@ -133,7 +133,7 @@ class ShareViewModel(
     fun refreshPrivateShare(
         remoteId: String
     ) {
-        val privateShareLiveData = getShareAsLiveDataUseCase.execute(
+        val privateShareLiveData = getShareAsLiveDataUseCase(
             GetShareAsLiveDataUseCase.Params(remoteId)
         )
 
@@ -175,7 +175,6 @@ class ShareViewModel(
         name: String,
         password: String,
         expirationTimeInMillis: Long,
-        publicUpload: Boolean,
         accountName: String
     ) = runUseCaseWithResult(
         coroutineDispatcher = coroutineDispatcherProvider.io,
@@ -188,7 +187,6 @@ class ShareViewModel(
             name,
             password,
             expirationTimeInMillis,
-            publicUpload,
             accountName
         ),
         postSuccessWithData = false
@@ -203,7 +201,6 @@ class ShareViewModel(
         password: String?,
         expirationDateInMillis: Long,
         permissions: Int,
-        publicUpload: Boolean,
         accountName: String
     ) = runUseCaseWithResult(
         coroutineDispatcher = coroutineDispatcherProvider.io,
@@ -216,7 +213,6 @@ class ShareViewModel(
             password,
             expirationDateInMillis,
             permissions,
-            publicUpload,
             accountName
         ),
         postSuccessWithData = false
