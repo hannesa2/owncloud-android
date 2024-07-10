@@ -8,8 +8,11 @@
  * @author Christian Schabesberger
  * @author Shashvat Kedia
  * @author Abel García de Prada
+ * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
+ *
  * Copyright (C) 2012  Bartek Przybylski
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -30,6 +33,7 @@ import android.accounts.Account
 import android.accounts.AccountAuthenticatorResponse
 import android.accounts.AccountManager
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
@@ -50,10 +54,11 @@ import com.owncloud.android.domain.authentication.oauth.model.ResponseType
 import com.owncloud.android.domain.authentication.oauth.model.TokenRequest
 import com.owncloud.android.domain.exceptions.NoNetworkConnectionException
 import com.owncloud.android.domain.exceptions.OwncloudVersionNotSupportedException
+import com.owncloud.android.domain.exceptions.SSLErrorCode
+import com.owncloud.android.domain.exceptions.SSLErrorException
 import com.owncloud.android.domain.exceptions.ServerNotReachableException
 import com.owncloud.android.domain.exceptions.StateMismatchException
 import com.owncloud.android.domain.exceptions.UnauthorizedException
-import com.owncloud.android.domain.server.model.AuthenticationMethod
 import com.owncloud.android.domain.server.model.ServerInfo
 import com.owncloud.android.extensions.checkPasscodeEnforced
 import com.owncloud.android.extensions.goToUrl
@@ -64,9 +69,9 @@ import com.owncloud.android.extensions.showMessageInSnackbar
 import com.owncloud.android.lib.common.accounts.AccountTypeUtils
 import com.owncloud.android.lib.common.accounts.AccountUtils
 import com.owncloud.android.lib.common.network.CertificateCombinedException
+import com.owncloud.android.presentation.authentication.AccountUtils.getAccounts
 import com.owncloud.android.presentation.authentication.AccountUtils.getUsernameOfAccount
 import com.owncloud.android.presentation.authentication.oauth.OAuthUtils
-import com.owncloud.android.presentation.authentication.oauth.OAuthViewModel
 import com.owncloud.android.presentation.common.UIResult
 import com.owncloud.android.presentation.documentsprovider.DocumentsProviderUtils.Companion.notifyDocumentsProviderRoots
 import com.owncloud.android.presentation.security.LockType
@@ -74,8 +79,11 @@ import com.owncloud.android.presentation.security.SecurityEnforced
 import com.owncloud.android.presentation.settings.SettingsActivity
 import com.owncloud.android.providers.ContextProvider
 import com.owncloud.android.providers.MdmProvider
+import com.owncloud.android.ui.activity.FileDisplayActivity
 import com.owncloud.android.ui.dialog.SslUntrustedCertDialog
+import com.owncloud.android.utils.CONFIGURATION_OAUTH2_OPEN_ID_PROMPT
 import com.owncloud.android.utils.CONFIGURATION_OAUTH2_OPEN_ID_SCOPE
+import com.owncloud.android.utils.CONFIGURATION_SEND_LOGIN_HINT_AND_USER
 import com.owncloud.android.utils.CONFIGURATION_SERVER_URL
 import com.owncloud.android.utils.CONFIGURATION_SERVER_URL_INPUT_VISIBILITY
 import com.owncloud.android.utils.NO_MDM_RESTRICTION_YET
@@ -88,7 +96,6 @@ import java.io.File
 class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrustedCertListener, SecurityEnforced {
 
     private val authenticationViewModel by viewModel<AuthenticationViewModel>()
-    private val oauthViewModel by viewModel<OAuthViewModel>()
     private val contextProvider by inject<ContextProvider>()
     private val mdmProvider by inject<MdmProvider>()
 
@@ -117,6 +124,7 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
         } // else, let it go, or taking screenshots & testing will not be possible
 
         // Get values from intent
+        handleDeepLink()
         loginAction = intent.getByteExtra(EXTRA_ACTION, ACTION_CREATE)
         authTokenType = intent.getStringExtra(KEY_AUTH_TOKEN_TYPE)
         userAccount = intent.getParcelableExtra(EXTRA_ACCOUNT)
@@ -168,9 +176,7 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
         binding.embeddedCheckServerButton.setOnClickListener { checkOcServer() }
 
         binding.loginButton.setOnClickListener {
-            if (AccountTypeUtils.getAuthTokenTypeAccessToken(accountType) == authTokenType) { // OAuth
-                startOIDCOauthorization()
-            } else { // Basic
+            if (AccountTypeUtils.getAuthTokenTypeAccessToken(accountType) != authTokenType) { // Basic
                 authenticationViewModel.loginBasic(
                     binding.accountUsername.text.toString().trim(),
                     binding.accountPassword.text.toString(),
@@ -190,15 +196,34 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
         initLiveDataObservers()
     }
 
-    private fun initLiveDataObservers() {
-        // LiveData observers
-        authenticationViewModel.webfingerHost.observe(this) { event ->
-            when (val uiResult = event.peekContent()) {
-                is UIResult.Loading -> getWebfingerIsLoading()
-                is UIResult.Success -> getWebfingerIsSuccess(uiResult)
-                is UIResult.Error -> getWebfingerIsError(uiResult)
+    private fun handleDeepLink() {
+        if (intent.data != null) {
+            authenticationViewModel.launchedFromDeepLink = true
+            if (getAccounts(baseContext).isNotEmpty()) {
+                launchFileDisplayActivity()
+            } else {
+                showMessageInSnackbar(message = baseContext.getString(R.string.uploader_wrn_no_account_title))
             }
         }
+    }
+
+    private fun launchFileDisplayActivity() {
+        val newIntent = Intent(this, FileDisplayActivity::class.java)
+        newIntent.data = intent.data
+        startActivity(newIntent)
+        finish()
+    }
+
+    private fun initLiveDataObservers() {
+        // LiveData observers
+        authenticationViewModel.legacyWebfingerHost.observe(this) { event ->
+            when (val uiResult = event.peekContent()) {
+                is UIResult.Loading -> getLegacyWebfingerIsLoading()
+                is UIResult.Success -> getLegacyWebfingerIsSuccess(uiResult)
+                is UIResult.Error -> getLegacyWebfingerIsError(uiResult)
+            }
+        }
+
         authenticationViewModel.serverInfo.observe(this) { event ->
             when (val uiResult = event.peekContent()) {
                 is UIResult.Loading -> getServerInfoIsLoading()
@@ -212,6 +237,23 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
                 is UIResult.Loading -> loginIsLoading()
                 is UIResult.Success -> loginIsSuccess(uiResult)
                 is UIResult.Error -> loginIsError(uiResult)
+            }
+        }
+
+        authenticationViewModel.accountDiscovery.observe(this) {
+            if (it.peekContent() is UIResult.Success) {
+                notifyDocumentsProviderRoots(applicationContext)
+                if (authenticationViewModel.launchedFromDeepLink) {
+                    launchFileDisplayActivity()
+                } else {
+                    finish()
+                }
+            } else {
+                binding.authStatusText.run {
+                    text = context.getString(R.string.login_account_preparing)
+                    isVisible = true
+                    setCompoundDrawablesWithIntrinsicBounds(R.drawable.progress_small, 0, 0, 0)
+                }
             }
         }
 
@@ -238,7 +280,7 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
         }
     }
 
-    private fun getWebfingerIsLoading() {
+    private fun getLegacyWebfingerIsLoading() {
         binding.webfingerStatusText.run {
             text = getString(R.string.auth_testing_connection)
             setCompoundDrawablesWithIntrinsicBounds(R.drawable.progress_small, 0, 0, 0)
@@ -246,7 +288,7 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
         }
     }
 
-    private fun getWebfingerIsSuccess(uiResult: UIResult.Success<String>) {
+    private fun getLegacyWebfingerIsSuccess(uiResult: UIResult.Success<String>) {
         val serverUrl = uiResult.data ?: return
         username = binding.webfingerUsername.text.toString()
         binding.webfingerLayout.isVisible = false
@@ -255,12 +297,13 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
         checkOcServer()
     }
 
-    private fun getWebfingerIsError(uiResult: UIResult<String>) {
-        when (uiResult.getThrowableOrNull()) {
+    private fun getLegacyWebfingerIsError(uiResult: UIResult.Error<String>) {
+        when (uiResult.error) {
             is NoNetworkConnectionException -> binding.webfingerStatusText.run {
                 text = getString(R.string.error_no_network_connection)
                 setCompoundDrawablesWithIntrinsicBounds(R.drawable.no_network, 0, 0, 0)
             }
+
             else -> binding.webfingerStatusText.run {
                 text = uiResult.getThrowableOrNull()?.parseError("", resources, true)
                 setCompoundDrawablesWithIntrinsicBounds(R.drawable.common_error, 0, 0, 0)
@@ -272,7 +315,7 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
     private fun checkOcServer() {
         val uri = binding.hostUrlInput.text.toString().trim()
         if (uri.isNotEmpty()) {
-            authenticationViewModel.getServerInfo(serverUrl = uri)
+            authenticationViewModel.getServerInfo(serverUrl = uri, loginAction == ACTION_CREATE)
         } else {
             binding.serverStatusText.run {
                 text = getString(R.string.auth_can_not_auth_against_server).also { Timber.d(it) }
@@ -284,6 +327,7 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
     private fun getServerInfoIsSuccess(uiResult: UIResult.Success<ServerInfo>) {
         updateCenteredRefreshButtonVisibility(shouldBeVisible = false)
         uiResult.data?.run {
+            val serverInfo = this
             serverBaseUrl = baseUrl
             binding.hostUrlInput.run {
                 setText(baseUrl)
@@ -304,33 +348,69 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
                 if (isSecureConnection) {
                     text = getString(R.string.auth_secure_connection)
                     setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_lock, 0, 0, 0)
+                    checkServerType(serverInfo)
                 } else {
                     text = getString(R.string.auth_connection_established)
                     setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_lock_open, 0, 0, 0)
+                    val builder = AlertDialog.Builder(context)
+                    builder.apply {
+                        setTitle(context.getString(R.string.insecure_http_url_title_dialog))
+                        setMessage(context.getString(R.string.insecure_http_url_message_dialog))
+                        setPositiveButton(R.string.insecure_http_url_continue_button) { dialog, which ->
+                            checkServerType(serverInfo)
+                        }
+                        setNegativeButton(android.R.string.cancel) { dialog, which ->
+                            showOrHideBasicAuthFields(shouldBeVisible = false)
+                        }
+                        setCancelable(false)
+                        show()
+                    }
                 }
                 isVisible = true
             }
+        }
+    }
 
-            when (authenticationMethod) {
-                AuthenticationMethod.BASIC_HTTP_AUTH -> {
-                    authTokenType = BASIC_TOKEN_TYPE
-                    showOrHideBasicAuthFields(shouldBeVisible = true)
-                    binding.accountUsername.doAfterTextChanged { updateLoginButtonVisibility() }
-                    binding.accountPassword.doAfterTextChanged { updateLoginButtonVisibility() }
+    private fun checkServerType(serverInfo: ServerInfo) {
+        when (serverInfo) {
+            is ServerInfo.BasicServer -> {
+                authTokenType = BASIC_TOKEN_TYPE
+                oidcSupported = false
+                showOrHideBasicAuthFields(shouldBeVisible = true)
+                binding.accountUsername.doAfterTextChanged { updateLoginButtonVisibility() }
+                binding.accountPassword.doAfterTextChanged { updateLoginButtonVisibility() }
+            }
+
+            is ServerInfo.OAuth2Server -> {
+                showOrHideBasicAuthFields(shouldBeVisible = false)
+                authTokenType = OAUTH_TOKEN_TYPE
+                oidcSupported = false
+
+                val oauth2authorizationEndpoint =
+                    Uri.parse("$serverBaseUrl${File.separator}${getString(R.string.oauth2_url_endpoint_auth)}")
+                performGetAuthorizationCodeRequest(oauth2authorizationEndpoint)
+            }
+
+            is ServerInfo.OIDCServer -> {
+                showOrHideBasicAuthFields(shouldBeVisible = false)
+                authTokenType = OAUTH_TOKEN_TYPE
+                oidcSupported = true
+                val registrationEndpoint = serverInfo.oidcServerConfiguration.registrationEndpoint
+                if (registrationEndpoint != null) {
+                    registerClient(
+                        authorizationEndpoint = serverInfo.oidcServerConfiguration.authorizationEndpoint.toUri(),
+                        registrationEndpoint = registrationEndpoint
+                    )
+                } else {
+                    performGetAuthorizationCodeRequest(serverInfo.oidcServerConfiguration.authorizationEndpoint.toUri())
                 }
+            }
 
-                AuthenticationMethod.BEARER_TOKEN -> {
-                    showOrHideBasicAuthFields(shouldBeVisible = false)
-                    authTokenType = OAUTH_TOKEN_TYPE
-                    startOIDCOauthorization()
-                }
-
-                else -> {
-                    binding.serverStatusText.run {
-                        text = getString(R.string.auth_unsupported_auth_method)
-                        setCompoundDrawablesWithIntrinsicBounds(R.drawable.common_error, 0, 0, 0)
-                        isVisible = true
-                    }
+            else -> {
+                binding.serverStatusText.run {
+                    text = getString(R.string.auth_unsupported_auth_method)
+                    setCompoundDrawablesWithIntrinsicBounds(R.drawable.common_error, 0, 0, 0)
+                    isVisible = true
                 }
             }
         }
@@ -344,21 +424,29 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
         }
     }
 
-    private fun getServerInfoIsError(uiResult: UIResult<ServerInfo>) {
+    private fun getServerInfoIsError(uiResult: UIResult.Error<ServerInfo>) {
         updateCenteredRefreshButtonVisibility(shouldBeVisible = true)
-        when (uiResult.getThrowableOrNull()) {
-            is CertificateCombinedException ->
-                showUntrustedCertDialog(uiResult.getThrowableOrNull() as CertificateCombinedException)
-            is OwncloudVersionNotSupportedException -> binding.serverStatusText.run {
+        when {
+            uiResult.error is CertificateCombinedException ->
+                showUntrustedCertDialog(uiResult.error)
+
+            uiResult.error is OwncloudVersionNotSupportedException -> binding.serverStatusText.run {
                 text = getString(R.string.server_not_supported)
                 setCompoundDrawablesWithIntrinsicBounds(R.drawable.common_error, 0, 0, 0)
             }
-            is NoNetworkConnectionException -> binding.serverStatusText.run {
+
+            uiResult.error is NoNetworkConnectionException -> binding.serverStatusText.run {
                 text = getString(R.string.error_no_network_connection)
                 setCompoundDrawablesWithIntrinsicBounds(R.drawable.no_network, 0, 0, 0)
             }
+
+            uiResult.error is SSLErrorException && uiResult.error.code == SSLErrorCode.NOT_HTTP_ALLOWED -> binding.serverStatusText.run {
+                text = getString(R.string.ssl_connection_not_secure)
+                setCompoundDrawablesWithIntrinsicBounds(R.drawable.common_error, 0, 0, 0)
+            }
+
             else -> binding.serverStatusText.run {
-                text = uiResult.getThrowableOrNull()?.parseError("", resources, true)
+                text = uiResult.error?.parseError("", resources, true)
                 setCompoundDrawablesWithIntrinsicBounds(R.drawable.common_error, 0, 0, 0)
             }
         }
@@ -366,23 +454,21 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
         showOrHideBasicAuthFields(shouldBeVisible = false)
     }
 
-    private fun loginIsSuccess(uiResult: UIResult<String>) {
+    private fun loginIsSuccess(uiResult: UIResult.Success<String>) {
         binding.authStatusText.run {
             isVisible = false
             text = ""
         }
 
         // Return result to account authenticator, multiaccount does not work without this
-        val accountName = uiResult.getStoredData()
+        val accountName = uiResult.data!!
         val intent = Intent()
         intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, accountName)
         intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, contextProvider.getString(R.string.account_type))
         resultBundle = intent.extras
         setResult(Activity.RESULT_OK, intent)
 
-        notifyDocumentsProviderRoots(applicationContext)
-
-        finish()
+        authenticationViewModel.discoverAccount(accountName = accountName, discoveryNeeded = loginAction == ACTION_CREATE)
     }
 
     private fun loginIsLoading() {
@@ -393,8 +479,8 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
         }
     }
 
-    private fun loginIsError(uiResult: UIResult<String>) {
-        when (uiResult.getThrowableOrNull()) {
+    private fun loginIsError(uiResult: UIResult.Error<String>) {
+        when (uiResult.error) {
             is NoNetworkConnectionException, is ServerNotReachableException -> {
                 binding.serverStatusText.run {
                     text = getString(R.string.error_no_network_connection)
@@ -402,50 +488,13 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
                 }
                 showOrHideBasicAuthFields(shouldBeVisible = false)
             }
+
             else -> {
                 binding.serverStatusText.isVisible = false
                 binding.authStatusText.run {
-                    text = uiResult.getThrowableOrNull()?.parseError("", resources, true)
+                    text = uiResult.error?.parseError("", resources, true)
                     isVisible = true
                     setCompoundDrawablesWithIntrinsicBounds(R.drawable.common_error, 0, 0, 0)
-                }
-            }
-        }
-    }
-
-    /**
-     * OAuth step 1: Get authorization code
-     * Firstly, try the OAuth authorization with Open Id Connect, checking whether there's an available .well-known url
-     * to use or not
-     */
-    private fun startOIDCOauthorization() {
-        binding.serverStatusText.run {
-            setCompoundDrawablesWithIntrinsicBounds(R.drawable.progress_small, 0, 0, 0)
-            text = resources.getString(R.string.oauth_login_connection)
-        }
-
-        oauthViewModel.getOIDCServerConfiguration(serverBaseUrl)
-        oauthViewModel.oidcDiscovery.observe(this) {
-            when (val uiResult = it.peekContent()) {
-                is UIResult.Loading -> {}
-                is UIResult.Success -> {
-                    Timber.d("Service discovery: ${uiResult.data}")
-                    oidcSupported = true
-                    uiResult.data?.let { oidcServerConfiguration ->
-                        val registrationEndpoint = oidcServerConfiguration.registrationEndpoint
-                        if (registrationEndpoint != null) {
-                            registerClient(
-                                authorizationEndpoint = oidcServerConfiguration.authorizationEndpoint.toUri(),
-                                registrationEndpoint = registrationEndpoint
-                            )
-                        } else {
-                            performGetAuthorizationCodeRequest(oidcServerConfiguration.authorizationEndpoint.toUri())
-                        }
-                    }
-                }
-                is UIResult.Error -> {
-                    Timber.e(uiResult.error, "OIDC failed. Try with normal OAuth")
-                    startNormalOauthorization()
                 }
             }
         }
@@ -458,8 +507,8 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
         authorizationEndpoint: Uri,
         registrationEndpoint: String
     ) {
-        oauthViewModel.registerClient(registrationEndpoint)
-        oauthViewModel.registerClient.observe(this) {
+        authenticationViewModel.registerClient(registrationEndpoint)
+        authenticationViewModel.registerClient.observe(this) {
             when (val uiResult = it.peekContent()) {
                 is UIResult.Loading -> {}
                 is UIResult.Success -> {
@@ -471,22 +520,13 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
                         )
                     }
                 }
+
                 is UIResult.Error -> {
                     Timber.e(uiResult.error, "Client registration failed.")
                     performGetAuthorizationCodeRequest(authorizationEndpoint)
                 }
             }
         }
-    }
-
-    /**
-     * OAuth step 1: Get authorization code
-     * If OIDC is not available, falling back to normal OAuth
-     */
-    private fun startNormalOauthorization() {
-        val oauth2authorizationEndpoint =
-            Uri.parse("$serverBaseUrl${File.separator}${getString(R.string.oauth2_url_endpoint_auth)}")
-        performGetAuthorizationCodeRequest(oauth2authorizationEndpoint)
     }
 
     private fun performGetAuthorizationCodeRequest(
@@ -504,9 +544,11 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
             clientId = clientId,
             responseType = ResponseType.CODE.string,
             scope = if (oidcSupported) mdmProvider.getBrandingString(CONFIGURATION_OAUTH2_OPEN_ID_SCOPE, R.string.oauth2_openid_scope) else "",
-            codeChallenge = oauthViewModel.codeChallenge,
-            state = oauthViewModel.oidcState,
+            prompt = if (oidcSupported) mdmProvider.getBrandingString(CONFIGURATION_OAUTH2_OPEN_ID_PROMPT, R.string.oauth2_openid_prompt) else "",
+            codeChallenge = authenticationViewModel.codeChallenge,
+            state = authenticationViewModel.oidcState,
             username = username,
+            sendLoginHintAndUser = mdmProvider.getBrandingBoolean(mdmKey = CONFIGURATION_SEND_LOGIN_HINT_AND_USER, booleanKey = R.bool.send_login_hint_and_user),
         )
 
         try {
@@ -532,7 +574,7 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
         val authorizationCode = intent.data?.getQueryParameter("code")
         val state = intent.data?.getQueryParameter("state")
 
-        if (state != oauthViewModel.oidcState) {
+        if (state != authenticationViewModel.oidcState) {
             Timber.e("OAuth request to get authorization code failed. State mismatching, maybe somebody is trying a CSRF attack.")
             updateOAuthStatusIconAndText(StateMismatchException())
         } else {
@@ -557,7 +599,7 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
     private fun exchangeAuthorizationCodeForTokens(authorizationCode: String) {
         binding.serverStatusText.text = getString(R.string.auth_getting_authorization)
 
-        val clientRegistrationInfo = oauthViewModel.registerClient.value?.peekContent()?.getStoredData()
+        val clientRegistrationInfo = authenticationViewModel.registerClient.value?.peekContent()?.getStoredData()
 
         val clientAuth = if (clientRegistrationInfo?.clientId != null && clientRegistrationInfo.clientSecret != null) {
             OAuthUtils.getClientAuth(clientRegistrationInfo.clientSecret as String, clientRegistrationInfo.clientId)
@@ -567,8 +609,12 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
         }
 
         // Use oidc discovery one, or build an oauth endpoint using serverBaseUrl + Setup string.
-        val tokenEndPoint = oauthViewModel.oidcDiscovery.value?.peekContent()?.getStoredData()?.tokenEndpoint
-            ?: "$serverBaseUrl${File.separator}${contextProvider.getString(R.string.oauth2_url_endpoint_access)}"
+        val tokenEndPoint = when (val serverInfo = authenticationViewModel.serverInfo.value?.peekContent()?.getStoredData()) {
+            is ServerInfo.OIDCServer -> serverInfo.oidcServerConfiguration.tokenEndpoint
+            else -> "$serverBaseUrl${File.separator}${contextProvider.getString(R.string.oauth2_url_endpoint_access)}"
+        }
+
+        val scope = resources.getString(R.string.oauth2_openid_scope)
 
         val requestToken = TokenRequest.AccessToken(
             baseUrl = serverBaseUrl,
@@ -576,12 +622,13 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
             authorizationCode = authorizationCode,
             redirectUri = OAuthUtils.buildRedirectUri(applicationContext).toString(),
             clientAuth = clientAuth,
-            codeVerifier = oauthViewModel.codeVerifier
+            scope = scope,
+            codeVerifier = authenticationViewModel.codeVerifier
         )
 
-        oauthViewModel.requestToken(requestToken)
+        authenticationViewModel.requestToken(requestToken)
 
-        oauthViewModel.requestToken.observe(this) {
+        authenticationViewModel.requestToken.observe(this) {
             when (val uiResult = it.peekContent()) {
                 is UIResult.Loading -> {}
                 is UIResult.Success -> {
@@ -589,6 +636,7 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
                     val tokenResponse = uiResult.data ?: return@observe
 
                     authenticationViewModel.loginOAuth(
+                        serverBaseUrl = serverBaseUrl,
                         username = tokenResponse.additionalParameters?.get(KEY_USER_ID).orEmpty(),
                         authTokenType = OAUTH_TOKEN_TYPE,
                         accessToken = tokenResponse.accessToken,
@@ -601,6 +649,7 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
                         clientRegistrationInfo = clientRegistrationInfo
                     )
                 }
+
                 is UIResult.Error -> {
                     Timber.e(uiResult.error, "OAuth request to exchange authorization code for tokens failed")
                     updateOAuthStatusIconAndText(uiResult.error)
@@ -719,7 +768,6 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
         val url = mdmProvider.getBrandingString(mdmKey = CONFIGURATION_SERVER_URL, stringKey = R.string.server_url)
         if (url.isNotEmpty()) {
             binding.hostUrlInput.setText(url)
-            checkOcServer()
         }
 
         binding.loginLayout.run {
@@ -742,17 +790,17 @@ class LoginActivity : AppCompatActivity(), SslUntrustedCertDialog.OnSslUntrusted
             } else isVisible = false
         }
 
-        val webfingerLookupServer = mdmProvider.getBrandingString(NO_MDM_RESTRICTION_YET, R.string.webfinger_lookup_server)
-        val shouldShowWebfingerFlow = loginAction == ACTION_CREATE && webfingerLookupServer.isNotBlank()
-        binding.webfingerLayout.isVisible = shouldShowWebfingerFlow
-        binding.mainLoginLayout.isVisible = !shouldShowWebfingerFlow
+        val legacyWebfingerLookupServer = mdmProvider.getBrandingString(NO_MDM_RESTRICTION_YET, R.string.webfinger_lookup_server)
+        val shouldShowLegacyWebfingerFlow = loginAction == ACTION_CREATE && legacyWebfingerLookupServer.isNotBlank()
+        binding.webfingerLayout.isVisible = shouldShowLegacyWebfingerFlow
+        binding.mainLoginLayout.isVisible = !shouldShowLegacyWebfingerFlow
 
-        if (shouldShowWebfingerFlow) {
+        if (shouldShowLegacyWebfingerFlow) {
             binding.webfingerButton.setOnClickListener {
                 val webfingerUsername = binding.webfingerUsername.text.toString()
                 if (webfingerUsername.isNotEmpty()) {
-                    authenticationViewModel.getWebfingerHost(
-                        webfingerLookupServer,
+                    authenticationViewModel.getLegacyWebfingerHost(
+                        legacyWebfingerLookupServer,
                         webfingerUsername
                     )
                 } else {

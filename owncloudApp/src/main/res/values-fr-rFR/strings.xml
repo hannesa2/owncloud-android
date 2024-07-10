@@ -191,7 +191,6 @@ Téléchargez-le ici : %2$s</string>
   <string name="uploader_upload_failed_ssl_certificate_not_trusted">Le certificat du serveur n\'est pas sûr</string>
   <string name="uploader_upload_text_dialog_title">Saisissez le nom du nouveau fichier</string>
   <string name="uploader_upload_text_dialog_filename_error_empty">Le nom de fichier ne doit pas être vide</string>
-  <string name="uploader_upload_text_dialog_filename_error_length_max">Le nom de fichier ne doit pas contenir plus de %d caractères</string>
   <string name="uploader_upload_text_filename_hint">Nom du fichier</string>
   <string name="uploader_upload_camera_upload_files">Téléversement des fichiers de l\'appareil photo </string>
   <string name="uploader_upload_picture_upload_files">%d nouvelles images seront téléversées</string>
@@ -327,7 +326,6 @@ Téléchargez-le ici : %2$s</string>
   <string name="sync_file_fail_msg">Le fichier distant ne peut pas être vérifié</string>
   <string name="sync_file_nothing_to_do_msg">Le contenu du fichier est déjà synchronisé</string>
   <string name="create_dir_fail_msg">Echec de la création du dossier</string>
-  <string name="filename_forbidden_characters">Caractères non autorisés :  / \\ &lt; &gt; : \" | ? *</string>
   <string name="filename_forbidden_characters_from_server">Le nom de fichier contient au moins un caractère invalide</string>
   <string name="filename_empty">Le nom de fichier ne peut pas être vide</string>
   <string name="wait_a_moment">Merci de patienter</string>
@@ -376,7 +374,6 @@ Téléchargez-le ici : %2$s</string>
   <string name="confirmation_disable_videos_upload_message">Etes vous sur de vouloir désactiver cette fonctionnalité ? Les vidéos en attente ne pourront pas être téléversées.</string>
   <string name="proper_pics_folder_warning_camera_upload">Veuillez vous assurer que le dossier sélectionné est bien l\'endroit ou l\'appareil photo que vous utilisez sauvegarde les photos. Sinon, cette fonctionnalité ne pourra pas détecter vos photos. Gardez à l\'esprit que les photos seront téléchargées au moins 15 minutes après les avoir prises.</string>
   <string name="proper_videos_folder_warning_camera_upload">Veuillez vous assurer que le dossier sélectionné est bien l\'endroit ou l\'appareil photo que vous utilisez sauvegarde les videos. Sinon, cette fonctionnalité ne pourra pas détecter vos videos. Gardez à l\'esprit que les videos seront téléversées au moins 15 minutes après avoir été prises.</string>
-  <string name="conflict_title">Conflit de fichier</string>
   <string name="conflict_description">Conflit avec le fichier %1$s, cliquer pour résoudre</string>
   <string name="conflict_message">Quels fichiers voulez vous conserver ? Si les deux versions sont sélectionnées, un numéro de version sera ajouté au nom de fichier de la version locale.</string>
   <string name="conflict_keep_both">Conserver les deux</string>
@@ -503,12 +500,7 @@ Téléchargez-le ici : %2$s</string>
   <string name="edit_share_done">terminé</string>
   <string name="action_upload_retry">Réessayer</string>
   <string name="action_upload_clear">Effacer</string>
-  <string name="manage_space_title">Gérer l\'espace</string>
-  <string name="manage_space_description">Parametres, base de données et certificats du serveur de %1$s seront perdus définitivement. \n\nLes fichiers téléchargés resteront intacts.\n\nCe processus peut prendre un certain temps.</string>
-  <string name="manage_space_clear_data">Effacer les données</string>
-  <string name="manage_space_error">Certains fichiers n\'ont pas pu être supprimés. </string>
   <string name="local_file_not_found_toast">Ce fichier n\'a pas été trouvé dans le système de fichiers local.</string>
-  <string name="confirmation_remove_files_alert">Souhaitez vous vraiment supprimer l\'élément sélectionné ?</string>
   <string name="confirmation_remove_folders_alert">Souhaitez vous vraiment supprimer les éléments sélectionnés et leur contenu ?</string>
   <string name="failed_upload_quota_exceeded_text">Pas assez de place sur ce compte</string>
   <string name="auth_forbidden">Authentification refusée</string>
@@ -591,4 +583,5 @@ Téléchargez-le ici : %2$s</string>
   <!--Webfinger-->
   <!--Release Notes-->
   <!--Open in web-->
+  <!--oCIS accounts warning-->
 </resources>

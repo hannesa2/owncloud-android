@@ -277,8 +277,7 @@
 Čakajúce obrázky nebudú nahrané</string>
   <string name="confirmation_disable_videos_upload_message">Vážne chcete vypnúť túto funkcionalitu ?
 Čakajúce videá nebudú nahraté</string>
-  <string name="conflict_title">Konflikt súborov</string>
-  <string name="conflict_description">Konflok v súbore %1$s, klikni sem a odstráň to</string>
+    <string name="conflict_description">Konflok v súbore %1$s, klikni sem a odstráň to</string>
   <string name="conflict_message">Ktoré súbory si prajate ponachať? Pokiaľ to budú obe verzie, lokálnej pribudne k názvu číslo.</string>
   <string name="conflict_keep_both">Ponechať oba</string>
   <string name="conflict_use_local_version">lokálnu verziu</string>
@@ -403,12 +402,7 @@
   <string name="edit_share_done">Hotovo</string>
   <string name="action_upload_retry">Skúsiť znova</string>
   <string name="action_upload_clear">Vyčistiť</string>
-  <string name="manage_space_title">Spravovať prestor</string>
-  <string name="manage_space_description">Nastavenia, certifikaty databazy a servera z %1$s budú trvalo odstránené. \n\nStiahnuté súbory budú ponechané.\n\nTento proces môžete spustiť iba raz.</string>
-  <string name="manage_space_clear_data">Vyčistenie dát.</string>
-  <string name="manage_space_error">Niektoré súbory nemohli byť zmazané.</string>
   <string name="local_file_not_found_toast">Tento súbor sa nenachádza v lokálnom zozname súborov</string>
-  <string name="confirmation_remove_files_alert">Vážne si želáš odstrániť tieto položky ?</string>
   <string name="confirmation_remove_folders_alert">Vážne si želáš odstrániť tieto položky a ich obsah ?</string>
   <string name="failed_upload_quota_exceeded_text">Nedostatok miesta na disku pre tento Užívateľský profil.</string>
   <string name="auth_forbidden">Zakázaná autentifikácia</string>

@@ -3,8 +3,9 @@
  *
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
+ * @author Aitor Ballesteros Pavón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -27,6 +28,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import androidx.room.Upsert
 import com.owncloud.android.data.ProviderMeta
 import com.owncloud.android.domain.availableoffline.model.AvailableOfflineStatus.AVAILABLE_OFFLINE
 import com.owncloud.android.domain.availableoffline.model.AvailableOfflineStatus.AVAILABLE_OFFLINE_PARENT
@@ -45,21 +47,28 @@ interface FileDao {
         id: Long
     ): OCFileEntity?
 
+    @Query(SELECT_FILE_WITH_ID)
+    fun getFileByIdAsFlow(
+        id: Long
+    ): Flow<OCFileEntity?>
+
     @Transaction
     @Query(SELECT_FILE_WITH_ID)
     fun getFileWithSyncInfoById(
         id: Long
     ): OCFileAndFileSync?
 
+    @Transaction
     @Query(SELECT_FILE_WITH_ID)
-    fun getFileByIdAsFlow(
+    fun getFileWithSyncInfoByIdAsFlow(
         id: Long
-    ): Flow<OCFileEntity?>
+    ): Flow<OCFileAndFileSync?>
 
     @Query(SELECT_FILE_FROM_OWNER_WITH_REMOTE_PATH)
     fun getFileByOwnerAndRemotePath(
         owner: String,
-        remotePath: String
+        remotePath: String,
+        spaceId: String?,
     ): OCFileEntity?
 
     @Query(SELECT_FILE_WITH_REMOTE_ID)
@@ -128,25 +137,30 @@ interface FileDao {
     @Query(SELECT_FILES_AVAILABLE_OFFLINE_FROM_EVERY_ACCOUNT)
     fun getFilesAvailableOfflineFromEveryAccount(): List<OCFileEntity>
 
+    @Query(SELECT_DOWNLOADED_FILES_FOR_ACCOUNT)
+    fun getDownloadedFilesForAccount(
+        accountOwner: String
+    ): List<OCFileEntity>
+
+    @Query(SELECT_FILES_WHERE_LAST_USAGE_IS_OLDER_THAN_GIVEN_TIME)
+    fun getFilesWithLastUsageOlderThanGivenTime(milliseconds: Long): List<OCFileEntity>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertOrIgnore(ocFileEntity: OCFileEntity): Long
 
     @Update
-    fun update(ocFileEntity: OCFileEntity)
+    fun updateFile(ocFileEntity: OCFileEntity)
 
-    @Transaction
-    fun upsert(ocFileEntity: OCFileEntity) = com.owncloud.android.data.upsert(
-        item = ocFileEntity,
-        insert = ::insertOrIgnore,
-        update = ::update
-    )
+    @Upsert
+    fun upsert(ocFileEntity: OCFileEntity)
 
     @Transaction
     fun updateSyncStatusForFile(id: Long, workerUuid: UUID?) {
         val fileWithSyncInfoEntity = getFileWithSyncInfoById(id)
 
         if ((fileWithSyncInfoEntity?.file?.parentId != ROOT_PARENT_ID) &&
-            ((workerUuid == null) != (fileWithSyncInfoEntity?.fileSync?.downloadWorkerUuid == null))) {
+            ((workerUuid == null) != (fileWithSyncInfoEntity?.fileSync?.downloadWorkerUuid == null))
+        ) {
             val fileSyncEntity = if (workerUuid == null) {
                 OCFileSyncEntity(
                     fileId = id,
@@ -192,13 +206,16 @@ interface FileDao {
      * return folder content
      */
     @Transaction
-    fun insertFilesInFolderAndReturnThem(
+    fun insertFilesInFolderAndReturnTheFilesThatChanged(
         folder: OCFileEntity,
         folderContent: List<OCFileEntity>,
     ): List<OCFileEntity> {
         var folderId = insertOrIgnore(folder)
         // If it was already in database
-        if (folderId == -1L) folderId = folder.id
+        if (folderId == -1L) {
+            updateFile(folder)
+            folderId = folder.id
+        }
 
         folderContent.forEach { fileToInsert ->
             upsert(fileToInsert.apply {
@@ -206,7 +223,13 @@ interface FileDao {
                 availableOfflineStatus = getNewAvailableOfflineStatus(folder.availableOfflineStatus, fileToInsert.availableOfflineStatus)
             })
         }
-        return getFolderContent(folderId)
+        val folderContentLocal = getFolderContent(folderId)
+
+        return folderContentLocal.filter { localFile ->
+            folderContent.any { changedFile ->
+                localFile.remoteId == changedFile.remoteId
+            }
+        }
     }
 
     @Transaction
@@ -215,7 +238,8 @@ interface FileDao {
     ): Long {
         val localFile: OCFileEntity? = getFileByOwnerAndRemotePath(
             owner = ocFileEntity.owner,
-            remotePath = ocFileEntity.remotePath
+            remotePath = ocFileEntity.remotePath,
+            ocFileEntity.spaceId,
         )
         return if (localFile == null) {
             insertOrIgnore(ocFileEntity)
@@ -228,6 +252,7 @@ interface FileDao {
                 treeEtag = localFile.treeEtag,
                 etagInConflict = localFile.etagInConflict,
                 availableOfflineStatus = localFile.availableOfflineStatus,
+                lastUsage = localFile.lastUsage,
             ).apply {
                 id = localFile.id
             })
@@ -239,7 +264,8 @@ interface FileDao {
         sourceFile: OCFileEntity,
         targetFolder: OCFileEntity,
         finalRemotePath: String,
-        remoteId: String?
+        remoteId: String?,
+        replace: Boolean?,
     ) {
         // 1. Update target size
         upsert(
@@ -247,6 +273,10 @@ interface FileDao {
                 length = targetFolder.length + sourceFile.length
             ).apply { id = targetFolder.id }
         )
+
+        if (replace == true) {
+            remoteId?.let { deleteFileByRemoteId(it) }
+        }
 
         // 2. Insert a new file with common attributes and retrieved remote id
         upsert(
@@ -306,6 +336,9 @@ interface FileDao {
     @Query(DELETE_FILE_WITH_ID)
     fun deleteFileById(id: Long)
 
+    @Query(DELETE_FILE_WITH_REMOTE_ID)
+    fun deleteFileByRemoteId(remoteId: String)
+
     @Query(UPDATE_FILES_STORAGE_DIRECTORY)
     fun updateDownloadedFilesStorageDirectoryInStoragePath(oldDirectory: String, newDirectory: String)
 
@@ -338,6 +371,9 @@ interface FileDao {
 
     @Query(UPDATE_FILE_WITH_NEW_AVAILABLE_OFFLINE_STATUS)
     fun updateFileWithAvailableOfflineStatus(id: Long, availableOfflineStatus: Int)
+
+    @Query(UPDATE_FILE_WITH_LAST_USAGE)
+    fun updateFileWithLastUsage(id: Long, lastUsage: Long?)
 
     @Transaction
     fun updateConflictStatusForFile(id: Long, eTagInConflict: String?) {
@@ -453,6 +489,7 @@ interface FileDao {
     }
 
     companion object {
+
         private const val SELECT_FILE_WITH_ID = """
             SELECT *
             FROM ${ProviderMeta.ProviderTableMeta.FILES_TABLE_NAME}
@@ -468,13 +505,18 @@ interface FileDao {
         private const val SELECT_FILE_FROM_OWNER_WITH_REMOTE_PATH = """
             SELECT *
             FROM ${ProviderMeta.ProviderTableMeta.FILES_TABLE_NAME}
-            WHERE owner = :owner AND remotePath = :remotePath
+            WHERE owner = :owner AND remotePath = :remotePath AND spaceId IS :spaceId
         """
 
         private const val DELETE_FILE_WITH_ID = """
             DELETE
             FROM ${ProviderMeta.ProviderTableMeta.FILES_TABLE_NAME}
             WHERE id = :id
+        """
+        private const val DELETE_FILE_WITH_REMOTE_ID = """
+            DELETE
+            FROM ${ProviderMeta.ProviderTableMeta.FILES_TABLE_NAME}
+            WHERE remoteId = :remoteId
         """
 
         private const val SELECT_FOLDER_CONTENT = """
@@ -507,6 +549,12 @@ interface FileDao {
             WHERE parentId = :folderId AND mimeType LIKE :mimeType || '%'
         """
 
+        private const val SELECT_DOWNLOADED_FILES_FOR_ACCOUNT = """
+            SELECT *
+            FROM ${ProviderMeta.ProviderTableMeta.FILES_TABLE_NAME}
+            WHERE owner = :accountOwner AND storagePath IS NOT NULL AND keepInSync = '0'
+        """
+
         private const val SELECT_FILES_SHARED_BY_LINK = """
             SELECT *
             FROM ${ProviderMeta.ProviderTableMeta.FILES_TABLE_NAME}
@@ -525,6 +573,13 @@ interface FileDao {
             WHERE keepInSync = '1'
         """
 
+        private const val SELECT_FILES_WHERE_LAST_USAGE_IS_OLDER_THAN_GIVEN_TIME = """
+            SELECT *
+            FROM ${ProviderMeta.ProviderTableMeta.FILES_TABLE_NAME}
+            WHERE lastUsage < (strftime('%s', 'now') * 1000 - :milliseconds)
+            AND keepInSync = '0'
+        """
+
         private const val UPDATE_FILE_WITH_NEW_AVAILABLE_OFFLINE_STATUS = """
             UPDATE ${ProviderMeta.ProviderTableMeta.FILES_TABLE_NAME}
             SET keepInSync = :availableOfflineStatus
@@ -537,6 +592,11 @@ interface FileDao {
             WHERE id = :id
         """
 
+        private const val UPDATE_FILE_WITH_LAST_USAGE = """
+            UPDATE ${ProviderMeta.ProviderTableMeta.FILES_TABLE_NAME}
+            SET lastUsage = :lastUsage
+            WHERE id = :id
+        """
         private const val DISABLE_THUMBNAILS_FOR_FILE = """
             UPDATE ${ProviderMeta.ProviderTableMeta.FILES_TABLE_NAME}
             SET needsToUpdateThumbnail = false

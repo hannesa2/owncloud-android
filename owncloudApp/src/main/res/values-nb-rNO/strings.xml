@@ -16,6 +16,7 @@
   <string name="actionbar_send_file">Send</string>
   <string name="actionbar_descending">Synkende</string>
   <string name="actionbar_sort_title">Sorter etter</string>
+  <string name="fab_new_file">Nytt dokument</string>
   <string name="drawer_item_all_files">Alle filer</string>
   <string name="drawer_item_only_available_offline">Tilgjengelig frakoblet</string>
   <string name="drawer_item_shared_by_link_files">Delt med lenke</string>
@@ -79,9 +80,11 @@
   <string name="illegal_argument_exception_message">En gyldig ACTION må være med i intent sendt til</string>
   <!--Bottom navigation bar-->
   <string name="bottom_nav_files">Filer</string>
+  <string name="bottom_nav_personal">Personlig</string>
   <string name="bottom_nav_uploads">Last opp</string>
   <string name="bottom_nav_offline">Frakoblet</string>
   <string name="bottom_nav_links">Lenker</string>
+  <string name="bottom_nav_shares">Delinger</string>
   <string name="recommend_subject">Prøv %1$s på smarttelefonen din!</string>
   <string name="recommend_text">Jeg ønsker å invitere deg til å bruke %1$s på smarttelefonen din!\nLast ned her: %2$s</string>
   <string name="error_reason">fordi</string>
@@ -131,6 +134,7 @@
   <string name="filedetails_size">Størrelse:</string>
   <string name="filedetails_type">Type:</string>
   <string name="filedetails_created">Opprettet:</string>
+  <string name="filedetails_last_sync">Siste synkronisering:</string>
   <string name="filedetails_modified">Endret:</string>
   <string name="filedetails_download">Last ned</string>
   <string name="filedetails_sync_file">Synkroniser</string>
@@ -291,7 +295,6 @@
   <string name="sync_file_fail_msg">Eksterne filer kunne ikke sjekkes</string>
   <string name="sync_file_nothing_to_do_msg">filinnhold er allerede synkronisert</string>
   <string name="create_dir_fail_msg">Mappe kunne ikke opprettes</string>
-  <string name="filename_forbidden_characters">Forbudte tegn: / \\ &lt; &gt; : \" | ? *</string>
   <string name="filename_forbidden_characters_from_server">Filnavnet inneholder minst ett ulovlig tegn</string>
   <string name="filename_empty">Filnavn kan ikke være tomt</string>
   <string name="wait_a_moment">Vent et øyeblikk</string>
@@ -340,7 +343,6 @@
   <string name="confirmation_disable_videos_upload_message">Er du sikker på at du vil deaktivere denne funksjonen? De ventende videoene vil ikke bli lastet opp</string>
   <string name="proper_pics_folder_warning_camera_upload">Sørg for å velge mappen som kameraet ditt lagrer bildene i. Hvis ikke vil programmet ikke være i stand til å detektere bildene dine. Vær obs på at når du tar bilder vil det ta minst 15 minutter før de blir lastet opp.</string>
   <string name="proper_videos_folder_warning_camera_upload">Sørg for å velge mappen som kameraet ditt lagrer videoene dine i. Hvis ikke vil programmet ikke være i stand til å detektere videoene. Vær obs på at når du er ferdig å ta opp en video vil det ta minst 15 minutter før de blir lastet opp.</string>
-  <string name="conflict_title">Filkonflikt</string>
   <string name="conflict_description">Det er en konflikt i fil %1$s, trykk for å løse den</string>
   <string name="conflict_message">Hvilke filer ønsker du å beholder? Hvis du velger begge versjonene, får den lokale filen lagt til et tall i navnet.</string>
   <string name="conflict_keep_both">Behold begge</string>
@@ -461,12 +463,7 @@
   <string name="edit_share_done">ferdig</string>
   <string name="action_upload_retry">Prøv igjen</string>
   <string name="action_upload_clear">Tøm</string>
-  <string name="manage_space_title">Håndter plass</string>
-  <string name="manage_space_description">Innstillinger, database og server-sertifikater fra %1$s sine data vil bli slettet permanent. \n\nNedlastede filer beholdes urørt.\n\nDenne prosessen kan ta litt tid.</string>
-  <string name="manage_space_clear_data">Nullstill data</string>
-  <string name="manage_space_error">Noen filer kunne ikke fjernes.</string>
   <string name="local_file_not_found_toast">Filen ble ikke funnet i det lokale filsystemet</string>
-  <string name="confirmation_remove_files_alert">Vil du virkelig fjerne de valgte elementene?</string>
   <string name="confirmation_remove_folders_alert">Vil du virkelig fjerne de valgte elementene og innholdet i dem?</string>
   <string name="failed_upload_quota_exceeded_text">For lite plass på kontoen</string>
   <string name="auth_forbidden">Forbudt autentisering</string>
@@ -529,4 +526,7 @@
   <!--Release Notes-->
   <string name="release_notes_proceed">Fortsett</string>
   <!--Open in web-->
+  <!--oCIS accounts warning-->
+  <string name="ocis_accounts_warning_checkbox_message">Ikke vis igjen</string>
+  <string name="tab_label_ascii">Tekst</string>
 </resources>

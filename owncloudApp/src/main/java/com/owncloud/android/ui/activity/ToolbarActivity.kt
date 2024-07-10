@@ -3,26 +3,26 @@
  *
  * @author Andy Scherzinger
  * @author Christian Schabesberger
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Jorge Aguado Recio
+ * @author Juan Carlos Garrote Gascón
  *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
  * as published by the Free Software Foundation.
- *
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http:></http:>//www.gnu.org/licenses/>.
  */
+
 package com.owncloud.android.ui.activity
 
-import android.content.Intent
 import android.view.View
 import android.view.View.VISIBLE
 import android.widget.ImageView
@@ -32,9 +32,10 @@ import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import com.owncloud.android.R
-import com.owncloud.android.presentation.accounts.AccountsManagementActivity
 import com.owncloud.android.presentation.authentication.AccountUtils
 import com.owncloud.android.presentation.avatar.AvatarUtils
+import com.owncloud.android.presentation.accounts.ManageAccountsDialogFragment
+import com.owncloud.android.presentation.accounts.ManageAccountsDialogFragment.Companion.MANAGE_ACCOUNTS_DIALOG
 
 /**
  * Base class providing toolbar registration functionality, see [.setupToolbar].
@@ -64,7 +65,8 @@ abstract class ToolbarActivity : BaseActivity() {
 
     open fun setupRootToolbar(
         title: String,
-        isSearchEnabled: Boolean
+        isSearchEnabled: Boolean,
+        isAvatarRequested: Boolean = false,
     ) {
         useStandardToolbar(false)
 
@@ -83,6 +85,7 @@ abstract class ToolbarActivity : BaseActivity() {
                 }
                 toolbarTitle.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_search, 0)
             } else {
+                setOnClickListener(null)
                 toolbarTitle.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
             }
         }
@@ -97,17 +100,17 @@ abstract class ToolbarActivity : BaseActivity() {
         }
 
         AccountUtils.getCurrentOwnCloudAccount(baseContext) ?: return
-
-        AvatarUtils().loadAvatarForAccount(
-            avatarView,
-            AccountUtils.getCurrentOwnCloudAccount(baseContext),
-            true,
-            baseContext.resources.getDimension(R.dimen.toolbar_avatar_radius)
-        )
+        if (isAvatarRequested) {
+            AvatarUtils().loadAvatarForAccount(
+                avatarView,
+                AccountUtils.getCurrentOwnCloudAccount(baseContext),
+                true,
+                baseContext.resources.getDimension(R.dimen.toolbar_avatar_radius)
+            )
+        }
         avatarView.setOnClickListener {
-            // The drawer activity will take care of checking if the account changed.
-            val manageAccountsIntent = Intent(applicationContext, AccountsManagementActivity::class.java)
-            startActivityForResult(manageAccountsIntent, DrawerActivity.ACTION_MANAGE_ACCOUNTS)
+            val dialog = ManageAccountsDialogFragment.newInstance(AccountUtils.getCurrentOwnCloudAccount(applicationContext))
+            dialog.show(supportFragmentManager, MANAGE_ACCOUNTS_DIALOG)
         }
     }
 

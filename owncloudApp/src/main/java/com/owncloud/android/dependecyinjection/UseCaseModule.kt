@@ -4,8 +4,9 @@
  * @author David González Verdugo
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
+ * @author Aitor Ballesteros Pavón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -22,6 +23,10 @@
 
 package com.owncloud.android.dependecyinjection
 
+import com.owncloud.android.domain.appregistry.usecases.CreateFileWithAppProviderUseCase
+import com.owncloud.android.domain.appregistry.usecases.GetAppRegistryForMimeTypeAsStreamUseCase
+import com.owncloud.android.domain.appregistry.usecases.GetAppRegistryWhichAllowCreationAsStreamUseCase
+import com.owncloud.android.domain.appregistry.usecases.GetUrlToOpenInWebUseCase
 import com.owncloud.android.domain.authentication.oauth.OIDCDiscoveryUseCase
 import com.owncloud.android.domain.authentication.oauth.RegisterClientUseCase
 import com.owncloud.android.domain.authentication.oauth.RequestTokenUseCase
@@ -44,7 +49,7 @@ import com.owncloud.android.domain.camerauploads.usecases.SaveVideoUploadsConfig
 import com.owncloud.android.domain.capabilities.usecases.GetCapabilitiesAsLiveDataUseCase
 import com.owncloud.android.domain.capabilities.usecases.GetStoredCapabilitiesUseCase
 import com.owncloud.android.domain.capabilities.usecases.RefreshCapabilitiesFromServerAsyncUseCase
-import com.owncloud.android.domain.files.GetUrlToOpenInWebUseCase
+import com.owncloud.android.domain.files.usecases.IsAnyFileAvailableLocallyAndNotAvailableOfflineUseCase
 import com.owncloud.android.domain.files.usecases.CleanConflictUseCase
 import com.owncloud.android.domain.files.usecases.CleanWorkersUUIDUseCase
 import com.owncloud.android.domain.files.usecases.CopyFileUseCase
@@ -53,17 +58,23 @@ import com.owncloud.android.domain.files.usecases.DisableThumbnailsForFileUseCas
 import com.owncloud.android.domain.files.usecases.GetFileByIdAsStreamUseCase
 import com.owncloud.android.domain.files.usecases.GetFileByIdUseCase
 import com.owncloud.android.domain.files.usecases.GetFileByRemotePathUseCase
+import com.owncloud.android.domain.files.usecases.GetFileWithSyncInfoByIdUseCase
 import com.owncloud.android.domain.files.usecases.GetFolderContentAsStreamUseCase
 import com.owncloud.android.domain.files.usecases.GetFolderContentUseCase
 import com.owncloud.android.domain.files.usecases.GetFolderImagesUseCase
+import com.owncloud.android.domain.files.usecases.GetPersonalRootFolderForAccountUseCase
 import com.owncloud.android.domain.files.usecases.GetSearchFolderContentUseCase
 import com.owncloud.android.domain.files.usecases.GetSharedByLinkForAccountAsStreamUseCase
+import com.owncloud.android.domain.files.usecases.GetSharesRootFolderForAccount
+import com.owncloud.android.domain.files.usecases.GetWebDavUrlForSpaceUseCase
+import com.owncloud.android.domain.files.usecases.ManageDeepLinkUseCase
 import com.owncloud.android.domain.files.usecases.MoveFileUseCase
 import com.owncloud.android.domain.files.usecases.RemoveFileUseCase
 import com.owncloud.android.domain.files.usecases.RenameFileUseCase
 import com.owncloud.android.domain.files.usecases.SaveConflictUseCase
 import com.owncloud.android.domain.files.usecases.SaveDownloadWorkerUUIDUseCase
 import com.owncloud.android.domain.files.usecases.SaveFileOrFolderUseCase
+import com.owncloud.android.domain.files.usecases.SetLastUsageFileUseCase
 import com.owncloud.android.domain.files.usecases.SortFilesUseCase
 import com.owncloud.android.domain.files.usecases.SortFilesWithSyncInfoUseCase
 import com.owncloud.android.domain.files.usecases.UpdateAlreadyDownloadedFilesPathUseCase
@@ -77,8 +88,16 @@ import com.owncloud.android.domain.sharing.shares.usecases.EditPublicShareAsyncU
 import com.owncloud.android.domain.sharing.shares.usecases.GetShareAsLiveDataUseCase
 import com.owncloud.android.domain.sharing.shares.usecases.GetSharesAsLiveDataUseCase
 import com.owncloud.android.domain.sharing.shares.usecases.RefreshSharesFromServerAsyncUseCase
+import com.owncloud.android.domain.spaces.usecases.GetPersonalAndProjectSpacesForAccountUseCase
+import com.owncloud.android.domain.spaces.usecases.GetPersonalAndProjectSpacesWithSpecialsForAccountAsStreamUseCase
+import com.owncloud.android.domain.spaces.usecases.GetPersonalSpaceForAccountUseCase
+import com.owncloud.android.domain.spaces.usecases.GetProjectSpacesWithSpecialsForAccountAsStreamUseCase
+import com.owncloud.android.domain.spaces.usecases.GetSpaceByIdForAccountUseCase
+import com.owncloud.android.domain.spaces.usecases.GetSpaceWithSpecialsByIdForAccountUseCase
+import com.owncloud.android.domain.spaces.usecases.GetSpacesFromEveryAccountUseCaseAsStream
+import com.owncloud.android.domain.spaces.usecases.RefreshSpacesFromServerAsyncUseCase
 import com.owncloud.android.domain.transfers.usecases.ClearSuccessfulTransfersUseCase
-import com.owncloud.android.domain.transfers.usecases.GetAllTransfersAsLiveDataUseCase
+import com.owncloud.android.domain.transfers.usecases.GetAllTransfersAsStreamUseCase
 import com.owncloud.android.domain.transfers.usecases.GetAllTransfersUseCase
 import com.owncloud.android.domain.transfers.usecases.UpdatePendingUploadsPathUseCase
 import com.owncloud.android.domain.user.usecases.GetStoredQuotaUseCase
@@ -86,15 +105,19 @@ import com.owncloud.android.domain.user.usecases.GetUserAvatarAsyncUseCase
 import com.owncloud.android.domain.user.usecases.GetUserInfoAsyncUseCase
 import com.owncloud.android.domain.user.usecases.GetUserQuotasUseCase
 import com.owncloud.android.domain.user.usecases.RefreshUserQuotaFromServerAsyncUseCase
-import com.owncloud.android.domain.webfinger.usecases.GetJRDFromWebfingerHostUseCase
+import com.owncloud.android.domain.webfinger.usecases.GetOwnCloudInstanceFromWebFingerUseCase
+import com.owncloud.android.domain.webfinger.usecases.GetOwnCloudInstancesFromAuthenticatedWebFingerUseCase
 import com.owncloud.android.usecases.accounts.RemoveAccountUseCase
+import com.owncloud.android.usecases.files.FilterFileMenuOptionsUseCase
+import com.owncloud.android.usecases.files.RemoveLocalFilesForAccountUseCase
+import com.owncloud.android.usecases.files.RemoveLocallyFilesWithLastUsageOlderThanGivenTimeUseCase
 import com.owncloud.android.usecases.synchronization.SynchronizeFileUseCase
 import com.owncloud.android.usecases.synchronization.SynchronizeFolderUseCase
 import com.owncloud.android.usecases.transfers.downloads.CancelDownloadForFileUseCase
+import com.owncloud.android.usecases.transfers.downloads.CancelDownloadsRecursivelyUseCase
 import com.owncloud.android.usecases.transfers.downloads.DownloadFileUseCase
 import com.owncloud.android.usecases.transfers.downloads.GetLiveDataForDownloadingFileUseCase
 import com.owncloud.android.usecases.transfers.downloads.GetLiveDataForFinishedDownloadsFromAccountUseCase
-import com.owncloud.android.usecases.transfers.downloads.CancelDownloadsRecursivelyUseCase
 import com.owncloud.android.usecases.transfers.uploads.CancelTransfersFromAccountUseCase
 import com.owncloud.android.usecases.transfers.uploads.CancelUploadForFileUseCase
 import com.owncloud.android.usecases.transfers.uploads.CancelUploadUseCase
@@ -109,117 +132,143 @@ import com.owncloud.android.usecases.transfers.uploads.UploadFileFromSystemUseCa
 import com.owncloud.android.usecases.transfers.uploads.UploadFileInConflictUseCase
 import com.owncloud.android.usecases.transfers.uploads.UploadFilesFromContentUriUseCase
 import com.owncloud.android.usecases.transfers.uploads.UploadFilesFromSystemUseCase
+import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
 val useCaseModule = module {
     // Authentication
-    factory { GetBaseUrlUseCase(get()) }
-    factory { LoginBasicAsyncUseCase(get()) }
-    factory { LoginOAuthAsyncUseCase(get()) }
-    factory { SupportsOAuth2UseCase(get()) }
-    factory { GetJRDFromWebfingerHostUseCase(get()) }
+    factoryOf(::GetBaseUrlUseCase)
+    factoryOf(::GetOwnCloudInstanceFromWebFingerUseCase)
+    factoryOf(::GetOwnCloudInstancesFromAuthenticatedWebFingerUseCase)
+    factoryOf(::LoginBasicAsyncUseCase)
+    factoryOf(::LoginOAuthAsyncUseCase)
+    factoryOf(::SupportsOAuth2UseCase)
 
     // OAuth
-    factory { OIDCDiscoveryUseCase(get()) }
-    factory { RequestTokenUseCase(get()) }
-    factory { RegisterClientUseCase(get()) }
+    factoryOf(::OIDCDiscoveryUseCase)
+    factoryOf(::RegisterClientUseCase)
+    factoryOf(::RequestTokenUseCase)
 
     // Capabilities
-    factory { GetCapabilitiesAsLiveDataUseCase(get()) }
-    factory { GetStoredCapabilitiesUseCase(get()) }
-    factory { RefreshCapabilitiesFromServerAsyncUseCase(get()) }
+    factoryOf(::GetCapabilitiesAsLiveDataUseCase)
+    factoryOf(::GetStoredCapabilitiesUseCase)
+    factoryOf(::RefreshCapabilitiesFromServerAsyncUseCase)
 
     // Files
-    factory { CreateFolderAsyncUseCase(get()) }
-    factory { CopyFileUseCase(get()) }
-    factory { GetFileByIdUseCase(get()) }
-    factory { GetFileByIdAsStreamUseCase(get()) }
-    factory { GetFileByRemotePathUseCase(get()) }
-    factory { GetFolderContentUseCase(get()) }
-    factory { GetFolderContentAsStreamUseCase(get()) }
-    factory { GetFolderImagesUseCase(get()) }
-    factory { MoveFileUseCase(get()) }
-    factory { RemoveFileUseCase(get()) }
-    factory { RenameFileUseCase(get()) }
-    factory { SaveFileOrFolderUseCase(get()) }
-    factory { GetSharedByLinkForAccountAsStreamUseCase(get()) }
-    factory { GetSearchFolderContentUseCase(get()) }
-    factory { SynchronizeFileUseCase(get(), get(), get(), get()) }
-    factory { SynchronizeFolderUseCase(get(), get()) }
-    factory { DisableThumbnailsForFileUseCase(get()) }
-    factory { SortFilesUseCase() }
-    factory { SortFilesWithSyncInfoUseCase() }
-    factory { SaveConflictUseCase(get()) }
-    factory { CleanConflictUseCase(get()) }
-    factory { SaveDownloadWorkerUUIDUseCase(get()) }
-    factory { CleanWorkersUUIDUseCase(get()) }
+    factoryOf(::CleanConflictUseCase)
+    factoryOf(::CleanWorkersUUIDUseCase)
+    factoryOf(::CopyFileUseCase)
+    factoryOf(::CreateFolderAsyncUseCase)
+    factoryOf(::DisableThumbnailsForFileUseCase)
+    factoryOf(::FilterFileMenuOptionsUseCase)
+    factoryOf(::GetFileByIdAsStreamUseCase)
+    factoryOf(::GetFileByIdUseCase)
+    factoryOf(::GetFileByRemotePathUseCase)
+    factoryOf(::GetFileWithSyncInfoByIdUseCase)
+    factoryOf(::GetFolderContentAsStreamUseCase)
+    factoryOf(::GetFolderContentUseCase)
+    factoryOf(::GetFolderImagesUseCase)
+    factoryOf(::IsAnyFileAvailableLocallyAndNotAvailableOfflineUseCase)
+    factoryOf(::GetPersonalRootFolderForAccountUseCase)
+    factoryOf(::GetSearchFolderContentUseCase)
+    factoryOf(::GetSharedByLinkForAccountAsStreamUseCase)
+    factoryOf(::GetSharesRootFolderForAccount)
+    factoryOf(::GetUrlToOpenInWebUseCase)
+    factoryOf(::ManageDeepLinkUseCase)
+    factoryOf(::MoveFileUseCase)
+    factoryOf(::RemoveFileUseCase)
+    factoryOf(::RemoveLocalFilesForAccountUseCase)
+    factoryOf(::RemoveLocallyFilesWithLastUsageOlderThanGivenTimeUseCase)
+    factoryOf(::RenameFileUseCase)
+    factoryOf(::SaveConflictUseCase)
+    factoryOf(::SaveDownloadWorkerUUIDUseCase)
+    factoryOf(::SaveFileOrFolderUseCase)
+    factoryOf(::SetLastUsageFileUseCase)
+    factoryOf(::SortFilesUseCase)
+    factoryOf(::SortFilesWithSyncInfoUseCase)
+    factoryOf(::SynchronizeFileUseCase)
+    factoryOf(::SynchronizeFolderUseCase)
+
+    // Open in web
+    factoryOf(::CreateFileWithAppProviderUseCase)
+    factoryOf(::GetAppRegistryForMimeTypeAsStreamUseCase)
+    factoryOf(::GetAppRegistryWhichAllowCreationAsStreamUseCase)
+    factoryOf(::GetUrlToOpenInWebUseCase)
 
     // Av Offline
-    factory { GetFilesAvailableOfflineFromAccountUseCase(get()) }
-    factory { GetFilesAvailableOfflineFromAccountAsStreamUseCase(get()) }
-    factory { GetFilesAvailableOfflineFromEveryAccountUseCase(get()) }
-    factory { SetFilesAsAvailableOfflineUseCase(get()) }
-    factory { UnsetFilesAsAvailableOfflineUseCase(get()) }
+    factoryOf(::GetFilesAvailableOfflineFromAccountAsStreamUseCase)
+    factoryOf(::GetFilesAvailableOfflineFromAccountUseCase)
+    factoryOf(::GetFilesAvailableOfflineFromEveryAccountUseCase)
+    factoryOf(::SetFilesAsAvailableOfflineUseCase)
+    factoryOf(::UnsetFilesAsAvailableOfflineUseCase)
 
     // Sharing
-    factory { CreatePrivateShareAsyncUseCase(get()) }
-    factory { CreatePublicShareAsyncUseCase(get()) }
-    factory { DeleteShareAsyncUseCase(get()) }
-    factory { EditPrivateShareAsyncUseCase(get()) }
-    factory { EditPublicShareAsyncUseCase(get()) }
-    factory { GetShareAsLiveDataUseCase(get()) }
-    factory { GetShareesAsyncUseCase(get()) }
-    factory { GetSharesAsLiveDataUseCase(get()) }
-    factory { RefreshSharesFromServerAsyncUseCase(get()) }
+    factoryOf(::CreatePrivateShareAsyncUseCase)
+    factoryOf(::CreatePublicShareAsyncUseCase)
+    factoryOf(::DeleteShareAsyncUseCase)
+    factoryOf(::EditPrivateShareAsyncUseCase)
+    factoryOf(::EditPublicShareAsyncUseCase)
+    factoryOf(::GetShareAsLiveDataUseCase)
+    factoryOf(::GetShareesAsyncUseCase)
+    factoryOf(::GetSharesAsLiveDataUseCase)
+    factoryOf(::RefreshSharesFromServerAsyncUseCase)
+
+    // Spaces
+    factoryOf(::GetPersonalAndProjectSpacesForAccountUseCase)
+    factoryOf(::GetPersonalAndProjectSpacesWithSpecialsForAccountAsStreamUseCase)
+    factoryOf(::GetPersonalSpaceForAccountUseCase)
+    factoryOf(::GetProjectSpacesWithSpecialsForAccountAsStreamUseCase)
+    factoryOf(::GetSpaceWithSpecialsByIdForAccountUseCase)
+    factoryOf(::GetSpacesFromEveryAccountUseCaseAsStream)
+    factoryOf(::GetWebDavUrlForSpaceUseCase)
+    factoryOf(::RefreshSpacesFromServerAsyncUseCase)
+    factoryOf(::GetSpaceByIdForAccountUseCase)
 
     // Transfers
-    factory { CancelDownloadForFileUseCase(get()) }
-    factory { CancelDownloadsRecursivelyUseCase(get(), get()) }
-    factory { DownloadFileUseCase(get()) }
-    factory { GetLiveDataForDownloadingFileUseCase(get()) }
-    factory { GetLiveDataForFinishedDownloadsFromAccountUseCase(get()) }
-    factory { UploadFileFromSystemUseCase(get()) }
-    factory { UploadFileFromContentUriUseCase(get()) }
-    factory { UploadFilesFromContentUriUseCase(get(), get()) }
-    factory { UploadFilesFromSystemUseCase(get(), get()) }
-    factory { UploadFileInConflictUseCase(get(), get()) }
-    factory { CancelUploadForFileUseCase(get(), get()) }
-    factory { CancelUploadsRecursivelyUseCase(get(), get(), get(), get()) }
-    factory { RetryUploadFromSystemUseCase(get(), get(), get()) }
-    factory { RetryUploadFromContentUriUseCase(get(), get(), get()) }
-    factory { GetAllTransfersAsLiveDataUseCase(get()) }
-    factory { GetAllTransfersUseCase(get()) }
-    factory { CancelUploadUseCase(get(), get(), get()) }
-    factory { ClearFailedTransfersUseCase(get(), get(), get()) }
-    factory { RetryFailedUploadsUseCase(get(), get(), get(), get()) }
-    factory { RetryFailedUploadsForAccountUseCase(get(), get(), get(), get()) }
-    factory { ClearSuccessfulTransfersUseCase(get()) }
-    factory { CancelTransfersFromAccountUseCase(get(), get()) }
-    factory { UpdatePendingUploadsPathUseCase(get()) }
-    factory { UpdateAlreadyDownloadedFilesPathUseCase(get()) }
+    factoryOf(::CancelDownloadForFileUseCase)
+    factoryOf(::CancelDownloadsRecursivelyUseCase)
+    factoryOf(::CancelTransfersFromAccountUseCase)
+    factoryOf(::CancelUploadForFileUseCase)
+    factoryOf(::CancelUploadUseCase)
+    factoryOf(::CancelUploadsRecursivelyUseCase)
+    factoryOf(::ClearFailedTransfersUseCase)
+    factoryOf(::ClearSuccessfulTransfersUseCase)
+    factoryOf(::DownloadFileUseCase)
+    factoryOf(::GetAllTransfersAsStreamUseCase)
+    factoryOf(::GetAllTransfersUseCase)
+    factoryOf(::GetLiveDataForDownloadingFileUseCase)
+    factoryOf(::GetLiveDataForFinishedDownloadsFromAccountUseCase)
+    factoryOf(::RetryFailedUploadsForAccountUseCase)
+    factoryOf(::RetryFailedUploadsUseCase)
+    factoryOf(::RetryUploadFromContentUriUseCase)
+    factoryOf(::RetryUploadFromSystemUseCase)
+    factoryOf(::UpdateAlreadyDownloadedFilesPathUseCase)
+    factoryOf(::UpdatePendingUploadsPathUseCase)
+    factoryOf(::UploadFileFromContentUriUseCase)
+    factoryOf(::UploadFileFromSystemUseCase)
+    factoryOf(::UploadFileInConflictUseCase)
+    factoryOf(::UploadFilesFromContentUriUseCase)
+    factoryOf(::UploadFilesFromSystemUseCase)
 
     // User
-    factory { GetStoredQuotaUseCase(get()) }
-    factory { GetUserQuotasUseCase(get()) }
-    factory { GetUserAvatarAsyncUseCase(get()) }
-    factory { GetUserInfoAsyncUseCase(get()) }
-    factory { RefreshUserQuotaFromServerAsyncUseCase(get()) }
+    factoryOf(::GetStoredQuotaUseCase)
+    factoryOf(::GetUserAvatarAsyncUseCase)
+    factoryOf(::GetUserInfoAsyncUseCase)
+    factoryOf(::GetUserQuotasUseCase)
+    factoryOf(::RefreshUserQuotaFromServerAsyncUseCase)
 
     // Server
-    factory { GetServerInfoAsyncUseCase(get()) }
+    factoryOf(::GetServerInfoAsyncUseCase)
 
     // Camera Uploads
-    factory { GetCameraUploadsConfigurationUseCase(get()) }
-    factory { SavePictureUploadsConfigurationUseCase(get()) }
-    factory { SaveVideoUploadsConfigurationUseCase(get()) }
-    factory { ResetPictureUploadsUseCase(get()) }
-    factory { ResetVideoUploadsUseCase(get()) }
-    factory { GetPictureUploadsConfigurationStreamUseCase(get()) }
-    factory { GetVideoUploadsConfigurationStreamUseCase(get()) }
-
-    // Files
-    factory { GetUrlToOpenInWebUseCase(get()) }
+    factoryOf(::GetCameraUploadsConfigurationUseCase)
+    factoryOf(::GetPictureUploadsConfigurationStreamUseCase)
+    factoryOf(::GetVideoUploadsConfigurationStreamUseCase)
+    factoryOf(::ResetPictureUploadsUseCase)
+    factoryOf(::ResetVideoUploadsUseCase)
+    factoryOf(::SavePictureUploadsConfigurationUseCase)
+    factoryOf(::SaveVideoUploadsConfigurationUseCase)
 
     // Accounts
-    factory { RemoveAccountUseCase(get(), get(), get(), get(), get(), get(), get(), get()) }
+    factoryOf(::RemoveAccountUseCase)
 }

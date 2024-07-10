@@ -10,12 +10,14 @@
   <string name="actionbar_upload_from_apps">محتوى من تطبيقات أخرى</string>
   <string name="actionbar_upload_files">ملفات</string>
   <string name="actionbar_open_with">فتح باستخدام</string>
+  <string name="actionbar_open_with_read_only">فتح مع (للقراءة فقط)</string>
   <string name="actionbar_mkdir">مجلد جديد</string>
   <string name="actionbar_settings">الإعدادات</string>
   <string name="actionbar_see_details">التفاصيل</string>
   <string name="actionbar_send_file">إرسال</string>
   <string name="actionbar_descending">تنازلي</string>
   <string name="actionbar_sort_title">فرز حسب</string>
+  <string name="fab_new_file">مستند جديد</string>
   <string name="drawer_item_all_files">كل الملفات</string>
   <string name="drawer_item_only_available_offline">متوفر دون اتصال بالإنترنت</string>
   <string name="drawer_item_shared_by_link_files">مشاركة بواسطة الرابط</string>
@@ -33,6 +35,10 @@
   <string name="prefs_subsection_logging">جارٍ التسجيل</string>
   <string name="prefs_subsection_more">المزيد</string>
   <string name="prefs_subsection_security">الأمان</string>
+  <string name="prefs_subsection_whatsnew">ما الجديد في أحدث إصدار؟</string>
+  <string name="prefs_subsection_security_summary">قم بتعيين الأقفال للوصول إلى التطبيق والسماح باللمسات مع النوافذ المرئية الأخرى</string>
+  <string name="prefs_subsection_logging_summary">تتبع السجلات الناتجة عن تنفيذ التطبيق</string>
+  <string name="prefs_subsection_more_summary">معلومات التطبيق والتعليقات وغيرها</string>
   <string name="prefs_accounts">حسابات</string>
   <string name="prefs_manage_accounts">إدارة الحسابات</string>
   <string name="prefs_passcode">قفل رمز المرور</string>
@@ -43,10 +49,14 @@
   <string name="prefs_lock_application_entries_1minute">بعد دقيقة واحدة (1)</string>
   <string name="prefs_lock_application_entries_5minutes">بعد 5 دقائق</string>
   <string name="prefs_lock_application_entries_30minutes">بعد 30 دقيقة</string>
+  <string name="prefs_lock_access_from_document_provider">تأمين الوصول من موفر المستندات</string>
+  <string name="prefs_lock_access_from_document_provider_summary">قفل الوصول من التطبيقات الأخرى إلى ملفات الحسابات في التطبيق عبر مستكشف الملفات الأصلي لنظام اندرويد.</string>
   <string name="prefs_touches_with_other_visible_windows">اللمس باستخدام نوافذ أخرى مرئية</string>
   <string name="prefs_touches_with_other_visible_windows_summary">يتيح اللمس باستخدام نافذة أخرى مرئية عندما تكون نافذة العرض مخفية. فعِّله لاستخدام تطبيقات تصفية الإضاءة.</string>
   <string name="confirmation_touches_with_other_windows_title">هل أنت متأكد أنك ترغب في تفعيل هذه الميزة؟</string>
   <string name="confirmation_touches_with_other_windows_message">استخدم هذه الميزة على مسؤوليتك فقد يحاول تطبيق ضار انتحال شخصيتك للقيام ببعض الإجراءات دون علمك باستخدام نوافذ عرض أخرى.</string>
+  <string name="prefs_subsection_picture_uploads">تحميل الصور تلقائيا</string>
+  <string name="prefs_subsection_picture_uploads_summary">إدارة موقع وسلوك الصور التي يتم تحميلها تلقائيا</string>
   <string name="prefs_camera_picture_upload">تحميلات الصور</string>
   <string name="prefs_camera_picture_upload_summary">حمِّل الصور الملتقطة بالكاميرا تلقائيًا</string>
   <string name="prefs_camera_picture_upload_path_title">مسار تحميل الصور</string>
@@ -86,9 +96,11 @@
   <string name="illegal_argument_exception_message">هناك حاجة إلى إجراء صحيح في الهدف الممرر إلى</string>
   <!--Bottom navigation bar-->
   <string name="bottom_nav_files">ملفات</string>
+  <string name="bottom_nav_personal">شخصي</string>
   <string name="bottom_nav_uploads">التحميلات</string>
   <string name="bottom_nav_offline">غير متصل</string>
   <string name="bottom_nav_links">روابط</string>
+  <string name="bottom_nav_shares">المشاركات</string>
   <string name="recommend_subject">جرب %1$s على هاتفك الذكي!</string>
   <string name="recommend_text">أود أن أدعوك إلى استخدام %1$s على هاتفك الذكي!\nتنزيل من هنا:%2$s</string>
   <string name="error_reason">بسبب</string>
@@ -172,7 +184,6 @@
   <string name="uploader_upload_failed_ssl_certificate_not_trusted">شهادة الخادم غير موثوق بها</string>
   <string name="uploader_upload_text_dialog_title">أدخل اسمًا للملف الجديد</string>
   <string name="uploader_upload_text_dialog_filename_error_empty">يجب ألا يكون اسم الملف فارغًا</string>
-  <string name="uploader_upload_text_dialog_filename_error_length_max">يجب ألا يزيد عدد أحرف اسم الملف عن %d</string>
   <string name="uploader_upload_text_filename_hint">اسم الملف</string>
   <string name="uploader_upload_camera_upload_files">تحميل ملفات تحميل الكاميرا</string>
   <string name="uploader_upload_available_offline_files">تحميل الملفات المتوفرة دون اتصال بالإنترنت</string>
@@ -300,7 +311,6 @@
   <string name="sync_file_fail_msg">تعذّر فحص الملف البعيد</string>
   <string name="sync_file_nothing_to_do_msg">تمت مزامنة محتويات الملف بالفعل</string>
   <string name="create_dir_fail_msg">تعذّر إنشاء المجلد</string>
-  <string name="filename_forbidden_characters">الرموز الممنوع استخدامها: / \\ &lt; &gt; : \" | ? *</string>
   <string name="filename_forbidden_characters_from_server">يحتوي اسم الملف على حرف واحد غير صالح على الأقل</string>
   <string name="filename_empty">لا يمكن أن يكون اسم الملف فارغًا</string>
   <string name="wait_a_moment">انتظر للحظة</string>
@@ -349,7 +359,6 @@
   <string name="confirmation_disable_videos_upload_message">هل أنت متأكد أنك ترغب في تعطيل هذه الميزة؟ لن يتم تحميل مقاطع الفيديو المعلقة</string>
   <string name="proper_pics_folder_warning_camera_upload">يُرجى التأكد من أن المجلد المحدد هو المكان الذي تحفظ فيه الكاميرا التي تستخدمها الصور الملتقطة. وإلا لن تتمكن الميزة من العثور على صورك. يُرجى مراعاة أن عملية تحميل الصور ستتم في غضون 15 دقيقة على الأقل من التقاطها.</string>
   <string name="proper_videos_folder_warning_camera_upload">يُرجى التأكد من أن المجلد المحدد هو المكان الذي تحفظ فيه الكاميرا التي تستخدمها مقاطع الفيديو المسجلة. وإلا لن تتمكن الميزة من العثور على مقاطع الفيديو. يُرجى مراعاة أن عملية تحميل مقاطع الفيديو ستتم في غضون 15 دقيقة على الأقل من تسجيلها.</string>
-  <string name="conflict_title">تعارض الملفات</string>
   <string name="conflict_description">حدث تعارض في ملف %1$s، انقر لحل هذه المشكلة</string>
   <string name="conflict_message">ما الملفات التي ترغب في حفظها؟ إن حددت كلا الإصدارَين، فستتم إضافة رقم إلى اسم الملف المحلي.</string>
   <string name="conflict_keep_both">احتفظ بالإصدارين</string>
@@ -473,12 +482,7 @@
   <string name="edit_share_done">تم</string>
   <string name="action_upload_retry">إعادة المحاولة</string>
   <string name="action_upload_clear">مسح</string>
-  <string name="manage_space_title">إدارة المساحة</string>
-  <string name="manage_space_description">سيتم حذف الإعدادات وقواعد البيانات وشهادات الخادم من بيانات %1$s\'s نهائيًا. \n\nسيتم الاحتفاظ بالملفات التي تم تنزيلها دون تغيير.\n\nيمكن أن تستغرق هذه العملية بعض الوقت.</string>
-  <string name="manage_space_clear_data">مسح البيانات</string>
-  <string name="manage_space_error">تعذّر حذف بعض الملفات.</string>
   <string name="local_file_not_found_toast">لم يتم العثور على الملف في نظام الملفات المحلية</string>
-  <string name="confirmation_remove_files_alert">هل ترغب حقًا في إزالة العناصر المحددة؟</string>
   <string name="confirmation_remove_folders_alert">هل ترغب حقًا في إزالة العناصر المحددة ومحتوياتها؟</string>
   <string name="failed_upload_quota_exceeded_text">لا توجد مساحة كافية في الحساب</string>
   <string name="auth_forbidden">مصادقة ممنوعة</string>
@@ -554,4 +558,7 @@
   <!--Release Notes-->
   <string name="release_notes_proceed">متابعة</string>
   <!--Open in web-->
+  <string name="open_in_web_error_too_early">الملف المطلوب غير متوفر بعد ، برجاء المحاولة مرة أخرى لاحقا</string>
+  <!--oCIS accounts warning-->
+  <string name="tab_label_ascii">النص</string>
 </resources>

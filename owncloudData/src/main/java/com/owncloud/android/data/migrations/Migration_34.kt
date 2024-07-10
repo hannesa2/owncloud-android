@@ -22,7 +22,7 @@ package com.owncloud.android.data.migrations
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.owncloud.android.data.ProviderMeta.ProviderTableMeta.FOLDER_BACKUP_TABLE_NAME
-import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider
+import com.owncloud.android.data.providers.SharedPreferencesProvider
 import com.owncloud.android.domain.camerauploads.model.FolderBackUpConfiguration
 import com.owncloud.android.domain.camerauploads.model.FolderBackUpConfiguration.Companion.pictureUploadsName
 import com.owncloud.android.domain.camerauploads.model.FolderBackUpConfiguration.Companion.videoUploadsName
@@ -50,7 +50,8 @@ class CameraUploadsMigrationToRoom(val sharedPreferencesProvider: SharedPreferen
             behavior = getBehaviorForPreference(PREF__CAMERA_PICTURE_UPLOADS_BEHAVIOUR),
             lastSyncTimestamp = timestamp,
             name = pictureUploadsName,
-            chargingOnly = false
+            chargingOnly = false,
+            spaceId = null,
         )
     }
 
@@ -65,7 +66,8 @@ class CameraUploadsMigrationToRoom(val sharedPreferencesProvider: SharedPreferen
             behavior = getBehaviorForPreference(PREF__CAMERA_VIDEO_UPLOADS_BEHAVIOUR),
             lastSyncTimestamp = timestamp,
             name = videoUploadsName,
-            chargingOnly = false
+            chargingOnly = false,
+            spaceId = null,
         )
     }
 

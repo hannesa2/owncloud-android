@@ -3,7 +3,7 @@
  *
  * @author Juan Carlos Garrote Gascón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2023 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -20,8 +20,7 @@
 
 package com.owncloud.android.data.transfers.datasources.implementation
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
+import androidx.annotation.VisibleForTesting
 import com.owncloud.android.data.transfers.datasources.LocalTransferDataSource
 import com.owncloud.android.data.transfers.db.OCTransferEntity
 import com.owncloud.android.data.transfers.db.TransferDao
@@ -30,6 +29,8 @@ import com.owncloud.android.domain.transfers.model.OCTransfer
 import com.owncloud.android.domain.transfers.model.TransferResult
 import com.owncloud.android.domain.transfers.model.TransferStatus
 import com.owncloud.android.domain.transfers.model.UploadEnqueuedBy
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class OCLocalTransferDataSource(
     private val transferDao: TransferDao
@@ -89,8 +90,8 @@ class OCLocalTransferDataSource(
         }
     }
 
-    override fun getAllTransfersAsLiveData(): LiveData<List<OCTransfer>> {
-        return Transformations.map(transferDao.getAllTransfersAsLiveData()) { transferEntitiesList ->
+    override fun getAllTransfersAsStream(): Flow<List<OCTransfer>> {
+        return transferDao.getAllTransfersAsStream().map { transferEntitiesList ->
             val transfers = transferEntitiesList.map { transferEntity ->
                 transferEntity.toModel()
             }
@@ -143,33 +144,40 @@ class OCLocalTransferDataSource(
         transferDao.deleteTransfersWithStatus(TransferStatus.TRANSFER_SUCCEEDED.value)
     }
 
-    private fun OCTransferEntity.toModel() = OCTransfer(
-        id = id,
-        localPath = localPath,
-        remotePath = remotePath,
-        accountName = accountName,
-        fileSize = fileSize,
-        status = TransferStatus.fromValue(status),
-        localBehaviour = if (localBehaviour > 1) UploadBehavior.MOVE else UploadBehavior.values()[localBehaviour],
-        forceOverwrite = forceOverwrite,
-        transferEndTimestamp = transferEndTimestamp,
-        lastResult = lastResult?.let { TransferResult.fromValue(it) },
-        createdBy = UploadEnqueuedBy.values()[createdBy],
-        transferId = transferId
-    )
 
-    private fun OCTransfer.toEntity() = OCTransferEntity(
-        localPath = localPath,
-        remotePath = remotePath,
-        accountName = accountName,
-        fileSize = fileSize,
-        status = status.value,
-        localBehaviour = localBehaviour.ordinal,
-        forceOverwrite = forceOverwrite,
-        transferEndTimestamp = transferEndTimestamp,
-        lastResult = lastResult?.value,
-        createdBy = createdBy.ordinal,
-        transferId = transferId
-    ).apply { this@toEntity.id?.let { this.id = it } }
 
+    companion object {
+
+        @VisibleForTesting
+        fun OCTransferEntity.toModel() = OCTransfer(
+            id = id,
+            localPath = localPath,
+            remotePath = remotePath,
+            accountName = accountName,
+            fileSize = fileSize,
+            status = TransferStatus.fromValue(status),
+            localBehaviour = if (localBehaviour > 1) UploadBehavior.MOVE else UploadBehavior.values()[localBehaviour],
+            forceOverwrite = forceOverwrite,
+            transferEndTimestamp = transferEndTimestamp,
+            lastResult = lastResult?.let { TransferResult.fromValue(it) },
+            createdBy = UploadEnqueuedBy.values()[createdBy],
+            transferId = transferId,
+            spaceId = spaceId,
+        )
+        @VisibleForTesting
+        fun OCTransfer.toEntity() = OCTransferEntity(
+            localPath = localPath,
+            remotePath = remotePath,
+            accountName = accountName,
+            fileSize = fileSize,
+            status = status.value,
+            localBehaviour = localBehaviour.ordinal,
+            forceOverwrite = forceOverwrite,
+            transferEndTimestamp = transferEndTimestamp,
+            lastResult = lastResult?.value,
+            createdBy = createdBy.ordinal,
+            transferId = transferId,
+            spaceId = spaceId,
+        ).apply { this@toEntity.id?.let { this.id = it } }
+    }
 }

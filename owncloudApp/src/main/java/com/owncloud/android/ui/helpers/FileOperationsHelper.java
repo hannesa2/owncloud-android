@@ -7,7 +7,9 @@
  * @author David González Verdugo
  * @author Shashvat Kedia
  * @author David Crespo Rios
- * Copyright (C) 2022 ownCloud GmbH.
+ * @author Aitor Ballesteros Pavón
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -29,10 +31,8 @@ import android.accounts.AccountManager;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.webkit.MimeTypeMap;
 
-import androidx.fragment.app.DialogFragment;
 import com.owncloud.android.R;
 import com.owncloud.android.domain.files.model.OCFile;
 import com.owncloud.android.domain.sharing.shares.model.OCShare;
@@ -41,7 +41,6 @@ import com.owncloud.android.presentation.common.ShareSheetHelper;
 import com.owncloud.android.presentation.sharing.ShareActivity;
 import com.owncloud.android.services.OperationsService;
 import com.owncloud.android.ui.activity.FileActivity;
-import com.owncloud.android.ui.dialog.ShareLinkToDialog;
 import com.owncloud.android.usecases.synchronization.SynchronizeFileUseCase;
 import com.owncloud.android.usecases.synchronization.SynchronizeFolderUseCase;
 import com.owncloud.android.utils.UriUtilsKt;
@@ -64,14 +63,18 @@ public class FileOperationsHelper {
         mFileActivity = fileActivity;
     }
 
-    private Intent getIntentForSavedMimeType(Uri data, String type) {
+    private Intent getIntentForSavedMimeType(Uri data, String type, boolean hasWritePermission) {
         Intent intentForSavedMimeType = new Intent(Intent.ACTION_VIEW);
         intentForSavedMimeType.setDataAndType(data, type);
-        intentForSavedMimeType.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+        if (hasWritePermission) {
+            flags = flags | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+        }
+        intentForSavedMimeType.setFlags(flags);
         return intentForSavedMimeType;
     }
 
-    private Intent getIntentForGuessedMimeType(String storagePath, String type, Uri data) {
+    private Intent getIntentForGuessedMimeType(String storagePath, String type, Uri data, boolean hasWritePermission) {
         Intent intentForGuessedMimeType = null;
 
         if (storagePath != null && storagePath.lastIndexOf('.') >= 0) {
@@ -80,7 +83,11 @@ public class FileOperationsHelper {
             if (guessedMimeType != null && !guessedMimeType.equals(type)) {
                 intentForGuessedMimeType = new Intent(Intent.ACTION_VIEW);
                 intentForGuessedMimeType.setDataAndType(data, guessedMimeType);
-                intentForGuessedMimeType.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+                if (hasWritePermission) {
+                    flags = flags | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+                }
+                intentForGuessedMimeType.setFlags(flags);
             }
         }
         return intentForGuessedMimeType;
@@ -89,10 +96,10 @@ public class FileOperationsHelper {
     public void openFile(OCFile ocFile) {
         if (ocFile != null) {
             Intent intentForSavedMimeType = getIntentForSavedMimeType(UriUtilsKt.INSTANCE.getExposedFileUriForOCFile(mFileActivity, ocFile),
-                    ocFile.getMimeType());
+                    ocFile.getMimeType(), ocFile.getHasWritePermission());
 
             Intent intentForGuessedMimeType = getIntentForGuessedMimeType(ocFile.getStoragePath(), ocFile.getMimeType(),
-                    UriUtilsKt.INSTANCE.getExposedFileUriForOCFile(mFileActivity, ocFile));
+                    UriUtilsKt.INSTANCE.getExposedFileUriForOCFile(mFileActivity, ocFile), ocFile.getHasWritePermission());
 
             openFileWithIntent(intentForSavedMimeType, intentForGuessedMimeType);
 
@@ -181,16 +188,18 @@ public class FileOperationsHelper {
     public void syncFile(OCFile file) {
         if (!file.isFolder()) {
             @NotNull Lazy<SynchronizeFileUseCase> synchronizeFileUseCaseLazy = inject(SynchronizeFileUseCase.class);
-            synchronizeFileUseCaseLazy.getValue().execute(
+            synchronizeFileUseCaseLazy.getValue().invoke(
                     new SynchronizeFileUseCase.Params(file)
             );
         } else {
             @NotNull Lazy<SynchronizeFolderUseCase> synchronizeFolderUseCaseLazy = inject(SynchronizeFolderUseCase.class);
-            synchronizeFolderUseCaseLazy.getValue().execute(
+            synchronizeFolderUseCaseLazy.getValue().invoke(
                     new SynchronizeFolderUseCase.Params(
                             file.getRemotePath(),
                             file.getOwner(),
-                            SynchronizeFolderUseCase.SyncFolderMode.SYNC_FOLDER_RECURSIVELY)
+                            file.getSpaceId(),
+                            SynchronizeFolderUseCase.SyncFolderMode.SYNC_FOLDER_RECURSIVELY,
+                            false)
             );
         }
     }
@@ -252,18 +261,13 @@ public class FileOperationsHelper {
 
         String[] packagesToExclude = new String[]{mFileActivity.getPackageName()};
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Intent shareSheetIntent = new ShareSheetHelper().getShareSheetIntent(
-                    intentToShareLink,
-                    mFileActivity.getApplicationContext(),
-                    R.string.activity_chooser_title,
-                    packagesToExclude
-            );
+        Intent shareSheetIntent = new ShareSheetHelper().getShareSheetIntent(
+                intentToShareLink,
+                mFileActivity.getApplicationContext(),
+                R.string.activity_chooser_title,
+                packagesToExclude
+        );
 
-            mFileActivity.startActivity(shareSheetIntent);
-        } else {
-            DialogFragment chooserDialog = ShareLinkToDialog.newInstance(intentToShareLink, packagesToExclude);
-            chooserDialog.show(mFileActivity.getSupportFragmentManager(), FTAG_CHOOSER_DIALOG);
-        }
+        mFileActivity.startActivity(shareSheetIntent);
     }
 }
