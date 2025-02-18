@@ -6,23 +6,24 @@
  * @author David González Verdugo
  * @author Abel García de Prada
  * @author Shashvat Kedia
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Juan Carlos Garrote Gascón
+ * @author Aitor Ballesteros Pavón
  *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
  * as published by the Free Software Foundation.
- *
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http:></http:>//www.gnu.org/licenses/>.
  */
+
 package com.owncloud.android.ui.preview
 
 import android.accounts.Account
@@ -32,40 +33,39 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.ProgressBar
 import com.owncloud.android.R
 import com.owncloud.android.domain.files.model.OCFile
+import com.owncloud.android.extensions.collectLatestLifecycleFlow
+import com.owncloud.android.extensions.filterMenuOptions
 import com.owncloud.android.extensions.sendDownloadedFilesByShareSheet
-import com.owncloud.android.files.FileMenuFilter
 import com.owncloud.android.media.MediaControlView
 import com.owncloud.android.media.MediaService
 import com.owncloud.android.media.MediaServiceBinder
 import com.owncloud.android.presentation.files.operations.FileOperation
 import com.owncloud.android.presentation.files.operations.FileOperationsViewModel
 import com.owncloud.android.presentation.files.removefile.RemoveFilesDialogFragment
-import com.owncloud.android.ui.controller.TransferProgressController
-import com.owncloud.android.ui.dialog.ConfirmationDialogFragment
+import com.owncloud.android.presentation.files.removefile.RemoveFilesDialogFragment.Companion.TAG_REMOVE_FILES_DIALOG_FRAGMENT
+import com.owncloud.android.presentation.previews.PreviewAudioViewModel
 import com.owncloud.android.ui.fragment.FileFragment
 import com.owncloud.android.utils.PreferenceUtils
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 
 /**
  * This fragment shows a preview of a downloaded audio.
  *
- *
  * Trying to get an instance with NULL [OCFile] or ownCloud [Account] values will
  * produce an [IllegalStateException].
- *
  *
  * If the [OCFile] passed is not downloaded, an [IllegalStateException] is
  * generated on instantiation too.
@@ -84,9 +84,8 @@ class PreviewAudioFragment : FileFragment() {
     private var mediaController: MediaControlView? = null
     private var mediaServiceConnection: MediaServiceConnection? = null
     private var autoplay = true
-    private var progressBar: ProgressBar? = null
-    var progressController: TransferProgressController? = null
 
+    private val previewAudioViewModel by viewModel<PreviewAudioViewModel>()
     private val fileOperationsViewModel: FileOperationsViewModel by inject()
 
     /**
@@ -95,6 +94,7 @@ class PreviewAudioFragment : FileFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+        requireActivity().title = getString(R.string.audio_preview_label)
     }
 
     /**
@@ -117,7 +117,6 @@ class PreviewAudioFragment : FileFragment() {
 
         imagePreview = view.findViewById(R.id.image_preview)
         mediaController = view.findViewById(R.id.media_controller)
-        progressBar = view.findViewById(R.id.syncProgressBar)
     }
 
     /**
@@ -146,9 +145,6 @@ class PreviewAudioFragment : FileFragment() {
         check(file.isAvailableLocally) { "There is no local file to preview" }
         check(file.isAudio) { "Not an audio file" }
         extractAndSetCoverArt(file)
-        progressController = TransferProgressController(mContainerActivity).also {
-            it.setProgressBar(progressBar)
-        }
     }
 
     /**
@@ -193,6 +189,8 @@ class PreviewAudioFragment : FileFragment() {
         if (file != null && file.isAvailableLocally) {
             bindMediaService()
         }
+        isOpen = true
+        currentFilePreviewing = file
     }
 
     override fun onFileMetadataChanged(updatedFile: OCFile?) {
@@ -214,19 +212,11 @@ class PreviewAudioFragment : FileFragment() {
     }
 
     override fun updateViewForSyncInProgress() {
-        progressController?.showProgressBar()
+        // Nothing to do here, sync is not shown in previews
     }
 
     override fun updateViewForSyncOff() {
-        progressController?.hideProgressBar()
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        super.onCreateOptionsMenu(menu, inflater)
-        inflater.inflate(R.menu.file_actions_menu, menu)
+        // Nothing to do here, sync is not shown in previews
     }
 
     /**
@@ -234,46 +224,26 @@ class PreviewAudioFragment : FileFragment() {
      */
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
-        val fileMenuFilter = FileMenuFilter(
-            file,
-            account,
-            mContainerActivity,
-            activity
-        )
-        fileMenuFilter.filter(
-            menu,
-            false,
-            false,
-            false,
-            false
-        )
+        val safeFile = file
+        val accountName = account!!.name
+        previewAudioViewModel.filterMenuOptions(safeFile, accountName)
 
-        // additional restriction for this fragment
-        // TODO allow renaming in PreviewAudioFragment
-        menu.findItem(R.id.action_rename_file).apply {
-            isVisible = false
-            isEnabled = false
-        }
-
-        // additional restriction for this fragment
-        menu.findItem(R.id.action_move).apply {
-            isVisible = false
-            isEnabled = false
-        }
-
-        // additional restriction for this fragment
-        menu.findItem(R.id.action_copy).apply {
-            isVisible = false
-            isEnabled = false
+        collectLatestLifecycleFlow(previewAudioViewModel.menuOptions) { menuOptions ->
+            val hasWritePermission = safeFile.hasWritePermission
+            menu.filterMenuOptions(menuOptions, hasWritePermission)
         }
 
         menu.findItem(R.id.action_search)?.apply {
             isVisible = false
             isEnabled = false
         }
-        menu.findItem(R.id.action_sync_file)?.apply {
-            isVisible = false
-            isEnabled = false
+
+        setRolesAccessibilityToMenuItems(menu)
+    }
+
+    private fun setRolesAccessibilityToMenuItems(menu: Menu) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            menu.findItem(R.id.action_see_details)?.contentDescription = "${getString(R.string.actionbar_see_details)} ${getString(R.string.button_role_accessibility)}"
         }
     }
 
@@ -286,35 +256,43 @@ class PreviewAudioFragment : FileFragment() {
                 mContainerActivity.fileOperationsHelper.showShareFile(file)
                 true
             }
+
             R.id.action_open_file_with -> {
                 openFile()
                 true
             }
+
             R.id.action_remove_file -> {
                 val dialog = RemoveFilesDialogFragment.newInstance(file)
-                dialog.show(parentFragmentManager, ConfirmationDialogFragment.FTAG_CONFIRMATION)
+                dialog.show(parentFragmentManager, TAG_REMOVE_FILES_DIALOG_FRAGMENT)
                 true
             }
+
             R.id.action_see_details -> {
                 seeDetails()
                 true
             }
+
             R.id.action_send_file -> {
                 requireActivity().sendDownloadedFilesByShareSheet(listOf(file))
                 true
             }
+
             R.id.action_sync_file -> {
                 mContainerActivity.fileOperationsHelper.syncFile(file)
                 true
             }
+
             R.id.action_set_available_offline -> {
                 fileOperationsViewModel.performOperation(FileOperation.SetFilesAsAvailableOffline(listOf(file)))
                 true
             }
+
             R.id.action_unset_available_offline -> {
                 fileOperationsViewModel.performOperation(FileOperation.UnsetFilesAsAvailableOffline(listOf(file)))
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -333,6 +311,8 @@ class PreviewAudioFragment : FileFragment() {
             mediaServiceConnection = null
             mediaServiceBinder = null
         }
+        isOpen = false
+        currentFilePreviewing = null
         super.onStop()
     }
 
@@ -430,6 +410,8 @@ class PreviewAudioFragment : FileFragment() {
         const val EXTRA_ACCOUNT = "ACCOUNT"
         private const val EXTRA_PLAY_POSITION = "PLAY_POSITION"
         private const val EXTRA_PLAYING = "PLAYING"
+        var isOpen: Boolean = false
+        var currentFilePreviewing: OCFile? = null
 
         /**
          * Public factory method to create new PreviewAudioFragment instances.

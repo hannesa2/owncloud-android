@@ -3,18 +3,19 @@
  *
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
  *
- * Copyright (C) 2022 ownCloud GmbH.
- * <p>
+ * Copyright (C) 2024 ownCloud GmbH.
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
  * as published by the Free Software Foundation.
- * <p>
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -27,7 +28,6 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.owncloud.android.R
-import com.owncloud.android.presentation.authentication.AccountUtils
 import com.owncloud.android.data.executeRemoteOperation
 import com.owncloud.android.domain.camerauploads.model.UploadBehavior
 import com.owncloud.android.domain.capabilities.usecases.GetStoredCapabilitiesUseCase
@@ -36,6 +36,7 @@ import com.owncloud.android.domain.exceptions.UnauthorizedException
 import com.owncloud.android.domain.files.model.OCFile.Companion.PATH_SEPARATOR
 import com.owncloud.android.domain.files.usecases.CleanConflictUseCase
 import com.owncloud.android.domain.files.usecases.GetFileByRemotePathUseCase
+import com.owncloud.android.domain.files.usecases.GetWebDavUrlForSpaceUseCase
 import com.owncloud.android.domain.files.usecases.SaveFileOrFolderUseCase
 import com.owncloud.android.domain.transfers.TransferRepository
 import com.owncloud.android.domain.transfers.model.OCTransfer
@@ -54,6 +55,7 @@ import com.owncloud.android.lib.resources.files.UploadFileFromFileSystemOperatio
 import com.owncloud.android.lib.resources.files.chunks.ChunkedUploadFromFileSystemOperation
 import com.owncloud.android.lib.resources.files.chunks.ChunkedUploadFromFileSystemOperation.Companion.CHUNK_SIZE
 import com.owncloud.android.lib.resources.files.services.implementation.OCChunkService
+import com.owncloud.android.presentation.authentication.AccountUtils
 import com.owncloud.android.utils.NotificationUtils
 import com.owncloud.android.utils.RemoteFileUtils.Companion.getAvailableRemotePath
 import com.owncloud.android.utils.SecurityUtils
@@ -80,13 +82,16 @@ class UploadFileFromFileSystemWorker(
     private lateinit var behavior: UploadBehavior
     private lateinit var uploadPath: String
     private lateinit var mimetype: String
+    private var removeLocal: Boolean = true
     private var uploadIdInStorageManager: Long = -1
     private lateinit var ocTransfer: OCTransfer
     private var fileSize: Long = 0
+    private var spaceWebDavUrl: String? = null
 
     private lateinit var uploadFileOperation: UploadFileFromFileSystemOperation
     private val saveFileOrFolderUseCase: SaveFileOrFolderUseCase by inject()
     private val cleanConflictUseCase: CleanConflictUseCase by inject()
+    private val getWebdavUrlForSpaceUseCase: GetWebDavUrlForSpaceUseCase by inject()
 
     // Etag in conflict required to overwrite files in server. Otherwise, the upload will be rejected.
     private var eTagInConflict: String = ""
@@ -101,11 +106,14 @@ class UploadFileFromFileSystemWorker(
 
         transferRepository.updateTransferStatusToInProgressById(uploadIdInStorageManager)
 
+        spaceWebDavUrl =
+            getWebdavUrlForSpaceUseCase(GetWebDavUrlForSpaceUseCase.Params(accountName = account.name, spaceId = ocTransfer.spaceId))
+
         return try {
             checkPermissionsToReadDocumentAreGranted()
             val clientForThisUpload = getClientForThisUpload()
             checkParentFolderExistence(clientForThisUpload)
-            checkNameCollisionOrGetAnAvailableOneInCase(clientForThisUpload)
+            checkNameCollisionAndGetAnAvailableOneInCase(clientForThisUpload)
             uploadDocument(clientForThisUpload)
             updateUploadsDatabaseWithResult(null)
             updateFilesDatabaseWithLatestDetails()
@@ -118,42 +126,6 @@ class UploadFileFromFileSystemWorker(
         }
     }
 
-    /**
-     * Update the database with latest details about this file.
-     *
-     * We will ask for thumbnails after the upload
-     * We will update info about the file (modification timestamp and etag)
-     */
-    private fun updateFilesDatabaseWithLatestDetails() {
-        val currentTime = System.currentTimeMillis()
-        val getFileByRemotePathUseCase: GetFileByRemotePathUseCase by inject()
-        val file = getFileByRemotePathUseCase.execute(GetFileByRemotePathUseCase.Params(account.name, ocTransfer.remotePath))
-        file.getDataOrNull()?.let { ocFile ->
-            val fileWithNewDetails =
-                if (ocTransfer.forceOverwrite) {
-                    ocFile.copy(
-                        needsToUpdateThumbnail = true,
-                        etag = uploadFileOperation.etag,
-                        length = (File(ocTransfer.localPath).length()),
-                        lastSyncDateForData = currentTime,
-                        modifiedAtLastSyncForData = currentTime,
-                    )
-                } else {
-                    // Uploading a file should remove any conflicts on the file.
-                    ocFile.copy(
-                        storagePath = null,
-                    )
-                }
-            saveFileOrFolderUseCase.execute(SaveFileOrFolderUseCase.Params(fileWithNewDetails))
-            cleanConflictUseCase.execute(
-                CleanConflictUseCase.Params(
-                    fileId = ocFile.id!!
-                )
-            )
-        }
-
-    }
-
     private fun areParametersValid(): Boolean {
         val paramAccountName = workerParameters.inputData.getString(KEY_PARAM_ACCOUNT_NAME)
         val paramUploadPath = workerParameters.inputData.getString(KEY_PARAM_UPLOAD_PATH)
@@ -161,6 +133,7 @@ class UploadFileFromFileSystemWorker(
         val paramBehavior = workerParameters.inputData.getString(KEY_PARAM_BEHAVIOR)
         val paramFileSystemUri = workerParameters.inputData.getString(KEY_PARAM_LOCAL_PATH)
         val paramUploadId = workerParameters.inputData.getLong(KEY_PARAM_UPLOAD_ID, -1)
+        val paramRemoveLocal = workerParameters.inputData.getBoolean(KEY_PARAM_REMOVE_LOCAL, true)
 
         account = AccountUtils.getOwnCloudAccountByName(appContext, paramAccountName) ?: return false
         fileSystemPath = paramFileSystemUri.takeUnless { it.isNullOrBlank() } ?: return false
@@ -169,6 +142,7 @@ class UploadFileFromFileSystemWorker(
         lastModified = paramLastModified ?: return false
         uploadIdInStorageManager = paramUploadId.takeUnless { it == -1L } ?: return false
         ocTransfer = retrieveUploadInfoFromDatabase() ?: return false
+        removeLocal = paramRemoveLocal
 
         return true
     }
@@ -195,42 +169,63 @@ class UploadFileFromFileSystemWorker(
         fileSize = fileInFileSystem.length()
     }
 
+    private fun getClientForThisUpload(): OwnCloudClient =
+        SingleSessionManager.getDefaultSingleton()
+            .getClientFor(
+                OwnCloudAccount(AccountUtils.getOwnCloudAccountByName(appContext, account.name), appContext),
+                appContext,
+            )
+
     private fun checkParentFolderExistence(client: OwnCloudClient) {
         var pathToGrant: String = File(uploadPath).parent ?: ""
         pathToGrant = if (pathToGrant.endsWith(File.separator)) pathToGrant else pathToGrant + File.separator
 
-        val checkPathExistenceOperation = CheckPathExistenceRemoteOperation(pathToGrant, false)
+        val checkPathExistenceOperation = CheckPathExistenceRemoteOperation(pathToGrant, false, spaceWebDavUrl)
         val checkPathExistenceResult = checkPathExistenceOperation.execute(client)
         if (checkPathExistenceResult.code == ResultCode.FILE_NOT_FOUND) {
-            val createRemoteFolderOperation = CreateRemoteFolderOperation(pathToGrant, true)
+            val createRemoteFolderOperation = CreateRemoteFolderOperation(
+                remotePath = pathToGrant,
+                createFullPath = true,
+                spaceWebDavUrl = spaceWebDavUrl,
+            )
             createRemoteFolderOperation.execute(client)
         }
     }
 
-    private fun checkNameCollisionOrGetAnAvailableOneInCase(client: OwnCloudClient) {
+    private fun checkNameCollisionAndGetAnAvailableOneInCase(client: OwnCloudClient) {
         if (ocTransfer.forceOverwrite) {
 
             val getFileByRemotePathUseCase: GetFileByRemotePathUseCase by inject()
-            val useCaseResult = getFileByRemotePathUseCase.execute(GetFileByRemotePathUseCase.Params(ocTransfer.accountName, ocTransfer.remotePath))
+            val useCaseResult = getFileByRemotePathUseCase(
+                GetFileByRemotePathUseCase.Params(
+                    ocTransfer.accountName,
+                    ocTransfer.remotePath,
+                    ocTransfer.spaceId
+                )
+            )
 
             eTagInConflict = useCaseResult.getDataOrNull()?.etagInConflict.orEmpty()
 
             Timber.d("Upload will overwrite current server file with the following etag in conflict: $eTagInConflict")
+        } else {
 
-            return
-        }
-
-        Timber.d("Checking name collision in server")
-        val remotePath = getAvailableRemotePath(client, uploadPath)
-        if (remotePath != null && remotePath != uploadPath) {
-            uploadPath = remotePath
-            Timber.d("Name collision detected, let's rename it to $remotePath")
+            Timber.d("Checking name collision in server")
+            val remotePath = getAvailableRemotePath(
+                ownCloudClient = client,
+                remotePath = uploadPath,
+                spaceWebDavUrl = spaceWebDavUrl,
+                isUserLogged = AccountUtils.getCurrentOwnCloudAccount(appContext) != null,
+            )
+            if (remotePath != uploadPath) {
+                uploadPath = remotePath
+                Timber.d("Name collision detected, let's rename it to $remotePath")
+            }
         }
     }
 
     private fun uploadDocument(client: OwnCloudClient) {
         val getStoredCapabilitiesUseCase: GetStoredCapabilitiesUseCase by inject()
-        val capabilitiesForAccount = getStoredCapabilitiesUseCase.execute(
+        val capabilitiesForAccount = getStoredCapabilitiesUseCase(
             GetStoredCapabilitiesUseCase.Params(
                 accountName = account.name
             )
@@ -252,14 +247,15 @@ class UploadFileFromFileSystemWorker(
             mimeType = mimetype,
             lastModifiedTimestamp = lastModified,
             requiredEtag = eTagInConflict,
+            spaceWebDavUrl = spaceWebDavUrl,
         ).also {
             it.addDataTransferProgressListener(this)
         }
 
         val result = executeRemoteOperation { uploadFileOperation.execute(client) }
 
-        if (result == Unit && behavior == UploadBehavior.MOVE) {
-            removeLocalFile()
+        if (result == Unit && removeLocal) {
+            removeLocalFile() // Removed file from tmp folder
         }
     }
 
@@ -296,8 +292,8 @@ class UploadFileFromFileSystemWorker(
             fileLength = fileSize
         )
 
-        // Step 4: Remove local file after uploading
-        if (result == Unit && behavior == UploadBehavior.MOVE) {
+        // Step 4: Remove tmp file folder after uploading
+        if (result == Unit && removeLocal) {
             removeLocalFile()
         }
     }
@@ -321,6 +317,41 @@ class UploadFileFromFileSystemWorker(
             TransferStatus.TRANSFER_SUCCEEDED
         } else {
             TransferStatus.TRANSFER_FAILED
+        }
+    }
+
+    /**
+     * Update the database with latest details about this file.
+     *
+     * We will ask for thumbnails after the upload
+     * We will update info about the file (modification timestamp and etag)
+     */
+    private fun updateFilesDatabaseWithLatestDetails() {
+        val currentTime = System.currentTimeMillis()
+        val getFileByRemotePathUseCase: GetFileByRemotePathUseCase by inject()
+        val file = getFileByRemotePathUseCase(GetFileByRemotePathUseCase.Params(account.name, ocTransfer.remotePath, ocTransfer.spaceId))
+        file.getDataOrNull()?.let { ocFile ->
+            val fileWithNewDetails =
+                if (ocTransfer.forceOverwrite) {
+                    ocFile.copy(
+                        needsToUpdateThumbnail = true,
+                        etag = uploadFileOperation.etag,
+                        length = (File(ocTransfer.localPath).length()),
+                        lastSyncDateForData = currentTime,
+                        modifiedAtLastSyncForData = currentTime,
+                    )
+                } else {
+                    // Uploading a file should remove any conflicts on the file.
+                    ocFile.copy(
+                        storagePath = null,
+                    )
+                }
+            saveFileOrFolderUseCase(SaveFileOrFolderUseCase.Params(fileWithNewDetails))
+            cleanConflictUseCase(
+                CleanConflictUseCase.Params(
+                    fileId = ocFile.id!!
+                )
+            )
         }
     }
 
@@ -349,13 +380,6 @@ class UploadFileFromFileSystemWorker(
         )
     }
 
-    private fun getClientForThisUpload(): OwnCloudClient =
-        SingleSessionManager.getDefaultSingleton()
-            .getClientFor(
-                OwnCloudAccount(AccountUtils.getOwnCloudAccountByName(appContext, account.name), appContext),
-                appContext,
-            )
-
     override fun onTransferProgress(
         progressRate: Long,
         totalTransferredSoFar: Long,
@@ -381,5 +405,6 @@ class UploadFileFromFileSystemWorker(
         const val KEY_PARAM_LAST_MODIFIED = "KEY_PARAM_LAST_MODIFIED"
         const val KEY_PARAM_UPLOAD_PATH = "KEY_PARAM_UPLOAD_PATH"
         const val KEY_PARAM_UPLOAD_ID = "KEY_PARAM_UPLOAD_ID"
+        const val KEY_PARAM_REMOVE_LOCAL = "KEY_REMOVE_LOCAL"
     }
 }

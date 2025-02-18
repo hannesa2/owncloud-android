@@ -4,7 +4,7 @@
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -30,9 +30,8 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import at.bitfire.dav4jvm.exception.UnauthorizedException
 import com.owncloud.android.R
-import com.owncloud.android.presentation.authentication.AccountUtils
 import com.owncloud.android.data.executeRemoteOperation
-import com.owncloud.android.data.storage.LocalStorageProvider
+import com.owncloud.android.data.providers.LocalStorageProvider
 import com.owncloud.android.domain.exceptions.CancelledException
 import com.owncloud.android.domain.exceptions.LocalStorageNotMovedException
 import com.owncloud.android.domain.exceptions.NoConnectionWithServerException
@@ -40,6 +39,7 @@ import com.owncloud.android.domain.files.model.OCFile
 import com.owncloud.android.domain.files.usecases.CleanConflictUseCase
 import com.owncloud.android.domain.files.usecases.CleanWorkersUUIDUseCase
 import com.owncloud.android.domain.files.usecases.GetFileByIdUseCase
+import com.owncloud.android.domain.files.usecases.GetWebDavUrlForSpaceUseCase
 import com.owncloud.android.domain.files.usecases.SaveDownloadWorkerUUIDUseCase
 import com.owncloud.android.domain.files.usecases.SaveFileOrFolderUseCase
 import com.owncloud.android.lib.common.OwnCloudAccount
@@ -48,13 +48,14 @@ import com.owncloud.android.lib.common.SingleSessionManager
 import com.owncloud.android.lib.common.network.OnDatatransferProgressListener
 import com.owncloud.android.lib.resources.files.DownloadRemoteFileOperation
 import com.owncloud.android.presentation.authentication.ACTION_UPDATE_EXPIRED_TOKEN
+import com.owncloud.android.presentation.authentication.AccountUtils
 import com.owncloud.android.presentation.authentication.EXTRA_ACCOUNT
 import com.owncloud.android.presentation.authentication.EXTRA_ACTION
 import com.owncloud.android.presentation.authentication.LoginActivity
+import com.owncloud.android.presentation.transfers.TransferOperation.Download
 import com.owncloud.android.ui.activity.FileActivity
 import com.owncloud.android.ui.activity.FileDisplayActivity
 import com.owncloud.android.ui.errorhandling.ErrorMessageAdapter
-import com.owncloud.android.presentation.transfers.TransferOperation.Download
 import com.owncloud.android.ui.preview.PreviewImageActivity
 import com.owncloud.android.ui.preview.PreviewImageFragment.Companion.canBePreviewed
 import com.owncloud.android.utils.DOWNLOAD_NOTIFICATION_CHANNEL_ID
@@ -75,11 +76,12 @@ class DownloadFileWorker(
     private val workerParameters: WorkerParameters
 ) : CoroutineWorker(
     appContext,
-    workerParameters
+    workerParameters,
 ), KoinComponent, OnDatatransferProgressListener {
 
     private val getFileByIdUseCase: GetFileByIdUseCase by inject()
     private val saveFileOrFolderUseCase: SaveFileOrFolderUseCase by inject()
+    private val getWebdavUrlForSpaceUseCase: GetWebDavUrlForSpaceUseCase by inject()
     private val cleanConflictUseCase: CleanConflictUseCase by inject()
     private val saveDownloadWorkerUuidUseCase: SaveDownloadWorkerUUIDUseCase by inject()
     private val cleanWorkersUuidUseCase: CleanWorkersUUIDUseCase by inject()
@@ -101,7 +103,7 @@ class DownloadFileWorker(
      * Temporal path where every file of this account will be downloaded.
      */
     private val temporalFolderPath
-        get() = FileStorageUtils.getTemporalPath(account.name)
+        get() = FileStorageUtils.getTemporalPath(account.name, ocFile.spaceId)
 
     /**
      * Final path where this file should be stored.
@@ -111,7 +113,7 @@ class DownloadFileWorker(
      */
     private val finalLocationForFile: String
         get() = ocFile.storagePath.takeUnless { it.isNullOrBlank() }
-            ?: localStorageProvider.getDefaultSavePathFor(account.name, ocFile.remotePath)
+            ?: localStorageProvider.getDefaultSavePathFor(accountName = account.name, remotePath = ocFile.remotePath, spaceId = ocFile.spaceId)
 
     override suspend fun doWork(): Result {
         if (!areParametersValid()) return Result.failure()
@@ -140,7 +142,7 @@ class DownloadFileWorker(
         val fileId = workerParameters.inputData.getLong(KEY_PARAM_FILE_ID, -1)
 
         account = AccountUtils.getOwnCloudAccountByName(appContext, accountName) ?: return false
-        ocFile = getFileByIdUseCase.execute(GetFileByIdUseCase.Params(fileId)).getDataOrNull() ?: return false
+        ocFile = getFileByIdUseCase(GetFileByIdUseCase.Params(fileId)).getDataOrNull() ?: return false
 
         return !ocFile.isFolder
     }
@@ -153,16 +155,20 @@ class DownloadFileWorker(
      * @see temporalFolderPath for the temporal location
      */
     private fun downloadFileToTemporalFile() {
-        saveDownloadWorkerUuidUseCase.execute(
+        saveDownloadWorkerUuidUseCase(
             SaveDownloadWorkerUUIDUseCase.Params(
                 fileId = workerParameters.inputData.getLong(KEY_PARAM_FILE_ID, -1),
                 workerUuid = id
             )
         )
 
+        val spaceWebDavUrl =
+            getWebdavUrlForSpaceUseCase(GetWebDavUrlForSpaceUseCase.Params(accountName = account.name, spaceId = ocFile.spaceId))
+
         downloadRemoteFileOperation = DownloadRemoteFileOperation(
             ocFile.remotePath,
-            temporalFolderPath
+            temporalFolderPath,
+            spaceWebDavUrl,
         ).also {
             it.addDatatransferProgressListener(this)
         }
@@ -210,12 +216,12 @@ class DownloadFileWorker(
             etag = downloadRemoteFileOperation.etag
             storagePath = finalLocationForFile
             length = (File(finalLocationForFile).length())
-            lastSyncDateForProperties = currentTime
             lastSyncDateForData = currentTime
             modifiedAtLastSyncForData = downloadRemoteFileOperation.modificationTimestamp
+            lastUsage = currentTime
         }
-        saveFileOrFolderUseCase.execute(SaveFileOrFolderUseCase.Params(ocFile))
-        cleanConflictUseCase.execute(
+        saveFileOrFolderUseCase(SaveFileOrFolderUseCase.Params(ocFile))
+        cleanConflictUseCase(
             CleanConflictUseCase.Params(
                 fileId = ocFile.id!!
             )
@@ -231,7 +237,7 @@ class DownloadFileWorker(
     private fun notifyDownloadResult(
         throwable: Throwable?
     ): Result {
-        cleanWorkersUuidUseCase.execute(
+        cleanWorkersUuidUseCase(
             CleanWorkersUUIDUseCase.Params(
                 fileId = workerParameters.inputData.getLong(KEY_PARAM_FILE_ID, -1)
             )
@@ -339,7 +345,7 @@ class DownloadFileWorker(
             downloadRemoteFileOperation.removeDatatransferProgressListener(this)
         }
 
-        val percent: Int = (100.0 * totalTransferredSoFar.toDouble() / totalToTransfer.toDouble()).toInt()
+        val percent: Int = if (totalToTransfer == -1L) -1 else (100.0 * totalTransferredSoFar.toDouble() / totalToTransfer.toDouble()).toInt()
         if (percent == lastPercent) return
 
         // Set current progress. Observers will listen.

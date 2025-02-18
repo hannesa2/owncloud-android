@@ -2,13 +2,14 @@
  * ownCloud Android client application
  *
  * @author Abel García de Prada
+ * @author Juan Carlos Garrote Gascón
  *
- * Copyright (C) 2022 ownCloud GmbH.
- * <p>
+ * Copyright (C) 2024 ownCloud GmbH.
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
  * as published by the Free Software Foundation.
- * <p>
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -17,6 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.owncloud.android.usecases.synchronization
 
 import com.owncloud.android.domain.BaseUseCaseWithResult
@@ -45,10 +47,20 @@ class SynchronizeFileUseCase(
         CoroutineScope(Dispatchers.IO).run {
             // 1. Perform a propfind to check if the file still exists in remote
             val serverFile = try {
-                fileRepository.readFile(fileToSynchronize.remotePath, fileToSynchronize.owner)
+                fileRepository.readFile(
+                    remotePath = fileToSynchronize.remotePath,
+                    accountName = fileToSynchronize.owner,
+                    spaceId = fileToSynchronize.spaceId
+                )
             } catch (exception: FileNotFoundException) {
-                // 1.1 File not exists anymore -> remove file locally (DB and Storage)
-                fileRepository.deleteFiles(listOf(fileToSynchronize), false)
+                // 1.1 File does not exist anymore in remote
+                val localFile = fileToSynchronize.id?.let { fileRepository.getFileById(it) }
+                // If it still exists locally, but file has different path, another operation could have been done simultaneously
+                // Do not remove the file in that case, it may be synced later
+                // Remove locally (storage) in any other case
+                if (localFile != null && (localFile.remotePath == fileToSynchronize.remotePath && localFile.spaceId == fileToSynchronize.spaceId)) {
+                    fileRepository.deleteFiles(listOf(fileToSynchronize), true)
+                }
                 return SyncType.FileNotFound
             }
 
@@ -73,7 +85,7 @@ class SynchronizeFileUseCase(
                 // 5.1 File has changed locally and remotely. We got a conflict, save the conflict.
                 Timber.i("File ${fileToSynchronize.fileName} has changed locally and remotely. We got a conflict with etag: ${serverFile.etag}")
                 if (fileToSynchronize.etagInConflict == null) {
-                    saveConflictUseCase.execute(
+                    saveConflictUseCase(
                         SaveConflictUseCase.Params(
                             fileId = fileToSynchronize.id!!,
                             eTagInConflict = serverFile.etag!!
@@ -100,7 +112,7 @@ class SynchronizeFileUseCase(
     }
 
     private fun requestForDownload(accountName: String, ocFile: OCFile): UUID? {
-        return downloadFileUseCase.execute(
+        return downloadFileUseCase(
             DownloadFileUseCase.Params(
                 accountName = accountName,
                 file = ocFile
@@ -109,11 +121,12 @@ class SynchronizeFileUseCase(
     }
 
     private fun requestForUpload(accountName: String, ocFile: OCFile, etagInConflict: String): UUID? {
-        return uploadFileInConflictUseCase.execute(
+        return uploadFileInConflictUseCase(
             UploadFileInConflictUseCase.Params(
                 accountName = accountName,
                 localPath = ocFile.storagePath!!,
                 uploadFolderPath = ocFile.getParentRemotePath(),
+                spaceId = ocFile.spaceId,
             )
         )
     }

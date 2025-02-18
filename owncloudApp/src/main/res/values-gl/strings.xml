@@ -16,6 +16,7 @@
   <string name="actionbar_send_file">Enviar</string>
   <string name="actionbar_descending">Descendente</string>
   <string name="actionbar_sort_title">Ordenar por</string>
+  <string name="fab_new_file">Novo documento</string>
   <string name="drawer_item_all_files">Todos os ficheiros</string>
   <string name="drawer_item_only_available_offline">Dispoñíbel sen conexión</string>
   <string name="drawer_item_shared_by_link_files">Compartido por ligazón</string>
@@ -87,9 +88,11 @@
   <string name="illegal_argument_exception_message">É necesaria unha ACCIÓN válida na intención pasada a</string>
   <!--Bottom navigation bar-->
   <string name="bottom_nav_files">Ficheiros</string>
+  <string name="bottom_nav_personal">Persoal</string>
   <string name="bottom_nav_uploads">Envios</string>
   <string name="bottom_nav_offline">Desconectado</string>
   <string name="bottom_nav_links">Ligazóns</string>
+  <string name="bottom_nav_shares">Comparticións</string>
   <string name="recommend_subject">Tente %1$s no seu teléfono intelixente!</string>
   <string name="recommend_text">Quero convidalo a empregar %1$s no seu teléfono intelixente!
 Descárgueo de aquí: %2$s</string>
@@ -140,6 +143,7 @@ Descárgueo de aquí: %2$s</string>
   <string name="filedetails_size">Tamaño:</string>
   <string name="filedetails_type">Tipo:</string>
   <string name="filedetails_created">Creado:</string>
+  <string name="filedetails_last_sync">Última sincronización:</string>
   <string name="filedetails_modified">Modificado:</string>
   <string name="filedetails_download">Descargar</string>
   <string name="filedetails_sync_file">Sincronizar</string>
@@ -174,7 +178,6 @@ Descárgueo de aquí: %2$s</string>
   <string name="uploader_upload_failed_ssl_certificate_not_trusted">O certificado do servidor non é de confianza</string>
   <string name="uploader_upload_text_dialog_title">Introduza o nome do novo ficheiro</string>
   <string name="uploader_upload_text_dialog_filename_error_empty">O nome de ficheiro non debe estar baleiro</string>
-  <string name="uploader_upload_text_dialog_filename_error_length_max">O nome do ficheiro non debe ter máis de %d caracteres</string>
   <string name="uploader_upload_text_filename_hint">Nome de ficheiro</string>
   <string name="uploader_upload_camera_upload_files">Enviando ficheiros pendentes de envío da cámara</string>
   <string name="uploader_upload_available_offline_files">Enviando ficheiros dispoñíbeis sen conexión</string>
@@ -307,7 +310,6 @@ Descárgueo de aquí: %2$s</string>
   <string name="sync_file_fail_msg">Non foi posíbel comprobar o ficheiro remoto</string>
   <string name="sync_file_nothing_to_do_msg">Os contidos do ficheiro xa están sincronizados</string>
   <string name="create_dir_fail_msg">Non foi posíbel crear o cartafol</string>
-  <string name="filename_forbidden_characters">Caracteres non permitidos: / \\ &lt; &gt; : \" | ? *</string>
   <string name="filename_forbidden_characters_from_server">O nome de ficheiro contén algún carácter incorrecto</string>
   <string name="filename_empty">O nome de ficheiro non pode estar baleiro</string>
   <string name="wait_a_moment">Agarde un chisco</string>
@@ -356,7 +358,6 @@ Descárgueo de aquí: %2$s</string>
   <string name="confirmation_disable_videos_upload_message">Confirma que quere desactivar esta característica? Os vídeos pendentes non van ser enviados</string>
   <string name="proper_pics_folder_warning_camera_upload">Asegúrese de que o cartafol seleccionado é onde a cámara que está a usar garda as imaxes tomadas. Se non, a función non poderá detectar as súas imaxes. Teña en conta que as imaxes serán enviadas, polo menos, 15 minutos despois de tomalas.</string>
   <string name="proper_videos_folder_warning_camera_upload">Asegúrese de que o cartafol seleccionado é onde a cámara que está a usar garda os vídeos gravados. Se non, a función non poderá detectar os seus vídeos. Teña en conta que os vídeos serán enviados, polo menos, 15 minutos despois de gravalos.</string>
-  <string name="conflict_title">Conflito de ficheiro</string>
   <string name="conflict_description">Hai un conflito no ficheiro %1$s, toque para solucionalo</string>
   <string name="conflict_message">Que ficheiros quere conservar? Se selecciona ámbalas dúas versións, engadiráselle un número ao nome do ficheiro local.</string>
   <string name="conflict_keep_both">Conxervar ambos</string>
@@ -482,12 +483,7 @@ Descárgueo de aquí: %2$s</string>
   <string name="edit_share_done">feito</string>
   <string name="action_upload_retry">Tentar de novo</string>
   <string name="action_upload_clear">Limpar</string>
-  <string name="manage_space_title">Administrar o espazo</string>
-  <string name="manage_space_description">Van ser eliminados de xeito permanente os axustes , base de datos e certificados do servidor de %1$s.\n\nOs ficheiros descargados manteranse sen cambios.\n\nEste proceso pode levar bastante tempo.</string>
-  <string name="manage_space_clear_data">Limpar os datos</string>
-  <string name="manage_space_error">Algúns ficheiros non puideron seren eliminados.</string>
   <string name="local_file_not_found_toast">Non se atopou o ficheiro no sistema local de ficheiros</string>
-  <string name="confirmation_remove_files_alert">Confirma que quere retirar os elementos seleccionados?</string>
   <string name="confirmation_remove_folders_alert">Confirma que quere eliminar os elementos seleccionados e o seu contido?</string>
   <string name="failed_upload_quota_exceeded_text">Non hai espazo abondo na conta</string>
   <string name="auth_forbidden">Autenticación non permitida</string>
@@ -560,4 +556,7 @@ Descárgueo de aquí: %2$s</string>
   <!--Release Notes-->
   <string name="release_notes_proceed">Proceder</string>
   <!--Open in web-->
+  <!--oCIS accounts warning-->
+  <string name="ocis_accounts_warning_checkbox_message">Non volver amosar</string>
+  <string name="tab_label_ascii">Texto</string>
 </resources>

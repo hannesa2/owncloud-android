@@ -317,8 +317,7 @@
   <string name="confirmation_disable_camera_uploads_title">Potrdi</string>
   <string name="confirmation_disable_pictures_upload_message">Ali ste prepričani, da želite onemogočiti to zmožnost? Slike na čakanju ne bodo poslane.</string>
   <string name="confirmation_disable_videos_upload_message">Ali ste prepričani, da želite onemogočiti to zmožnost? Posnetki na čakanju ne bodo poslani.</string>
-  <string name="conflict_title">Neskladje datotek</string>
-  <string name="conflict_message">Katere datoteke želite ohraniti? Če izberete obe različici, bo krajevni datoteki dodatna k imenu še številka.</string>
+    <string name="conflict_message">Katere datoteke želite ohraniti? Če izberete obe različici, bo krajevni datoteki dodatna k imenu še številka.</string>
   <string name="conflict_keep_both">Ohrani obe</string>
   <string name="conflict_use_local_version">krajevna različica</string>
   <string name="conflict_use_server_version">različica strežnika</string>
@@ -431,12 +430,7 @@
   <string name="edit_share_done">končano</string>
   <string name="action_upload_retry">Poskusi znova</string>
   <string name="action_upload_clear">Počisti</string>
-  <string name="manage_space_title">Upravljanje s prostorom</string>
-  <string name="manage_space_description">Naastavitve, podatkovna zbirka in potrdila strežnika podatkov %1$s bodo trajno izbrisani. \n\nŽe prejete datoteke bodo ostane nedotaknjene.\n\nTo opravilo je lahko dolgotrajno.</string>
-  <string name="manage_space_clear_data">Počisti podatke</string>
-  <string name="manage_space_error">Nekaterih datotek ni mogoče izbrisati.</string>
   <string name="local_file_not_found_toast">Datoteke ni mogoče najti na krajevnem sistemu</string>
-  <string name="confirmation_remove_files_alert">Ali res želite odstraniti izbrane predmete?</string>
   <string name="confirmation_remove_folders_alert">Ali res želite odstraniti izbrane predmete in njihovo vsebino?</string>
   <string name="failed_upload_quota_exceeded_text">Na računu ni dovolj prostora</string>
   <string name="auth_forbidden">Overitev je prepovedana</string>

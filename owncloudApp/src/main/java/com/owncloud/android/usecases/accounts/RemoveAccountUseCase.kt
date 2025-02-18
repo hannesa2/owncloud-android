@@ -20,9 +20,11 @@
 
 package com.owncloud.android.usecases.accounts
 
+import com.owncloud.android.data.appregistry.datasources.LocalAppRegistryDataSource
 import com.owncloud.android.data.capabilities.datasources.LocalCapabilitiesDataSource
 import com.owncloud.android.data.files.datasources.LocalFileDataSource
 import com.owncloud.android.data.sharing.shares.datasources.LocalShareDataSource
+import com.owncloud.android.data.spaces.datasources.LocalSpacesDataSource
 import com.owncloud.android.data.user.datasources.LocalUserDataSource
 import com.owncloud.android.domain.BaseUseCase
 import com.owncloud.android.domain.camerauploads.usecases.GetCameraUploadsConfigurationUseCase
@@ -43,21 +45,23 @@ class RemoveAccountUseCase(
     private val localFileDataSource: LocalFileDataSource,
     private val localCapabilitiesDataSource: LocalCapabilitiesDataSource,
     private val localShareDataSource: LocalShareDataSource,
-    private val localUserDataSource: LocalUserDataSource
+    private val localUserDataSource: LocalUserDataSource,
+    private val localSpacesDataSource: LocalSpacesDataSource,
+    private val localAppRegistryDataSource: LocalAppRegistryDataSource,
 ) : BaseUseCase<Unit, RemoveAccountUseCase.Params>() {
 
     override fun run(params: Params) {
         // Reset camera uploads if they were enabled for the removed account
-        val cameraUploadsConfiguration = getCameraUploadsConfigurationUseCase.execute(Unit)
+        val cameraUploadsConfiguration = getCameraUploadsConfigurationUseCase(Unit)
         if (params.accountName == cameraUploadsConfiguration.getDataOrNull()?.pictureUploadsConfiguration?.accountName) {
-            resetPictureUploadsUseCase.execute(Unit)
+            resetPictureUploadsUseCase(Unit)
         }
         if (params.accountName == cameraUploadsConfiguration.getDataOrNull()?.videoUploadsConfiguration?.accountName) {
-            resetVideoUploadsUseCase.execute(Unit)
+            resetVideoUploadsUseCase(Unit)
         }
 
         // Cancel transfers of the removed account
-        cancelTransfersFromAccountUseCase.execute(
+        cancelTransfersFromAccountUseCase(
             CancelTransfersFromAccountUseCase.Params(accountName = params.accountName)
         )
 
@@ -72,6 +76,12 @@ class RemoveAccountUseCase(
 
         // Delete quota for the removed account in database
         localUserDataSource.deleteQuotaForAccount(params.accountName)
+
+        // Delete spaces for the removed account in database
+        localSpacesDataSource.deleteSpacesForAccount(params.accountName)
+
+        // Delete app registry for the removed account in database
+        localAppRegistryDataSource.deleteAppRegistryForAccount(params.accountName)
     }
 
     data class Params(

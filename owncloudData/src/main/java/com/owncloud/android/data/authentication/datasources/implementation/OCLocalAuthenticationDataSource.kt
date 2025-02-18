@@ -26,11 +26,13 @@ import android.net.Uri
 import com.owncloud.android.data.authentication.KEY_CLIENT_REGISTRATION_CLIENT_EXPIRATION_DATE
 import com.owncloud.android.data.authentication.KEY_CLIENT_REGISTRATION_CLIENT_ID
 import com.owncloud.android.data.authentication.KEY_CLIENT_REGISTRATION_CLIENT_SECRET
+import com.owncloud.android.data.authentication.KEY_FEATURE_ALLOWED
+import com.owncloud.android.data.authentication.KEY_FEATURE_SPACES
 import com.owncloud.android.data.authentication.KEY_OAUTH2_REFRESH_TOKEN
 import com.owncloud.android.data.authentication.KEY_OAUTH2_SCOPE
 import com.owncloud.android.data.authentication.SELECTED_ACCOUNT
 import com.owncloud.android.data.authentication.datasources.LocalAuthenticationDataSource
-import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider
+import com.owncloud.android.data.providers.SharedPreferencesProvider
 import com.owncloud.android.domain.authentication.oauth.model.ClientRegistrationInfo
 import com.owncloud.android.domain.exceptions.AccountNotFoundException
 import com.owncloud.android.domain.exceptions.AccountNotNewException
@@ -162,6 +164,9 @@ class OCLocalAuthenticationDataSource(
 
             // with external authorizations, the password is never input in the app
             accountManager.addAccountExplicitly(newAccount, password, null)
+
+            // Only fresh accounts will support spaces
+            accountManager.setUserData(newAccount, KEY_FEATURE_SPACES, KEY_FEATURE_ALLOWED)
 
             /// add the new account as default in preferences, if there is none already
             val defaultAccount: Account? = getCurrentAccount()

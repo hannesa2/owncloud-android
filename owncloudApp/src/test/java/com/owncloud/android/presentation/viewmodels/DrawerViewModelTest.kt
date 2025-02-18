@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author Abel García de Prada
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Aitor Ballesteros Pavón
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -18,14 +20,14 @@
  */
 package com.owncloud.android.presentation.viewmodels
 
-import com.owncloud.android.data.storage.LocalStorageProvider
+import com.owncloud.android.data.providers.LocalStorageProvider
 import com.owncloud.android.domain.UseCaseResult
 import com.owncloud.android.domain.user.model.UserQuota
 import com.owncloud.android.domain.user.usecases.GetStoredQuotaUseCase
 import com.owncloud.android.domain.user.usecases.GetUserQuotasUseCase
 import com.owncloud.android.domain.utils.Event
-import com.owncloud.android.presentation.common.UIResult
 import com.owncloud.android.presentation.common.DrawerViewModel
+import com.owncloud.android.presentation.common.UIResult
 import com.owncloud.android.providers.ContextProvider
 import com.owncloud.android.testutil.OC_ACCOUNT_NAME
 import com.owncloud.android.testutil.OC_USER_QUOTA
@@ -83,7 +85,8 @@ class DrawerViewModelTest : ViewModelTest() {
             removeAccountUseCase = removeAccountUseCase,
             getUserQuotasUseCase = getUserQuotasUseCase,
             localStorageProvider = localStorageProvider,
-            coroutinesDispatcherProvider = coroutineDispatcherProvider
+            coroutinesDispatcherProvider = coroutineDispatcherProvider,
+            contextProvider = contextProvider,
         )
     }
 
@@ -95,7 +98,7 @@ class DrawerViewModelTest : ViewModelTest() {
 
     @Test
     fun getStoredQuotaOk() {
-        every { getStoredQuotaUseCase.execute(any()) } returns UseCaseResult.Success(OC_USER_QUOTA)
+        every { getStoredQuotaUseCase(any()) } returns UseCaseResult.Success(OC_USER_QUOTA)
         drawerViewModel.getStoredQuota(OC_ACCOUNT_NAME)
 
         assertEmittedValues(
@@ -108,7 +111,7 @@ class DrawerViewModelTest : ViewModelTest() {
 
     @Test
     fun getStoredQuotaException() {
-        every { getStoredQuotaUseCase.execute(any()) } returns UseCaseResult.Error(commonException)
+        every { getStoredQuotaUseCase(any()) } returns UseCaseResult.Error(commonException)
         drawerViewModel.getStoredQuota(OC_ACCOUNT_NAME)
 
         assertEmittedValues(

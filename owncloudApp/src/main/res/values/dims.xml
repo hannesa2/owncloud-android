@@ -1,8 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ownCloud Android client application
 
-  Copyright (C) 2020 ownCloud GmbH.
+  Copyright (C) 2024 ownCloud GmbH.
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License version 2,
@@ -33,11 +32,6 @@
     <dimen name="nav_drawer_header_avatar">56dp</dimen>
     <!-- avatar radius needs to 1/2 of the avatar dp value -->
     <dimen name="nav_drawer_header_avatar_radius">28dp</dimen>
-    <dimen name="nav_drawer_header_avatar_other_accounts_size">40dp</dimen>
-    <dimen name="nav_drawer_header_avatar_other_accounts_radius">20dp</dimen>
-    <!-- margin must be nav_drawer_header_avatar_other_accounts_size+16dp -->
-    <dimen name="nav_drawer_header_avatar_second_account_margin">56dp</dimen>
-    <dimen name="nav_drawer_menu_avatar_radius">12sp</dimen>
     <dimen name="list_item_avatar_icon_radius">20dp</dimen>
 
     <!-- Bottom navigation bar -->
@@ -50,8 +44,10 @@
     <dimen name="file_indicator_pin_size">12dp</dimen>
     <dimen name="file_indicator_pin_size_grid">18dp</dimen>
     <dimen name="file_icon_size">32dp</dimen>
+    <dimen name="file_icon_size_bottom_sheet">48dp</dimen>
     <dimen name="file_icon_size_grid">128dp</dimen>
     <dimen name="file_avatar_size">128dp</dimen>
+    <dimen name="max_height_bottom_sheet">400dp</dimen>
 
     <dimen name="two_line_primary_text_size">16sp</dimen>
     <dimen name="two_line_secondary_text_size">14sp</dimen>
@@ -60,6 +56,12 @@
 
     <!-- File List -->
     <dimen name="file_list_progress_bar_height">4dp</dimen>
+
+    <!-- item file grid dimens-->
+    <dimen name="item_file_grid_margin">10dp</dimen>
+    <dimen name="item_file_image_grid_margin">1.5dp</dimen>
+    <dimen name="item_file_grid_height">72dp</dimen>
+    <dimen name="item_file_grid_width">72dp</dimen>
 
     <!-- Bottom Sheet Fragment Item -->
     <dimen name="bottom_sheet_fragment_item_icon_size">24dp</dimen>
@@ -77,4 +79,11 @@
     <dimen name="passcode_margin_top">24dp</dimen>
     <dimen name="passcode_margin_bottom">6dp</dimen>
     <dimen name="passcode_margin_buttons">4dp</dimen>
+
+    <!-- Spaces -->
+    <dimen name="spaces_thumbnail_height">156dp</dimen>
+    <dimen name="spaces_header_card_height">80dp</dimen>
+
+    <!-- Accessibility dims -->
+    <dimen name="icon_button_size">48dp</dimen>
 </resources>

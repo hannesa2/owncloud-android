@@ -88,8 +88,10 @@
   <string name="pattern_reenter_pattern">Будь ласка, повторіть ваш шаблон</string>
   <!--Bottom navigation bar-->
   <string name="bottom_nav_files">Файли</string>
+  <string name="bottom_nav_personal">Особисте</string>
   <string name="bottom_nav_uploads">Відвантаження</string>
   <string name="bottom_nav_links">Посилання</string>
+  <string name="bottom_nav_shares">Розподільні</string>
   <string name="recommend_subject">Спробуйте %1$s на своєму смартфоні!</string>
   <string name="recommend_text">Пропоную вам користуватися %1$s на вашому смартфоні!\nЗавантажити можна за посиланням: %2$s</string>
   <string name="auth_failure_snackbar">Автентифікація не виконана</string>
@@ -332,7 +334,6 @@
   <string name="placeholder_timestamp">2012/05/18 12:23 PM</string>
   <string name="placeholder_media_time">12:23:45</string>
   <string name="confirmation_disable_camera_uploads_title">Підтвердити</string>
-  <string name="conflict_title">Конфлікт файлу</string>
   <string name="conflict_message">Які файли Ви хочете залишити? Якщо Ви оберете обидві версії, локальний файл матиме номер, що додається до його імені.</string>
   <string name="conflict_keep_both">Залишити обидва</string>
   <string name="conflict_use_local_version">Локальна версія</string>
@@ -410,7 +411,7 @@
   <string name="upload_copy_files">Копіювати файл</string>
   <string name="upload_move_files">Перемістити файл</string>
   <string name="pref_behaviour_entries_keep_file">залишено в оригінальній теці</string>
-    <string name="share_dialog_title">Поділитися</string>
+  <string name="share_dialog_title">Поділитися</string>
   <string name="share_file">Поділитися %1$s</string>
   <string name="share_with_user_section_title">Користувачі та групи</string>
   <string name="share_no_users">З користувачами ще нічим не поділилися</string>
@@ -446,12 +447,7 @@
   <string name="edit_share_done">зроблено</string>
   <string name="action_upload_retry">Повторити</string>
   <string name="action_upload_clear">Очистити</string>
-  <string name="manage_space_title">Керування вільним місцем</string>
-  <string name="manage_space_description">Налаштування, бази даних і сертифікати сервера з даних %1$s\'s будуть вилучені повністю. \n\nЗвантажені файли будуть збережені незайманими.\n\nЦей процес може тривати якийсь час.</string>
-  <string name="manage_space_clear_data">Очистити дані</string>
-  <string name="manage_space_error">Деякі файли неможливо вилучити.</string>
   <string name="local_file_not_found_toast">Файл не знайдено в локальній файловій системі</string>
-  <string name="confirmation_remove_files_alert">Ви дійсно бажаєте вилучити вибране?</string>
   <string name="confirmation_remove_folders_alert">Ви дійсно бажаєте вилучити вибране і їхній вміст?</string>
   <string name="failed_upload_quota_exceeded_text">Недостатньо місця для цього облікового запису</string>
   <string name="auth_forbidden">Заборонена аутентифікація</string>

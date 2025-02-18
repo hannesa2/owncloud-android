@@ -38,6 +38,7 @@ import com.owncloud.android.presentation.sharing.sharees.SearchShareesFragment
 import com.owncloud.android.presentation.sharing.ShareViewModel
 import com.owncloud.android.sharing.shares.ui.TestShareFileActivity
 import com.owncloud.android.testutil.OC_SHARE
+import com.owncloud.android.testutil.annotation.FailsOnGithubAction
 import io.mockk.every
 import io.mockk.mockkClass
 import org.hamcrest.CoreMatchers
@@ -54,7 +55,7 @@ class SearchShareesFragmentTest {
     private val sharesLiveData = MutableLiveData<Event<UIResult<List<OCShare>>>>()
 
     @Before
-    fun init() {
+    fun setUp() {
         every { shareViewModel.shares } returns sharesLiveData
 
         stopKoin()
@@ -84,6 +85,7 @@ class SearchShareesFragmentTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun showUserShares() {
         sharesLiveData.postValue(
             Event(

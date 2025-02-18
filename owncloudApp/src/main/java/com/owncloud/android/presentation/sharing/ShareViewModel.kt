@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author David González Verdugo
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Juan Carlos Garrote Gascón
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -22,6 +24,9 @@ package com.owncloud.android.presentation.sharing
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.owncloud.android.domain.capabilities.model.OCCapability
+import com.owncloud.android.domain.capabilities.usecases.GetStoredCapabilitiesUseCase
 import com.owncloud.android.domain.sharing.shares.model.OCShare
 import com.owncloud.android.domain.sharing.shares.model.ShareType
 import com.owncloud.android.domain.sharing.shares.usecases.CreatePrivateShareAsyncUseCase
@@ -37,6 +42,7 @@ import com.owncloud.android.extensions.ViewModelExt.runUseCaseWithResult
 import com.owncloud.android.extensions.ViewModelExt.runUseCaseWithResultAndUseCachedData
 import com.owncloud.android.presentation.common.UIResult
 import com.owncloud.android.providers.CoroutinesDispatcherProvider
+import kotlinx.coroutines.launch
 
 /**
  * View Model to keep a reference to the share repository and an up-to-date list of a shares
@@ -52,15 +58,18 @@ class ShareViewModel(
     private val createPublicShareUseCase: CreatePublicShareAsyncUseCase,
     private val editPublicShareUseCase: EditPublicShareAsyncUseCase,
     private val deletePublicShareUseCase: DeleteShareAsyncUseCase,
+    private val getStoredCapabilitiesUseCase: GetStoredCapabilitiesUseCase,
     private val coroutineDispatcherProvider: CoroutinesDispatcherProvider
 ) : ViewModel() {
 
     private val _shares = MediatorLiveData<Event<UIResult<List<OCShare>>>>()
     val shares: LiveData<Event<UIResult<List<OCShare>>>> = _shares
 
-    private var sharesLiveData: LiveData<List<OCShare>> = getSharesAsLiveDataUseCase.execute(
+    private var sharesLiveData: LiveData<List<OCShare>> = getSharesAsLiveDataUseCase(
         GetSharesAsLiveDataUseCase.Params(filePath = filePath, accountName = accountName)
     )
+
+    private var capabilities: OCCapability? = null
 
     init {
         _shares.addSource(sharesLiveData) { shares ->
@@ -68,9 +77,17 @@ class ShareViewModel(
         }
 
         refreshSharesFromNetwork()
+
+        viewModelScope.launch(coroutineDispatcherProvider.io) {
+            capabilities = getStoredCapabilitiesUseCase(
+                GetStoredCapabilitiesUseCase.Params(
+                    accountName = accountName
+                )
+            )
+        }
     }
 
-    private fun refreshSharesFromNetwork() = runUseCaseWithResultAndUseCachedData(
+    fun refreshSharesFromNetwork() = runUseCaseWithResultAndUseCachedData(
         coroutineDispatcher = coroutineDispatcherProvider.io,
         cachedData = sharesLiveData.value,
         liveData = _shares,
@@ -97,6 +114,8 @@ class ShareViewModel(
         ),
         postSuccess = false
     )
+
+    fun isResharingAllowed() = capabilities?.filesSharingResharing?.isTrue ?: false
 
     /******************************************************************************************************
      ******************************************* PRIVATE SHARES *******************************************
@@ -133,7 +152,7 @@ class ShareViewModel(
     fun refreshPrivateShare(
         remoteId: String
     ) {
-        val privateShareLiveData = getShareAsLiveDataUseCase.execute(
+        val privateShareLiveData = getShareAsLiveDataUseCase(
             GetShareAsLiveDataUseCase.Params(remoteId)
         )
 
@@ -175,7 +194,6 @@ class ShareViewModel(
         name: String,
         password: String,
         expirationTimeInMillis: Long,
-        publicUpload: Boolean,
         accountName: String
     ) = runUseCaseWithResult(
         coroutineDispatcher = coroutineDispatcherProvider.io,
@@ -188,7 +206,6 @@ class ShareViewModel(
             name,
             password,
             expirationTimeInMillis,
-            publicUpload,
             accountName
         ),
         postSuccessWithData = false
@@ -203,7 +220,6 @@ class ShareViewModel(
         password: String?,
         expirationDateInMillis: Long,
         permissions: Int,
-        publicUpload: Boolean,
         accountName: String
     ) = runUseCaseWithResult(
         coroutineDispatcher = coroutineDispatcherProvider.io,
@@ -216,7 +232,6 @@ class ShareViewModel(
             password,
             expirationDateInMillis,
             permissions,
-            publicUpload,
             accountName
         ),
         postSuccessWithData = false

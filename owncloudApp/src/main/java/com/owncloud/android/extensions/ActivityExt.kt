@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author David González Verdugo
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Aitor Ballesteros Pavón
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -22,42 +24,57 @@ package com.owncloud.android.extensions
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.ActivityNotFoundException
-import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_NO_HISTORY
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
+import android.graphics.Typeface
 import android.net.Uri
-import android.os.Build
+import android.text.method.LinkMovementMethod
+import android.util.TypedValue
+import android.view.ContextThemeWrapper
 import android.view.inputmethod.InputMethodManager
 import android.webkit.MimeTypeMap
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
-import androidx.fragment.app.DialogFragment
+import androidx.core.text.HtmlCompat
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.snackbar.Snackbar
+import com.owncloud.android.BuildConfig
 import com.owncloud.android.R
-import com.owncloud.android.data.preferences.datasources.implementation.OCSharedPreferencesProvider
+import com.owncloud.android.data.providers.implementation.OCSharedPreferencesProvider
 import com.owncloud.android.domain.files.model.OCFile
+import com.owncloud.android.presentation.common.ShareSheetHelper
 import com.owncloud.android.presentation.security.LockEnforcedType
 import com.owncloud.android.presentation.security.LockEnforcedType.Companion.parseFromInteger
+import com.owncloud.android.presentation.security.LockType
+import com.owncloud.android.presentation.security.SecurityEnforced
+import com.owncloud.android.presentation.security.biometric.BiometricActivity
 import com.owncloud.android.presentation.security.biometric.BiometricStatus
 import com.owncloud.android.presentation.security.biometric.EnableBiometrics
-import com.owncloud.android.presentation.security.SecurityEnforced
-import com.owncloud.android.presentation.security.LockType
-import com.owncloud.android.lib.common.network.WebdavUtils
-import com.owncloud.android.presentation.security.biometric.BiometricActivity
-import com.owncloud.android.presentation.security.pattern.PatternActivity
+import com.owncloud.android.presentation.security.isDeviceSecure
 import com.owncloud.android.presentation.security.passcode.PassCodeActivity
+import com.owncloud.android.presentation.security.pattern.PatternActivity
 import com.owncloud.android.presentation.settings.privacypolicy.PrivacyPolicyActivity
 import com.owncloud.android.presentation.settings.security.SettingsSecurityFragment.Companion.EXTRAS_LOCK_ENFORCED
+import com.owncloud.android.providers.MdmProvider
+import com.owncloud.android.ui.activity.DrawerActivity
 import com.owncloud.android.ui.activity.FileDisplayActivity.Companion.ALL_FILES_SAF_REGEX
-import com.owncloud.android.ui.dialog.ShareLinkToDialog
-import com.owncloud.android.presentation.common.ShareSheetHelper
+import com.owncloud.android.utils.CONFIGURATION_DEVICE_PROTECTION
 import com.owncloud.android.utils.MimetypeIconUtil
-import com.owncloud.android.utils.UriUtilsKt
 import com.owncloud.android.utils.UriUtilsKt.getExposedFileUriForOCFile
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import timber.log.Timber
 import java.io.File
 
@@ -187,22 +204,15 @@ private fun getExposedFileUri(context: Context, localPath: String): Uri? {
         return null
     }
 
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-        // TODO - use FileProvider with any Android version, with deeper testing -> 2.2.0
-        exposedFileUri = Uri.parse(
-            ContentResolver.SCHEME_FILE + "://" + WebdavUtils.encodePath(localPath)
+    // Use the FileProvider to get a content URI
+    try {
+        exposedFileUri = FileProvider.getUriForFile(
+            context,
+            context.getString(R.string.file_provider_authority),
+            File(localPath)
         )
-    } else {
-        // Use the FileProvider to get a content URI
-        try {
-            exposedFileUri = FileProvider.getUriForFile(
-                context,
-                context.getString(R.string.file_provider_authority),
-                File(localPath)
-            )
-        } catch (e: IllegalArgumentException) {
-            Timber.e(e, "File can't be exported")
-        }
+    } catch (e: IllegalArgumentException) {
+        Timber.e(e, "File can't be exported")
     }
 
     return exposedFileUri
@@ -238,20 +248,13 @@ fun Activity.openFileWithIntent(intentForSavedMimeType: Intent, intentForGuessed
 fun AppCompatActivity.sendFile(file: File?) {
     if (file != null) {
         val sendIntent: Intent = makeIntent(file, this)
-        // Show dialog, without the own app
-        val packagesToExclude = arrayOf<String>(this.packageName)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val shareSheetIntent = ShareSheetHelper().getShareSheetIntent(
-                sendIntent,
-                this,
-                R.string.activity_chooser_send_file_title,
-                packagesToExclude
-            )
-            this.startActivity(shareSheetIntent)
-        } else {
-            val chooserDialog: DialogFragment = ShareLinkToDialog.newInstance(sendIntent, packagesToExclude)
-            chooserDialog.show(this.supportFragmentManager, "CHOOSER_DIALOG")
-        }
+        val shareSheetIntent = ShareSheetHelper().getShareSheetIntent(
+            intent = sendIntent,
+            context = this,
+            title = R.string.activity_chooser_send_file_title,
+            packagesToExclude = arrayOf()
+        )
+        this.startActivity(shareSheetIntent)
     } else {
         Timber.e("Trying to send a NULL file")
     }
@@ -284,43 +287,132 @@ fun Activity.hideSoftKeyboard() {
 
 fun Activity.checkPasscodeEnforced(securityEnforced: SecurityEnforced) {
     val sharedPreferencesProvider = OCSharedPreferencesProvider(this)
+    val mdmProvider by inject<MdmProvider>()
 
+    // If device protection is false, launch the previous behaviour (check the lockEnforced).
+    // If device protection is true, ask for security only if device is not secure.
+    val showDeviceProtectionForced: Boolean =
+        mdmProvider.getBrandingBoolean(CONFIGURATION_DEVICE_PROTECTION, R.bool.device_protection) && !isDeviceSecure()
     val lockEnforced: Int = this.resources.getInteger(R.integer.lock_enforced)
     val passcodeConfigured = sharedPreferencesProvider.getBoolean(PassCodeActivity.PREFERENCE_SET_PASSCODE, false)
     val patternConfigured = sharedPreferencesProvider.getBoolean(PatternActivity.PREFERENCE_SET_PATTERN, false)
 
     when (parseFromInteger(lockEnforced)) {
-        LockEnforcedType.DISABLED -> {}
-        LockEnforcedType.EITHER_ENFORCED -> {
-            if (!passcodeConfigured && !patternConfigured) {
-                val options = arrayOf(getString(R.string.security_enforced_first_option), getString(R.string.security_enforced_second_option))
-                var optionSelected = 0
-
-                AlertDialog.Builder(this)
-                    .setCancelable(false)
-                    .setTitle(getString(R.string.security_enforced_title))
-                    .setSingleChoiceItems(options, LockType.PASSCODE.ordinal) { _, which -> optionSelected = which }
-                    .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                        when (LockType.parseFromInteger(optionSelected)) {
-                            LockType.PASSCODE -> securityEnforced.optionLockSelected(LockType.PASSCODE)
-                            LockType.PATTERN -> securityEnforced.optionLockSelected(LockType.PATTERN)
-                        }
-                        dialog.dismiss()
-                    }
-                    .show()
+        LockEnforcedType.DISABLED -> {
+            if (showDeviceProtectionForced) {
+                showSelectSecurityDialog(passcodeConfigured, patternConfigured, securityEnforced)
             }
         }
+
+        LockEnforcedType.EITHER_ENFORCED -> {
+            showSelectSecurityDialog(passcodeConfigured, patternConfigured, securityEnforced)
+        }
+
         LockEnforcedType.PASSCODE_ENFORCED -> {
             if (!passcodeConfigured) {
                 manageOptionLockSelected(LockType.PASSCODE)
             }
         }
+
         LockEnforcedType.PATTERN_ENFORCED -> {
             if (!patternConfigured) {
                 manageOptionLockSelected(LockType.PATTERN)
             }
         }
     }
+}
+
+private fun Activity.showSelectSecurityDialog(
+    passcodeConfigured: Boolean,
+    patternConfigured: Boolean,
+    securityEnforced: SecurityEnforced
+) {
+    if (!passcodeConfigured && !patternConfigured) {
+        val options = arrayOf(getString(R.string.security_enforced_first_option), getString(R.string.security_enforced_second_option))
+        var optionSelected = 0
+
+        AlertDialog.Builder(this)
+            .setCancelable(false)
+            .setTitle(getString(R.string.security_enforced_title))
+            .setSingleChoiceItems(options, LockType.PASSCODE.ordinal) { _, which -> optionSelected = which }
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                when (LockType.parseFromInteger(optionSelected)) {
+                    LockType.PASSCODE -> securityEnforced.optionLockSelected(LockType.PASSCODE)
+                    LockType.PATTERN -> securityEnforced.optionLockSelected(LockType.PATTERN)
+                }
+                dialog.dismiss()
+            }
+            .show()
+    }
+}
+
+fun Activity.sendEmailOrOpenFeedbackDialogAction(feedbackMail: String) {
+    if (feedbackMail.isNotEmpty()) {
+        val feedback = "Android v" + BuildConfig.VERSION_NAME + " - " + getString(R.string.prefs_feedback)
+        sendEmail(email = feedbackMail, subject = feedback)
+    } else {
+        openFeedbackDialog()
+    }
+}
+
+fun Activity.openFeedbackDialog() {
+    val getInContactDescription =
+        getString(
+            R.string.feedback_dialog_get_in_contact_description,
+            DrawerActivity.CENTRAL_URL,
+            DrawerActivity.TALK_MOBILE_URL,
+            DrawerActivity.GITHUB_URL
+        ).trimIndent()
+    val spannableString = HtmlCompat.fromHtml(getInContactDescription, HtmlCompat.FROM_HTML_MODE_LEGACY)
+
+    val descriptionSurvey = TextView(this).apply {
+        text = getString(R.string.feedback_dialog_description)
+        setPadding(0, 0, 0, 64)
+        setTextColor(getColor(android.R.color.black))
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+
+    }
+    val button = Button(ContextThemeWrapper(this, R.style.Button_Primary), null, 0).apply {
+        text = getString(R.string.prefs_send_feedback)
+        setOnClickListener {
+            goToUrl(DrawerActivity.SURVEY_URL)
+        }
+    }
+
+    val getInContactTitle = TextView(this).apply {
+        text = getString(R.string.feedback_dialog_get_in_contact_title)
+        setPadding(0, 64, 0, 0)
+        setTextColor(getColor(android.R.color.black))
+        setTypeface(typeface, Typeface.BOLD)
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+
+    }
+    val getInContactDescriptionTextView = TextView(this).apply {
+        text = spannableString
+        setTextColor(getColor(android.R.color.black))
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+        movementMethod = LinkMovementMethod.getInstance()
+    }
+
+    val layout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(64, 16, 64, 16)
+        addView(descriptionSurvey)
+        addView(button)
+        addView(getInContactTitle)
+        addView(getInContactDescriptionTextView)
+    }
+    val builder = AlertDialog.Builder(this)
+    builder.apply {
+        setTitle(getString(R.string.drawer_feedback))
+        setView(layout)
+        setNegativeButton(R.string.drawer_close) { dialog, _ ->
+            dialog.dismiss()
+        }
+        setCancelable(false)
+    }
+    val alertDialog = builder.create()
+    alertDialog.show()
 }
 
 fun Activity.manageOptionLockSelected(type: LockType) {
@@ -341,10 +433,13 @@ fun Activity.manageOptionLockSelected(type: LockType) {
     when (type) {
         LockType.PASSCODE -> startActivity(Intent(this, PassCodeActivity::class.java).apply {
             action = PassCodeActivity.ACTION_CREATE
+            flags = FLAG_ACTIVITY_NO_HISTORY
             putExtra(EXTRAS_LOCK_ENFORCED, true)
         })
+
         LockType.PATTERN -> startActivity(Intent(this, PatternActivity::class.java).apply {
             action = PatternActivity.ACTION_REQUEST_WITH_RESULT
+            flags = FLAG_ACTIVITY_NO_HISTORY
             putExtra(EXTRAS_LOCK_ENFORCED, true)
         })
     }
@@ -371,10 +466,10 @@ fun FragmentActivity.sendDownloadedFilesByShareSheet(ocFiles: List<OCFile>) {
     val sendIntent = if (ocFiles.size == 1) {
         Intent(Intent.ACTION_SEND).apply {
             type = ocFiles.first().mimeType
-            putExtra(Intent.EXTRA_STREAM, UriUtilsKt.getExposedFileUriForOCFile(this@sendDownloadedFilesByShareSheet, ocFiles.first()))
+            putExtra(Intent.EXTRA_STREAM, getExposedFileUriForOCFile(this@sendDownloadedFilesByShareSheet, ocFiles.first()))
         }
     } else {
-        val fileUris = ocFiles.map { UriUtilsKt.getExposedFileUriForOCFile(this@sendDownloadedFilesByShareSheet, it) }
+        val fileUris = ocFiles.map { getExposedFileUriForOCFile(this@sendDownloadedFilesByShareSheet, it) }
         Intent(Intent.ACTION_SEND_MULTIPLE).apply {
             type = ALL_FILES_SAF_REGEX
             putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(fileUris))
@@ -382,29 +477,39 @@ fun FragmentActivity.sendDownloadedFilesByShareSheet(ocFiles: List<OCFile>) {
     }
 
     val packagesToExclude = arrayOf<String>(this@sendDownloadedFilesByShareSheet.packageName)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        val shareSheetIntent = ShareSheetHelper().getShareSheetIntent(
-            sendIntent,
-            this@sendDownloadedFilesByShareSheet,
-            R.string.activity_chooser_send_file_title,
-            packagesToExclude
-        )
-        startActivity(shareSheetIntent)
-    } else {
-        val chooserDialog: DialogFragment = ShareLinkToDialog.newInstance(sendIntent, packagesToExclude)
-        chooserDialog.show(supportFragmentManager, FRAGMENT_TAG_CHOOSER_DIALOG)
-    }
+    val shareSheetIntent = ShareSheetHelper().getShareSheetIntent(
+        sendIntent,
+        this@sendDownloadedFilesByShareSheet,
+        R.string.activity_chooser_send_file_title,
+        packagesToExclude
+    )
+    startActivity(shareSheetIntent)
 }
 
 fun Activity.openOCFile(ocFile: OCFile) {
     val intentForSavedMimeType = Intent(Intent.ACTION_VIEW).apply {
         setDataAndType(getExposedFileUriForOCFile(this@openOCFile, ocFile), ocFile.mimeType)
-        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+        if (ocFile.hasWritePermission) {
+            flags = flags or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        }
     }
 
     try {
         startActivity(Intent.createChooser(intentForSavedMimeType, getString(R.string.actionbar_open_with)))
     } catch (anfe: ActivityNotFoundException) {
         showErrorInSnackbar(genericErrorMessageId = R.string.file_list_no_app_for_file_type, anfe)
+    }
+}
+
+fun <T> FragmentActivity.collectLatestLifecycleFlow(
+    flow: Flow<T>,
+    lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
+    collect: suspend (T) -> Unit
+) {
+    lifecycleScope.launch {
+        repeatOnLifecycle(lifecycleState) {
+            flow.collectLatest(collect)
+        }
     }
 }

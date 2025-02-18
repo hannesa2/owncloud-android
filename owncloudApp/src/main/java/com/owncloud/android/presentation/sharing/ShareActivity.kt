@@ -6,8 +6,10 @@
  * @author Juan Carlos González Cabrero
  * @author David González Verdugo
  * @author Christian Schabesberger
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Aitor Ballesteros Pavón
+ * @author Juan Carlos Garrote Gascón
  *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -27,7 +29,10 @@ package com.owncloud.android.presentation.sharing
 import android.app.SearchManager
 import android.content.Intent
 import android.os.Bundle
+import android.view.KeyEvent
+import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.fragment.app.transaction
 import com.owncloud.android.R
 import com.owncloud.android.domain.files.model.OCFile
@@ -63,8 +68,13 @@ class ShareActivity : FileActivity(), ShareFragmentListener {
 
         setContentView(R.layout.share_activity)
 
-        // Set back button
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        setupStandardToolbar(
+            title = null,
+            displayHomeAsUpEnabled = true,
+            homeButtonEnabled = true,
+            displayShowTitleEnabled = true,
+        )
+        supportActionBar?.setHomeActionContentDescription(R.string.common_back)
 
         supportFragmentManager.transaction {
             if (savedInstanceState == null && file != null && account != null) {
@@ -143,7 +153,10 @@ class ShareActivity : FileActivity(), ShareFragmentListener {
                     is UIResult.Loading -> {
                         showLoadingDialog(R.string.common_loading)
                     }
-                    is UIResult.Success -> {}
+                    is UIResult.Success -> {
+                        // Needs to trigger refresh after creation because creation request returns wrong path resulting list not getting updated.
+                        shareViewModel.refreshSharesFromNetwork()
+                    }
                 }
             }
         )
@@ -153,7 +166,7 @@ class ShareActivity : FileActivity(), ShareFragmentListener {
         // check if the Share is FERERATED
         val isFederated = ShareType.FEDERATED == shareType
 
-        return when {
+        val permissions = when {
             file.isSharedWithMe -> RemoteShare.READ_PERMISSION_FLAG    // minimum permissions
             isFederated ->
                 if (file.isFolder) {
@@ -168,6 +181,8 @@ class ShareActivity : FileActivity(), ShareFragmentListener {
                     RemoteShare.MAXIMUM_PERMISSIONS_FOR_FILE
                 }
         }
+
+        return if (shareViewModel.isResharingAllowed()) permissions else permissions - RemoteShare.SHARE_PERMISSION_FLAG
     }
 
     private fun observePrivateShareEdition() {
@@ -294,6 +309,23 @@ class ShareActivity : FileActivity(), ShareFragmentListener {
 
     override fun dismissLoading() {
         dismissLoadingDialog()
+    }
+
+    // The main_menu won't be displayed
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        return false
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+        return when (keyCode) {
+            KeyEvent.KEYCODE_DPAD_DOWN -> {
+                if (findViewById<View>(R.id.owncloud_app_bar).hasFocus()) {
+                    findViewById<View>(R.id.share_fragment_container).requestFocus()
+                }
+                true
+            }
+            else -> super.onKeyUp(keyCode, event)
+        }
     }
 
     companion object {

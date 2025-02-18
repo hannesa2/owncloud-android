@@ -23,7 +23,7 @@ import androidx.lifecycle.ViewModel
 import com.owncloud.android.MainApp
 import com.owncloud.android.MainApp.Companion.versionCode
 import com.owncloud.android.R
-import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider
+import com.owncloud.android.data.providers.SharedPreferencesProvider
 import com.owncloud.android.providers.ContextProvider
 
 class ReleaseNotesViewModel(
@@ -45,8 +45,11 @@ class ReleaseNotesViewModel(
 
     companion object {
         val releaseNotesList = listOf(
-            ReleaseNote(R.string.release_notes_3_0_4_title1, R.string.release_notes_3_0_4_subtitle1, ReleaseNoteType.SECURITY),
-            ReleaseNote(R.string.release_notes_3_0_4_title2, R.string.release_notes_3_0_4_subtitle2, ReleaseNoteType.CHANGE),
+            ReleaseNote(
+                title = R.string.release_notes_4_4_1_title_file_size_0,
+                subtitle = R.string.release_notes_4_4_1_subtitle_file_size_0,
+                type = ReleaseNoteType.BUGFIX
+            ),
         )
     }
 }

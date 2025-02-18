@@ -1,4 +1,4 @@
-/*
+/**
  * ownCloud Android client application
  *
  * @author Andy Scherzinger
@@ -7,17 +7,19 @@
  * @author Shashvat Kedia
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
- * Copyright (C) 2021 ownCloud GmbH.
- * <p>
+ * @author Aitor Ballesteros Pavon
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
  * as published by the Free Software Foundation.
- * <p>
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -40,78 +42,93 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.GravityCompat
+import androidx.core.view.get
 import androidx.core.view.isVisible
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.navigation.NavigationView
+import com.google.zxing.integration.android.IntentIntegrator
 import com.owncloud.android.BuildConfig
 import com.owncloud.android.R
+import com.owncloud.android.domain.capabilities.model.OCCapability
 import com.owncloud.android.domain.files.model.FileListOption
+import com.owncloud.android.domain.utils.Event
 import com.owncloud.android.extensions.goToUrl
 import com.owncloud.android.extensions.openPrivacyPolicy
-import com.owncloud.android.extensions.sendEmail
+import com.owncloud.android.extensions.sendEmailOrOpenFeedbackDialogAction
+import com.owncloud.android.extensions.setAccessibilityRole
 import com.owncloud.android.lib.common.OwnCloudAccount
+import com.owncloud.android.presentation.authentication.AccountUtils
+import com.owncloud.android.presentation.avatar.AvatarUtils
+import com.owncloud.android.presentation.capabilities.CapabilityViewModel
+import com.owncloud.android.presentation.common.DrawerViewModel
 import com.owncloud.android.presentation.common.UIResult
 import com.owncloud.android.presentation.settings.SettingsActivity
-import com.owncloud.android.presentation.common.DrawerViewModel
-import com.owncloud.android.presentation.avatar.AvatarUtils
-import com.owncloud.android.presentation.accounts.AccountsManagementActivity
-import com.owncloud.android.presentation.accounts.AccountsManagementActivity.Companion.KEY_ACCOUNT_LIST_CHANGED
-import com.owncloud.android.presentation.accounts.AccountsManagementActivity.Companion.KEY_CURRENT_ACCOUNT_CHANGED
 import com.owncloud.android.utils.DisplayUtils
 import com.owncloud.android.utils.PreferenceUtils
+import info.hannes.github.AppUpdateHelper.checkWithDialog
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import timber.log.Timber
 import kotlin.math.ceil
 
 /**
- * Base class to handle setup of the drawer implementation including user switching and avatar fetching and fallback
+ * Base class to handle setup of the drawer implementation including avatar fetching and fallback
  * generation.
  */
 abstract class DrawerActivity : ToolbarActivity() {
 
     private val drawerViewModel by viewModel<DrawerViewModel>()
+    private val capabilitiesViewModel by viewModel<CapabilityViewModel> {
+        parametersOf(
+            account?.name
+        )
+    }
 
-    private var menuAccountAvatarRadiusDimension = 0f
     private var currentAccountAvatarRadiusDimension = 0f
-    private var otherAccountAvatarRadiusDimension = 0f
 
     private var drawerToggle: ActionBarDrawerToggle? = null
 
-    private var isAccountChooserActive = false
     private var checkedMenuItem = Menu.NONE
-
-    /**
-     * accounts for the (max) three displayed accounts in the drawer header.
-     */
-    private var accountsWithAvatars = arrayOfNulls<Account>(3)
 
     /**
      * Initializes the drawer and its content.
      * This method needs to be called after the content view has been set.
      */
     protected open fun setupDrawer() {
-
         // Allow or disallow touches with other visible windows
         getDrawerLayout()?.filterTouchesWhenObscured = PreferenceUtils.shouldDisallowTouchesWithOtherVisibleWindows(this)
         getNavView()?.filterTouchesWhenObscured = PreferenceUtils.shouldDisallowTouchesWithOtherVisibleWindows(this)
 
-        // Set background header image and logo, if any
+        // Set background header image, if any
         if (resources.getBoolean(R.bool.use_drawer_background_header)) {
             getDrawerHeaderBackground()?.setImageResource(R.drawable.drawer_header_background)
         }
+
+        // Set logo and text for drawer link, if any
         if (resources.getBoolean(R.bool.use_drawer_logo)) {
-            getDrawerLogo()?.setImageResource(R.drawable.drawer_logo)
+            if (isDrawerLinkEnabled()) {
+                getDrawerLinkIcon()?.apply {
+                    isVisible = true
+                    setOnClickListener { openDrawerLink() }
+                    setAccessibilityRole(roleDescription = context.getString(R.string.link_role_accessibility))
+                }
+                getDrawerLinkText()?.apply {
+                    isVisible = true
+                    setOnClickListener { openDrawerLink() }
+                    setAccessibilityRole(roleDescription = context.getString(R.string.link_role_accessibility))
+                }
+            } else {
+                getDrawerLogo()?.setImageResource(R.drawable.drawer_logo)
+            }
         }
 
-        getDrawerAccountChooserToggle()?.setImageResource(R.drawable.ic_down)
-        isAccountChooserActive = false
-
-        //Notch support
+        // Notch support
         getNavView()?.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
             override fun onViewAttachedToWindow(v: View) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -125,17 +142,12 @@ abstract class DrawerActivity : ToolbarActivity() {
             override fun onViewDetachedFromWindow(v: View) {}
         })
         setupDrawerContent()
-        getDrawerActiveUser()?.setOnClickListener { toggleAccountList() }
 
         drawerToggle =
             object : ActionBarDrawerToggle(this, getDrawerLayout(), R.string.drawer_open, R.string.drawer_close) {
                 /** Called when a drawer has settled in a completely closed state.  */
                 override fun onDrawerClosed(view: View) {
                     super.onDrawerClosed(view)
-                    // standard behavior of drawer is to switch to the standard menu on closing
-                    if (isAccountChooserActive) {
-                        toggleAccountList()
-                    }
                     drawerToggle?.isDrawerIndicatorEnabled = false
                     invalidateOptionsMenu()
                 }
@@ -157,7 +169,7 @@ abstract class DrawerActivity : ToolbarActivity() {
      * setup drawer content, basically setting the item selected listener.
      *
      */
-    protected open fun setupDrawerContent() {
+    private fun setupDrawerContent() {
         val navigationView: NavigationView = getNavView() ?: return
         // Disable help or feedback on customization
         if (!resources.getBoolean(R.bool.help_enabled)) {
@@ -165,9 +177,6 @@ abstract class DrawerActivity : ToolbarActivity() {
         }
         if (!resources.getBoolean(R.bool.feedback_enabled)) {
             navigationView.menu.removeItem(R.id.drawer_menu_feedback)
-        }
-        if (!resources.getBoolean(R.bool.multiaccount_support)) {
-            navigationView.menu.removeItem(R.id.drawer_menu_accounts)
         }
         if (!resources.getBoolean(R.bool.privacy_policy_enabled)) {
             navigationView.menu.removeItem(R.id.drawer_menu_privacy_policy)
@@ -179,24 +188,19 @@ abstract class DrawerActivity : ToolbarActivity() {
                     val settingsIntent = Intent(applicationContext, SettingsActivity::class.java)
                     startActivity(settingsIntent)
                 }
-                R.id.drawer_menu_account_add -> createAccount(false)
-                R.id.drawer_menu_account_manage -> {
-                    val manageAccountsIntent = Intent(applicationContext, AccountsManagementActivity::class.java)
-                    startActivityForResult(manageAccountsIntent, ACTION_MANAGE_ACCOUNTS)
-                }
                 R.id.drawer_menu_feedback -> openFeedback()
+                R.id.nav_check_update -> checkWithDialog(
+                    this@DrawerActivity,
+                    BuildConfig.GIT_REPOSITORY
+                )
+                R.id.nav_qr -> IntentIntegrator(this).initiateScan()
                 R.id.drawer_menu_help -> openHelp()
                 R.id.drawer_menu_privacy_policy -> openPrivacyPolicy()
-                Menu.NONE -> {
-                    accountClicked(menuItem.title.toString())
-                }
                 else -> Timber.i("Unknown drawer menu item clicked: %s", menuItem.title)
             }
             true
         }
-
-        // handle correct state
-        navigationView.menu.setGroupVisible(R.id.drawer_menu_accounts, isAccountChooserActive)
+        setRolesAccessibilityToMenuItems()
     }
 
     fun setCheckedItemAtBottomBar(checkedMenuItem: Int) {
@@ -212,6 +216,11 @@ abstract class DrawerActivity : ToolbarActivity() {
     open fun setupNavigationBottomBar(menuItemId: Int) {
         // Allow or disallow touches with other visible windows
         getBottomNavigationView()?.filterTouchesWhenObscured = PreferenceUtils.shouldDisallowTouchesWithOtherVisibleWindows(this)
+        if (account != null) {
+            capabilitiesViewModel.capabilities.observe(this) { event: Event<UIResult<OCCapability>> ->
+                setSpacesVisibilityBottomBar(event.peekContent())
+            }
+        }
         setCheckedItemAtBottomBar(menuItemId)
         getBottomNavigationView()?.setOnNavigationItemSelectedListener { menuItem: MenuItem ->
             bottomBarNavigationTo(menuItem.itemId, getBottomNavigationView()?.selectedItemId == menuItem.itemId)
@@ -219,14 +228,31 @@ abstract class DrawerActivity : ToolbarActivity() {
         }
     }
 
+    private fun setSpacesVisibilityBottomBar(uiResult: UIResult<OCCapability>) {
+        if (uiResult is UIResult.Success) {
+            val capabilities = uiResult.data
+            if (AccountUtils.isSpacesFeatureAllowedForAccount(baseContext, account, capabilities)) {
+                getBottomNavigationView()?.menu?.get(0)?.title = getString(R.string.bottom_nav_personal)
+                getBottomNavigationView()?.menu?.get(1)?.title = getString(R.string.bottom_nav_shares)
+                getBottomNavigationView()?.menu?.get(1)?.icon = AppCompatResources.getDrawable(this, R.drawable.ic_ocis_shares)
+                getBottomNavigationView()?.menu?.get(2)?.isVisible = capabilities?.isSpacesProjectsAllowed() == true
+            } else {
+                getBottomNavigationView()?.menu?.get(0)?.title = getString(R.string.bottom_nav_files)
+                getBottomNavigationView()?.menu?.get(2)?.isVisible = false
+            }
+        }
+    }
+
     private fun bottomBarNavigationTo(menuItemId: Int, isCurrentOptionActive: Boolean) {
         when (menuItemId) {
             R.id.nav_all_files -> navigateToOption(FileListOption.ALL_FILES)
+            R.id.nav_spaces -> navigateToOption(FileListOption.SPACES_LIST)
             R.id.nav_uploads -> if (!isCurrentOptionActive) {
                 val uploadListIntent = Intent(applicationContext, UploadListActivity::class.java)
                 uploadListIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 startActivity(uploadListIntent)
             }
+
             R.id.nav_available_offline_files -> navigateToOption(FileListOption.AV_OFFLINE)
             R.id.nav_shared_by_link_files -> navigateToOption(FileListOption.SHARED_BY_LINK)
         }
@@ -237,36 +263,15 @@ abstract class DrawerActivity : ToolbarActivity() {
     }
 
     private fun openFeedback() {
-        val feedbackMail = getString(R.string.mail_feedback)
-        val feedback = "Android v" + BuildConfig.VERSION_NAME + " - " + getString(R.string.drawer_feedback)
-        sendEmail(email = feedbackMail, subject = feedback)
+        sendEmailOrOpenFeedbackDialogAction(drawerViewModel.getFeedbackMail())
     }
 
-    /**
-     * sets the new/current account and restarts. In case the given account equals the actual/current account the
-     * call will be ignored.
-     *
-     * @param accountName The account name to be set
-     */
-    private fun accountClicked(accountName: String) {
-        if (drawerViewModel.getCurrentAccount(this)?.name != accountName) {
-            if (drawerViewModel.setCurrentAccount(applicationContext, accountName)) {
-                restart()
-            } else {
-                Timber.d("Was not able to change account")
-                // TODO: Handle this error (?)
-            }
-        }
+    private fun openDrawerLink() {
+        goToUrl(url = resources.getString(R.string.drawer_link))
     }
 
-    /**
-     * click method for mini avatars in drawer header.
-     *
-     * @param view the clicked ImageView
-     */
-    open fun onAccountDrawerClick(view: View) {
-        accountClicked(view.contentDescription.toString())
-    }
+    private fun isDrawerLinkEnabled() =
+        resources.getString(R.string.drawer_link_label).isNotBlank() && resources.getString(R.string.drawer_link).isNotBlank()
 
     /**
      * checks if the drawer exists and is opened.
@@ -287,6 +292,7 @@ abstract class DrawerActivity : ToolbarActivity() {
      */
     open fun openDrawer() {
         getDrawerLayout()?.openDrawer(GravityCompat.START)
+        findViewById<View>(R.id.nav_view).requestFocus()
     }
 
     /**
@@ -297,92 +303,6 @@ abstract class DrawerActivity : ToolbarActivity() {
      */
     open fun setDrawerLockMode(lockMode: Int) {
         getDrawerLayout()?.setDrawerLockMode(lockMode)
-    }
-
-    /**
-     * updates the account list in the drawer.
-     */
-    private fun updateAccountList() {
-        val accounts = drawerViewModel.getAccounts(this)
-        if (getNavView() != null && getDrawerLayout() != null) {
-            if (accounts.isNotEmpty()) {
-                repopulateAccountList(accounts)
-                setAccountInDrawer(drawerViewModel.getCurrentAccount(this) ?: accounts.first())
-                populateDrawerOwnCloudAccounts()
-
-                // activate second/end account avatar
-                accountsWithAvatars[1]?.let { account ->
-                    getDrawerAccountEnd()?.let {
-                        AvatarUtils().loadAvatarForAccount(
-                            imageView = it,
-                            account = account,
-                            displayRadius = otherAccountAvatarRadiusDimension
-                        )
-                    }
-                }
-                if (accountsWithAvatars[1] == null) {
-                    getDrawerAccountEnd()?.isVisible = false
-                }
-
-                // activate third/middle account avatar
-                accountsWithAvatars[2]?.let { account ->
-                    getDrawerAccountMiddle()?.let {
-                        AvatarUtils().loadAvatarForAccount(
-                            imageView = it,
-                            account = account,
-                            displayRadius = otherAccountAvatarRadiusDimension
-                        )
-                    }
-                }
-                if (accountsWithAvatars[2] == null) {
-                    getDrawerAccountMiddle()?.isVisible = false
-                }
-            } else {
-                getDrawerAccountEnd()?.isVisible = false
-                getDrawerAccountMiddle()?.isVisible = false
-            }
-        }
-    }
-
-    /**
-     * re-populates the account list.
-     *
-     * @param accounts list of accounts
-     */
-    private fun repopulateAccountList(accounts: List<Account>?) {
-        val navigationView = getNavView() ?: return
-        val navigationMenu = navigationView.menu
-        // remove all accounts from list
-        navigationMenu.removeGroup(R.id.drawer_menu_accounts)
-
-        // add all accounts to list except current one
-        accounts?.filter { it.name != account?.name }?.forEach {
-            val accountMenuItem: MenuItem =
-                navigationMenu.add(R.id.drawer_menu_accounts, Menu.NONE, MENU_ORDER_ACCOUNT, it.name)
-            AvatarUtils().loadAvatarForAccount(
-                menuItem = accountMenuItem,
-                account = it,
-                fetchIfNotCached = false,
-                displayRadius = menuAccountAvatarRadiusDimension
-            )
-        }
-
-        // re-add add-account and manage-accounts
-        if (resources.getBoolean(R.bool.multiaccount_support)) {
-            navigationMenu.add(
-                R.id.drawer_menu_accounts, R.id.drawer_menu_account_add,
-                MENU_ORDER_ACCOUNT_FUNCTION,
-                resources.getString(R.string.prefs_add_account)
-            ).setIcon(R.drawable.ic_plus_grey)
-        }
-        navigationMenu.add(
-            R.id.drawer_menu_accounts, R.id.drawer_menu_account_manage,
-            MENU_ORDER_ACCOUNT_FUNCTION,
-            resources.getString(R.string.drawer_manage_accounts)
-        ).setIcon(R.drawable.ic_group)
-
-        // adding sets menu group back to visible, so safety check and setting invisible
-        showMenu()
     }
 
     /**
@@ -408,10 +328,12 @@ abstract class DrawerActivity : ToolbarActivity() {
                                 )
 
                             }
+
                             userQuota.available == 0L -> { // Quota 0, guest users
                                 getAccountQuotaBar()?.isVisible = false
                                 getAccountQuotaText()?.text = getString(R.string.drawer_unavailable_used_storage)
                             }
+
                             else -> { // Limited quota
                                 // Update progress bar rounding up to next int. Example: quota is 0.54 => 1
                                 getAccountQuotaBar()?.run {
@@ -428,14 +350,19 @@ abstract class DrawerActivity : ToolbarActivity() {
                         }
                     }
                 }
+
                 is UIResult.Loading -> getAccountQuotaText()?.text = getString(R.string.drawer_loading_quota)
                 is UIResult.Error -> getAccountQuotaText()?.text = getString(R.string.drawer_unavailable_used_storage)
             }
         }
     }
 
-    override fun setupRootToolbar(title: String, isSearchEnabled: Boolean) {
-        super.setupRootToolbar(title, isSearchEnabled)
+    override fun setupRootToolbar(title: String, isSearchEnabled: Boolean, isAvatarRequested: Boolean) {
+        super.setupRootToolbar(
+            title = title,
+            isSearchEnabled = isSearchEnabled,
+            isAvatarRequested = isAvatarRequested,
+        )
 
         val toolbarLeftIcon = findViewById<ImageView>(R.id.root_toolbar_left_icon)
         toolbarLeftIcon.setOnClickListener { openDrawer() }
@@ -470,27 +397,6 @@ abstract class DrawerActivity : ToolbarActivity() {
     }
 
     /**
-     * Toggle between standard menu and account list including saving the state.
-     */
-    private fun toggleAccountList() {
-        isAccountChooserActive = !isAccountChooserActive
-        showMenu()
-    }
-
-    /**
-     * depending on the #mIsAccountChooserActive flag shows the account chooser or the standard menu.
-     */
-    private fun showMenu() {
-        val navigationView = getNavView() ?: return
-
-        val accountCount = drawerViewModel.getAccounts(this).size
-        getDrawerAccountChooserToggle()?.setImageResource(if (isAccountChooserActive) R.drawable.ic_up else R.drawable.ic_down)
-        navigationView.menu.setGroupVisible(R.id.drawer_menu_accounts, isAccountChooserActive)
-        navigationView.menu.setGroupVisible(R.id.drawer_menu_settings_etc, !isAccountChooserActive)
-        getDrawerLogo()?.isVisible = !isAccountChooserActive || accountCount < USER_ITEMS_ALLOWED_BEFORE_REMOVING_CLOUD
-    }
-
-    /**
      * checks/highlights the provided menu item if the drawer has been initialized and the menu item exists.
      *
      * @param menuItemId the menu item to be highlighted
@@ -515,40 +421,42 @@ abstract class DrawerActivity : ToolbarActivity() {
             val rootsUri = DocumentsContract.buildRootsUri(authority)
             contentResolver.notifyChange(rootsUri, null)
 
-            updateAccountList()
-
             if (drawerViewModel.getAccounts(this).isEmpty()) {
                 mAccountWasSet = false
             }
         }, Handler(), false)
     }
 
+    private fun setRolesAccessibilityToMenuItems() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val navViewMenu = getNavView()?.menu ?: return
+            val roleAccessibilityDescription = getString(R.string.button_role_accessibility)
+            navViewMenu.apply {
+                findItem(R.id.nav_settings)?.contentDescription = "${getString(R.string.actionbar_settings)} $roleAccessibilityDescription"
+                findItem(R.id.drawer_menu_feedback)?.contentDescription = "${getString(R.string.drawer_feedback)} $roleAccessibilityDescription"
+                findItem(R.id.drawer_menu_help)?.contentDescription = "${getString(R.string.prefs_help)} $roleAccessibilityDescription"
+                findItem(R.id.drawer_menu_privacy_policy)?.contentDescription = "${getString(R.string.prefs_privacy_policy)} $roleAccessibilityDescription"
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState != null) {
-            isAccountChooserActive = savedInstanceState.getBoolean(KEY_IS_ACCOUNT_CHOOSER_ACTIVE, false)
             checkedMenuItem = savedInstanceState.getInt(KEY_CHECKED_MENU_ITEM, Menu.NONE)
         }
 
         currentAccountAvatarRadiusDimension = resources.getDimension(R.dimen.nav_drawer_header_avatar_radius)
-        otherAccountAvatarRadiusDimension =
-            resources.getDimension(R.dimen.nav_drawer_header_avatar_other_accounts_radius)
-        menuAccountAvatarRadiusDimension = resources.getDimension(R.dimen.nav_drawer_menu_avatar_radius)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putBoolean(KEY_IS_ACCOUNT_CHOOSER_ACTIVE, isAccountChooserActive)
         outState.putInt(KEY_CHECKED_MENU_ITEM, checkedMenuItem)
     }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
-        isAccountChooserActive = savedInstanceState.getBoolean(KEY_IS_ACCOUNT_CHOOSER_ACTIVE, false)
         checkedMenuItem = savedInstanceState.getInt(KEY_CHECKED_MENU_ITEM, Menu.NONE)
-
-        // (re-)setup drawer state
-        showMenu()
 
         // check/highlight the menu item if present
         if (checkedMenuItem != Menu.NONE) {
@@ -565,7 +473,6 @@ abstract class DrawerActivity : ToolbarActivity() {
                 it.isDrawerIndicatorEnabled = true
             }
         }
-        updateAccountList()
         updateQuota()
         setOnAccountsUpdatedListener()
     }
@@ -588,59 +495,20 @@ abstract class DrawerActivity : ToolbarActivity() {
         setDrawerMenuItemChecked(checkedMenuItem)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        // update Account list and active account if Manage Account activity replies with
-        // - ACCOUNT_LIST_CHANGED = true
-        // - RESULT_OK
-        if (requestCode == ACTION_MANAGE_ACCOUNTS && resultCode == RESULT_OK && data!!.getBooleanExtra(
-                KEY_ACCOUNT_LIST_CHANGED,
-                false
-            )
-        ) {
-
-            // current account has changed
-            if (data.getBooleanExtra(KEY_CURRENT_ACCOUNT_CHANGED, false)) {
-                account = drawerViewModel.getCurrentAccount(this)
-                restart()
-            } else {
-                updateAccountList()
-                updateQuota()
-            }
-        }
-    }
-
     override fun onAccountCreationSuccessful(future: AccountManagerFuture<Bundle?>?) {
         super.onAccountCreationSuccessful(future)
-        updateAccountList()
         updateQuota()
         restart()
     }
 
-    /**
-     * populates the avatar drawer array with the first three ownCloud [Account]s while the first element is
-     * always the current account.
-     */
-    private fun populateDrawerOwnCloudAccounts() {
-        accountsWithAvatars = arrayOfNulls(3)
-        val accountsAll = drawerViewModel.getAccounts(this)
-        val currentAccount = drawerViewModel.getCurrentAccount(this)
-        val otherAccounts = accountsAll.filter { it != currentAccount }
-        accountsWithAvatars[0] = currentAccount
-        accountsWithAvatars[1] = otherAccounts.getOrNull(0)
-        accountsWithAvatars[2] = otherAccounts.getOrNull(1)
-    }
-
     private fun getDrawerLayout(): DrawerLayout? = findViewById(R.id.drawer_layout)
     private fun getNavView(): NavigationView? = findViewById(R.id.nav_view)
-    private fun getDrawerLogo(): AppCompatImageView? = findViewById(R.id.drawer_logo)
     private fun getBottomNavigationView(): BottomNavigationView? = findViewById(R.id.bottom_nav_view)
+    private fun getDrawerLogo(): AppCompatImageView? = findViewById(R.id.drawer_logo)
+    private fun getDrawerLinkIcon(): ImageView? = findViewById(R.id.drawer_link_icon)
+    private fun getDrawerLinkText(): TextView? = findViewById(R.id.drawer_link_text)
     private fun getAccountQuotaText(): TextView? = findViewById(R.id.account_quota_text)
     private fun getAccountQuotaBar(): ProgressBar? = findViewById(R.id.account_quota_bar)
-    private fun getDrawerAccountChooserToggle() = findNavigationViewChildById(R.id.drawer_account_chooser_toggle) as ImageView?
-    private fun getDrawerAccountEnd() = findNavigationViewChildById(R.id.drawer_account_end) as ImageView?
-    private fun getDrawerAccountMiddle() = findNavigationViewChildById(R.id.drawer_account_middle) as ImageView?
     private fun getDrawerActiveUser() = findNavigationViewChildById(R.id.drawer_active_user) as ConstraintLayout?
     private fun getDrawerCurrentAccount() = findNavigationViewChildById(R.id.drawer_current_account) as AppCompatImageView?
     private fun getDrawerHeaderBackground() = findNavigationViewChildById(R.id.drawer_header_background) as ImageView?
@@ -674,11 +542,11 @@ abstract class DrawerActivity : ToolbarActivity() {
     protected abstract fun restart()
 
     companion object {
+        const val CENTRAL_URL = "https://central.owncloud.org/"
+        const val TALK_MOBILE_URL = "https://talk.owncloud.com/channel/mobile"
+        const val GITHUB_URL = "https://github.com/owncloud/android/issues/new/choose"
+        const val SURVEY_URL = "https://owncloud.com/android-app-feedback"
         private const val KEY_IS_ACCOUNT_CHOOSER_ACTIVE = "IS_ACCOUNT_CHOOSER_ACTIVE"
         private const val KEY_CHECKED_MENU_ITEM = "CHECKED_MENU_ITEM"
-        const val ACTION_MANAGE_ACCOUNTS = 101
-        private const val MENU_ORDER_ACCOUNT = 1
-        private const val MENU_ORDER_ACCOUNT_FUNCTION = 2
-        private const val USER_ITEMS_ALLOWED_BEFORE_REMOVING_CLOUD = 4
     }
 }

@@ -3,17 +3,17 @@
  *
  * @author Juan Carlos Garrote Gascón
  *
- * Copyright (C) 2021 ownCloud GmbH.
- * <p>
+ * Copyright (C) 2023 ownCloud GmbH.
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
  * as published by the Free Software Foundation.
- * <p>
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -30,12 +30,14 @@ import androidx.fragment.app.testing.launchFragmentInContainer
 import androidx.preference.Preference
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasData
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasExtra
 import androidx.test.espresso.intent.matcher.IntentMatchers.hasFlag
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.platform.app.InstrumentationRegistry
 import com.owncloud.android.BuildConfig
@@ -64,6 +66,7 @@ class SettingsMoreFragmentTest {
 
     private var prefHelp: Preference? = null
     private var prefSync: Preference? = null
+    private var prefAccessDocProvider: Preference? = null
     private var prefRecommend: Preference? = null
     private var prefFeedback: Preference? = null
     private var prefImprint: Preference? = null
@@ -110,12 +113,14 @@ class SettingsMoreFragmentTest {
     private fun launchTest(
         helpEnabled: Boolean = true,
         syncEnabled: Boolean = true,
+        docProviderAppEnabled: Boolean = true,
         recommendEnabled: Boolean = true,
         feedbackEnabled: Boolean = true,
         imprintEnabled: Boolean = true
     ) {
         every { moreViewModel.isHelpEnabled() } returns helpEnabled
         every { moreViewModel.isSyncEnabled() } returns syncEnabled
+        every { moreViewModel.isDocProviderAppEnabled() } returns docProviderAppEnabled
         every { moreViewModel.isRecommendEnabled() } returns recommendEnabled
         every { moreViewModel.isFeedbackEnabled() } returns feedbackEnabled
         every { moreViewModel.isImprintEnabled() } returns imprintEnabled
@@ -142,6 +147,16 @@ class SettingsMoreFragmentTest {
             keyPref = PREFERENCE_SYNC_CALENDAR_CONTACTS,
             titlePref = context.getString(R.string.prefs_sync_calendar_contacts),
             summaryPref = context.getString(R.string.prefs_sync_calendar_contacts_summary),
+            visible = true,
+            enabled = true
+        )
+
+        prefAccessDocProvider = getPreference(PREFERENCE_ACCESS_DOCUMENT_PROVIDER)
+        assertNotNull(prefAccessDocProvider)
+        prefAccessDocProvider?.verifyPreference(
+            keyPref = PREFERENCE_ACCESS_DOCUMENT_PROVIDER,
+            titlePref = context.getString(R.string.prefs_access_document_provider),
+            summaryPref = context.getString(R.string.prefs_access_document_provider_summary),
             visible = true,
             enabled = true
         )
@@ -188,6 +203,14 @@ class SettingsMoreFragmentTest {
         prefSync = getPreference(PREFERENCE_SYNC_CALENDAR_CONTACTS)
 
         assertNull(prefSync)
+    }
+
+    @Test
+    fun accessDocumentProviderNotEnabledView() {
+        launchTest(docProviderAppEnabled = false)
+        prefAccessDocProvider = getPreference(PREFERENCE_ACCESS_DOCUMENT_PROVIDER)
+
+        assertNull(prefAccessDocProvider)
     }
 
     @Test
@@ -239,6 +262,18 @@ class SettingsMoreFragmentTest {
     }
 
     @Test
+    fun accessDocumentProviderOpensNotEmptyUrl() {
+        every { moreViewModel.getDocProviderAppUrl() } returns context.getString(R.string.url_document_provider_app)
+
+        launchTest()
+
+        mockIntent(action = Intent.ACTION_VIEW)
+        onView(withText(R.string.prefs_access_document_provider)).perform(click())
+
+        intended(hasData(context.getString(R.string.url_document_provider_app)))
+    }
+
+    @Test
     fun recommendOpensSender() {
         launchTest()
 
@@ -270,9 +305,9 @@ class SettingsMoreFragmentTest {
     }
 
     @Test
-    fun feedbackOpensSender() {
+    fun feedbackOpensSenderIfFeedbackMailExists() {
         launchTest()
-
+        every { moreViewModel.getFeedbackMail() } returns FEEDBACK_MAIL
         mockIntent(action = Intent.ACTION_SENDTO)
 
         onView(withText(R.string.prefs_send_feedback)).perform(click())
@@ -286,10 +321,21 @@ class SettingsMoreFragmentTest {
                     EXTRA_SUBJECT,
                     "Android v" + BuildConfig.VERSION_NAME + " - " + context.getText(R.string.prefs_feedback)
                 ),
-                hasData(Uri.parse(context.getString(R.string.mail_feedback))),
+                hasData(Uri.parse(FEEDBACK_MAIL)),
                 hasFlag(Intent.FLAG_ACTIVITY_NEW_TASK)
             )
         )
+    }
+
+    @Test
+    fun feedbackOpensAlertDialogIfFeedbackMailIsEmpty() {
+        launchTest()
+        every { moreViewModel.getFeedbackMail() } returns ""
+
+        onView(withText(R.string.prefs_send_feedback)).perform(click())
+
+        onView(withText(R.string.drawer_feedback)).check(ViewAssertions.matches(isDisplayed()))
+        onView(withText(R.string.feedback_dialog_description)).check(ViewAssertions.matches(isDisplayed()))
     }
 
     @Test
@@ -307,9 +353,12 @@ class SettingsMoreFragmentTest {
     companion object {
         private const val PREFERENCE_HELP = "help"
         private const val PREFERENCE_SYNC_CALENDAR_CONTACTS = "syncCalendarContacts"
+        private const val PREFERENCE_ACCESS_DOCUMENT_PROVIDER = "accessDocumentProvider"
         private const val PREFERENCE_RECOMMEND = "recommend"
         private const val PREFERENCE_FEEDBACK = "feedback"
         private const val PREFERENCE_IMPRINT = "imprint"
+        private const val FEEDBACK_MAIL = "mailto:android-app@owncloud.com"
+
     }
 
 }

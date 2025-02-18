@@ -2,7 +2,7 @@
 <!--
   ownCloud Android client application
 
-  Copyright (C) 2020 ownCloud GmbH.
+  Copyright (C) 2024 ownCloud GmbH.
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License version 2,
@@ -16,46 +16,25 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <!--
-        account list placeholder
-        all items in this group MUST have orderInCategory="2" set
-        all accounts are dynamically added with orderInCategory="1" set
-    -->
-    <group android:id="@+id/drawer_menu_accounts">
-        <item
-            android:orderInCategory="2"
-            android:id="@+id/drawer_menu_account_add"
-            android:icon="@drawable/ic_plus_grey"
-            android:title="@string/prefs_add_account" />
-        <item
-            android:orderInCategory="2"
-            android:id="@+id/drawer_menu_account_manage"
-            android:icon="@drawable/ic_account_multiple_grey"
-            android:title="@string/drawer_manage_accounts" />
-
-        <item
-            android:id="@+id/footer_spacer_3"
-            android:checkable="false"
-            android:enabled="false"
-            android:orderInCategory="200"
-            android:title="" />
-
-        <item
-            android:id="@+id/footer_spacer_4"
-            android:checkable="false"
-            android:enabled="false"
-            android:orderInCategory="200"
-            android:title="" />
-
-    </group>
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
       standard menu
       all items in this group MUST have orderInCategory="0" set
     -->
     <group android:id="@+id/drawer_menu_settings_etc">
+        <item
+            android:orderInCategory="3"
+            android:id="@+id/nav_check_update"
+            android:icon="@drawable/ic_search"
+            android:title="Check for update"
+            tools:ignore="HardcodedText" />
+        <item
+            android:orderInCategory="3"
+            android:id="@+id/nav_qr"
+            android:icon="@drawable/ic_qr_code"
+            android:title="@string/qr_scan"/>
         <item
             android:orderInCategory="3"
             android:id="@+id/nav_settings"
@@ -76,20 +55,6 @@
             android:id="@+id/drawer_menu_privacy_policy"
             android:icon="@drawable/ic_privacy_policy"
             android:title="@string/prefs_privacy_policy" />
-
-        <item
-            android:id="@+id/footer_spacer_1"
-            android:checkable="false"
-            android:enabled="false"
-            android:orderInCategory="200"
-            android:title="" />
-
-        <item
-            android:id="@+id/footer_spacer_2"
-            android:checkable="false"
-            android:enabled="false"
-            android:orderInCategory="200"
-            android:title="" />
     </group>
 
 </menu>

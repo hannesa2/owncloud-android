@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author Abel García de Prada
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Aitor Ballesteros Pavón
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -21,13 +23,20 @@ package com.owncloud.android.presentation.files
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.View
+import android.widget.Button
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.core.view.AccessibilityDelegateCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import com.owncloud.android.R
-import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider
-import com.owncloud.android.data.preferences.datasources.implementation.OCSharedPreferencesProvider
+import com.owncloud.android.data.providers.SharedPreferencesProvider
+import com.owncloud.android.data.providers.implementation.OCSharedPreferencesProvider
 import com.owncloud.android.databinding.SortOptionsLayoutBinding
+import com.owncloud.android.extensions.setAccessibilityRole
 import com.owncloud.android.presentation.files.SortOrder.Companion.PREF_FILE_LIST_SORT_ORDER
+import com.owncloud.android.presentation.files.SortOrder.SORT_ORDER_ASCENDING
 import com.owncloud.android.presentation.files.SortType.Companion.PREF_FILE_LIST_SORT_TYPE
 
 class SortOptionsView @JvmOverloads constructor(
@@ -75,7 +84,7 @@ class SortOptionsView @JvmOverloads constructor(
         // Select sort type and order according to preferences.
         sortTypeSelected = SortType.values()[sharedPreferencesProvider.getInt(PREF_FILE_LIST_SORT_TYPE, SortType.SORT_TYPE_BY_NAME.ordinal)]
         sortOrderSelected = SortOrder.values()[sharedPreferencesProvider.getInt(PREF_FILE_LIST_SORT_ORDER, SortOrder.SORT_ORDER_ASCENDING.ordinal)]
-
+        binding.sortTypeTitle.setAccessibilityRole(className = Button::class.java)
         binding.sortTypeSelector.setOnClickListener {
             onSortOptionsListener?.onSortTypeListener(
                 sortTypeSelected,
@@ -87,23 +96,46 @@ class SortOptionsView @JvmOverloads constructor(
                 viewTypeSelected.getOppositeViewType()
             )
         }
+        ViewCompat.setAccessibilityDelegate(binding.sortTypeSelector, object : AccessibilityDelegateCompat() {
+            override fun onInitializeAccessibilityNodeInfo(v: View, info: AccessibilityNodeInfoCompat) {
+                super.onInitializeAccessibilityNodeInfo(v, info)
+                val sortTitleText = binding.sortTypeTitle.text
+                if (sortOrderSelected == SORT_ORDER_ASCENDING) {
+                    binding.sortTypeTitle.contentDescription = context.getString(R.string.content_description_sort_by_name_ascending, sortTitleText)
+                } else {
+                    binding.sortTypeTitle.contentDescription = context.getString(R.string.content_description_sort_by_name_descending, sortTitleText)
+                }
+            }
+        })
+
     }
 
     fun selectAdditionalView(additionalView: AdditionalView) {
         when (additionalView) {
             AdditionalView.CREATE_FOLDER -> {
-                binding.viewTypeSelector.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_action_create_dir))
-                binding.viewTypeSelector.setOnClickListener {
-                    onCreateFolderListener?.onCreateFolderListener()
+                binding.viewTypeSelector.apply {
+                    visibility = VISIBLE
+                    contentDescription = context.getString(R.string.content_description_create_new_folder)
+                    setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_action_create_dir))
+                    setOnClickListener {
+                        onCreateFolderListener?.onCreateFolderListener()
+                    }
                 }
             }
             AdditionalView.VIEW_TYPE -> {
                 viewTypeSelected = viewTypeSelected
-                binding.viewTypeSelector.setOnClickListener {
-                    onSortOptionsListener?.onViewTypeListener(
-                        viewTypeSelected.getOppositeViewType()
-                    )
+                binding.viewTypeSelector.apply {
+                    visibility = VISIBLE
+                    contentDescription = context.getString(R.string.content_description_type_view)
+                    setOnClickListener {
+                        onSortOptionsListener?.onViewTypeListener(
+                            viewTypeSelected.getOppositeViewType()
+                        )
+                    }
                 }
+            }
+            AdditionalView.HIDDEN -> {
+                binding.viewTypeSelector.visibility = INVISIBLE
             }
         }
     }
@@ -118,6 +150,6 @@ class SortOptionsView @JvmOverloads constructor(
     }
 
     enum class AdditionalView {
-        CREATE_FOLDER, VIEW_TYPE
+        CREATE_FOLDER, VIEW_TYPE, HIDDEN
     }
 }

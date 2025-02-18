@@ -2,8 +2,9 @@
  * ownCloud Android client application
  *
  * @author Juan Carlos Garrote Gascón
+ * @author Aitor Ballesteros Pavón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -20,12 +21,12 @@
 
 package com.owncloud.android.data.transfers.repository
 
-import androidx.lifecycle.LiveData
 import com.owncloud.android.data.transfers.datasources.LocalTransferDataSource
 import com.owncloud.android.domain.transfers.TransferRepository
 import com.owncloud.android.domain.transfers.model.OCTransfer
 import com.owncloud.android.domain.transfers.model.TransferResult
 import com.owncloud.android.domain.transfers.model.TransferStatus
+import kotlinx.coroutines.flow.Flow
 
 class OCTransferRepository(
     private val localTransferDataSource: LocalTransferDataSource
@@ -46,6 +47,10 @@ class OCTransferRepository(
 
     override fun updateTransferLocalPath(id: Long, localPath: String) {
         localTransferDataSource.updateTransferLocalPath(id = id, localPath = localPath)
+    }
+
+    override fun updateTransferSourcePath(id: Long, sourcePath: String) {
+        localTransferDataSource.updateTransferSourcePath(id = id, sourcePath = sourcePath)
     }
 
     override fun updateTransferWhenFinished(
@@ -86,8 +91,8 @@ class OCTransferRepository(
     override fun getAllTransfers(): List<OCTransfer> =
         localTransferDataSource.getAllTransfers()
 
-    override fun getAllTransfersAsLiveData(): LiveData<List<OCTransfer>> =
-        localTransferDataSource.getAllTransfersAsLiveData()
+    override fun getAllTransfersAsStream(): Flow<List<OCTransfer>> =
+        localTransferDataSource.getAllTransfersAsStream()
 
     override fun getLastTransferFor(remotePath: String, accountName: String) =
         localTransferDataSource.getLastTransferFor(remotePath = remotePath, accountName = accountName)

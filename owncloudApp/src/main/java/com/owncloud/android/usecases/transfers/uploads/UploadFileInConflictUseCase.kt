@@ -3,8 +3,9 @@
  *
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -40,7 +41,7 @@ import java.util.UUID
 /**
  * Use case to upload an update for a file in server.
  *
- * We use this to upload files from Conflicts - Keep local - Overwrite file in server
+ * We use this to upload files from Conflicts - Keep local (Overwrite file in server)
  *
  * It stores the upload in the database and then enqueue a new worker to upload the single file
  */
@@ -62,6 +63,7 @@ class UploadFileInConflictUseCase(
             localFile = localFile,
             uploadPath = params.uploadFolderPath.plus(localFile.name),
             accountName = params.accountName,
+            spaceId = params.spaceId,
         )
 
         return enqueueSingleUpload(
@@ -77,6 +79,7 @@ class UploadFileInConflictUseCase(
         localFile: File,
         uploadPath: String,
         accountName: String,
+        spaceId: String?,
     ): Long {
         val ocTransfer = OCTransfer(
             localPath = localFile.absolutePath,
@@ -86,7 +89,8 @@ class UploadFileInConflictUseCase(
             status = TransferStatus.TRANSFER_QUEUED,
             localBehaviour = UploadBehavior.COPY,
             forceOverwrite = true,
-            createdBy = UploadEnqueuedBy.ENQUEUED_BY_USER
+            createdBy = UploadEnqueuedBy.ENQUEUED_BY_USER,
+            spaceId = spaceId,
         )
 
         return transferRepository.saveTransfer(ocTransfer).also {
@@ -108,6 +112,7 @@ class UploadFileInConflictUseCase(
             UploadFileFromFileSystemWorker.KEY_PARAM_LAST_MODIFIED to lastModifiedInSeconds,
             UploadFileFromFileSystemWorker.KEY_PARAM_UPLOAD_PATH to uploadPath,
             UploadFileFromFileSystemWorker.KEY_PARAM_UPLOAD_ID to uploadIdInStorageManager,
+            UploadFileFromFileSystemWorker.KEY_PARAM_REMOVE_LOCAL to false
         )
 
         val constraints = Constraints.Builder()
@@ -131,5 +136,6 @@ class UploadFileInConflictUseCase(
         val accountName: String,
         val localPath: String,
         val uploadFolderPath: String,
+        val spaceId: String?,
     )
 }

@@ -2,8 +2,9 @@
  * ownCloud Android client application
  *
  * @author Juan Carlos Garrote Gascón
+ * @author Aitor Ballesteros Pavón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -52,7 +53,9 @@ data class OCTransferEntity(
     val transferEndTimestamp: Long? = null,
     val lastResult: Int? = null,
     val createdBy: Int,
-    val transferId: String? = null
+    val transferId: String? = null,
+    val spaceId: String? = null,
+    val sourcePath: String? = null,
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0

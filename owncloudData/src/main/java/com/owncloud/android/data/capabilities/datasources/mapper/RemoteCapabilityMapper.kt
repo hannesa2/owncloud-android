@@ -30,7 +30,7 @@ class RemoteCapabilityMapper : RemoteMapper<OCCapability, RemoteCapability> {
         remote?.let {
             OCCapability(
                 accountName = remote.accountName,
-                versionMayor = remote.versionMayor,
+                versionMajor = remote.versionMajor,
                 versionMinor = remote.versionMinor,
                 versionMicro = remote.versionMicro,
                 versionString = remote.versionString,
@@ -66,7 +66,9 @@ class RemoteCapabilityMapper : RemoteMapper<OCCapability, RemoteCapability> {
                 filesUndelete = CapabilityBooleanType.fromValue(remote.filesUndelete.value),
                 filesVersioning = CapabilityBooleanType.fromValue(remote.filesVersioning.value),
                 filesPrivateLinks = CapabilityBooleanType.fromValue(remote.filesPrivateLinks.value),
-                filesOcisProviders = remote.filesAppProviders?.firstOrNull()?.toOCISProvider()
+                filesAppProviders = remote.filesAppProviders?.firstOrNull()?.toAppProviders(),
+                spaces = remote.spaces?.toSpaces(),
+                passwordPolicy = remote.passwordPolicy?.toPasswordPolicy()
             )
         }
 
@@ -74,7 +76,7 @@ class RemoteCapabilityMapper : RemoteMapper<OCCapability, RemoteCapability> {
         model?.let {
             RemoteCapability(
                 accountName = model.accountName!!,
-                versionMayor = model.versionMayor,
+                versionMajor = model.versionMajor,
                 versionMinor = model.versionMinor,
                 versionMicro = model.versionMicro,
                 versionString = model.versionString!!,
@@ -110,11 +112,18 @@ class RemoteCapabilityMapper : RemoteMapper<OCCapability, RemoteCapability> {
                 filesUndelete = RemoteCapabilityBooleanType.fromValue(model.filesUndelete.value)!!,
                 filesVersioning = RemoteCapabilityBooleanType.fromValue(model.filesVersioning.value)!!,
                 filesPrivateLinks = RemoteCapabilityBooleanType.fromValue(model.filesPrivateLinks.value)!!,
-                filesAppProviders = null
+                filesAppProviders = null,
+                spaces = null,
+                passwordPolicy = null,
             )
         }
 
-    private fun RemoteCapability.RemoteOCISProvider.toOCISProvider() =
-        OCCapability.OcisProvider(enabled, version, appsUrl, openUrl, openWebUrl, newUrl)
+    private fun RemoteCapability.RemoteAppProviders.toAppProviders() =
+        OCCapability.AppProviders(enabled, version, appsUrl, openUrl, openWebUrl, newUrl)
 
+    private fun RemoteCapability.RemoteSpaces.toSpaces() =
+        OCCapability.Spaces(enabled, projects, shareJail)
+
+    private fun RemoteCapability.RemotePasswordPolicy.toPasswordPolicy() =
+        OCCapability.PasswordPolicy(maxCharacters, minCharacters, minDigits, minLowercaseCharacters, minSpecialCharacters, minUppercaseCharacters)
 }

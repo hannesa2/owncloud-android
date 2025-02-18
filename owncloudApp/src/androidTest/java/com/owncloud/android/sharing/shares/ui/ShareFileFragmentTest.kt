@@ -44,6 +44,7 @@ import com.owncloud.android.testutil.OC_ACCOUNT
 import com.owncloud.android.testutil.OC_CAPABILITY
 import com.owncloud.android.testutil.OC_FILE
 import com.owncloud.android.testutil.OC_SHARE
+import com.owncloud.android.testutil.annotation.FailsOnGithubAction
 import com.owncloud.android.utils.matchers.assertVisibility
 import com.owncloud.android.utils.matchers.isDisplayed
 import com.owncloud.android.utils.matchers.withText
@@ -144,6 +145,7 @@ class ShareFileFragmentTest {
     }
 
     @Test
+    @FailsOnGithubAction
     fun showUserShares() {
         loadShareFileFragment(shares = userSharesList)
         onView(withText("Batman")).check(matches(isDisplayed()))
@@ -291,7 +293,7 @@ class ShareFileFragmentTest {
     fun showError() {
         loadShareFileFragment(
             sharesUIResult = UIResult.Error(
-                error = Throwable("It was not possible to retrieve the shares from server")
+                error = Throwable("It was not possible to retrieve the shares from the server")
             )
         )
         com.google.android.material.R.id.snackbar_text.withText(R.string.get_shares_error)

@@ -9,8 +9,10 @@
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
  * @author David Crespo Ríos
+ * @author  Aitor Ballesteros Pavón
+ *
  * Copyright (C) 2011 Bartek Przybylski
- * Copyright (C) 2021 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -33,7 +35,6 @@ import android.text.Editable
 import android.view.KeyEvent
 import android.view.MenuItem
 import android.view.View
-import android.view.View.OnFocusChangeListener
 import android.view.WindowManager
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -42,7 +43,6 @@ import com.owncloud.android.BuildConfig
 import com.owncloud.android.R
 import com.owncloud.android.databinding.PasscodelockBinding
 import com.owncloud.android.domain.utils.Event
-import com.owncloud.android.extensions.hideSoftKeyboard
 import com.owncloud.android.extensions.showBiometricDialog
 import com.owncloud.android.presentation.documentsprovider.DocumentsProviderUtils.Companion.notifyDocumentsProviderRoots
 import com.owncloud.android.presentation.security.biometric.BiometricStatus
@@ -118,6 +118,7 @@ class PassCodeActivity : AppCompatActivity(), NumberKeyboardListener, EnableBiom
                 binding.explanation.visibility = View.INVISIBLE
                 supportActionBar?.setDisplayHomeAsUpEnabled(false) //Don´t show the back arrow
             }
+
             ACTION_CREATE -> { //Create a new password
                 if (confirmingPassCode) {
                     //the app was in the passcode confirmation
@@ -136,15 +137,18 @@ class PassCodeActivity : AppCompatActivity(), NumberKeyboardListener, EnableBiom
                         intent.extras?.getBoolean(EXTRAS_MIGRATION) == true -> {
                             supportActionBar?.setDisplayHomeAsUpEnabled(false)
                         }
+
                         intent.extras?.getBoolean(EXTRAS_LOCK_ENFORCED) == true -> {
                             supportActionBar?.setDisplayHomeAsUpEnabled(false)
                         }
+
                         else -> {
                             supportActionBar?.setDisplayHomeAsUpEnabled(true)
                         }
                     }
                 }
             }
+
             ACTION_REMOVE -> { // Remove password
                 // pass code preference has just been disabled in Preferences;
                 // will confirm user knows pass code, then remove it
@@ -152,12 +156,11 @@ class PassCodeActivity : AppCompatActivity(), NumberKeyboardListener, EnableBiom
                 binding.explanation.visibility = View.INVISIBLE
                 supportActionBar?.setDisplayHomeAsUpEnabled(true)
             }
+
             else -> {
                 throw IllegalArgumentException(R.string.illegal_argument_exception_message.toString() + " ")
             }
         }
-
-        setTextListeners()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -179,27 +182,6 @@ class PassCodeActivity : AppCompatActivity(), NumberKeyboardListener, EnableBiom
             passCodeEditTexts[i] = txt
         }
         passCodeEditTexts.first()?.requestFocus()
-    }
-
-    /**
-     * Binds the appropriate listeners to the input boxes receiving each digit of the pass code.
-     */
-    private fun setTextListeners() {
-        val numberOfPasscodeDigits = (passCodeViewModel.getPassCode()?.length ?: passCodeViewModel.getNumberOfPassCodeDigits())
-        for (i in 0 until numberOfPasscodeDigits) {
-            passCodeEditTexts[i]?.setOnClickListener { hideSoftKeyboard() }
-            passCodeEditTexts[i]?.onFocusChangeListener = OnFocusChangeListener { _: View, _: Boolean ->
-                // Return the focus to the first EditText without number
-                for (j in 0 until i) {
-                    if (passCodeEditTexts[j]?.text.toString() == "") {  // TODO WIP validation
-                        // could be done in a global way, with a single OnFocusChangeListener for all the
-                        // input fields
-                        passCodeEditTexts[j]?.requestFocus()
-                        break
-                    }
-                }
-            }
-        }
     }
 
     override fun onNumberClicked(number: Int) {
@@ -231,12 +213,14 @@ class PassCodeActivity : AppCompatActivity(), NumberKeyboardListener, EnableBiom
                         else -> actionCheckError()
                     }
                 }
+
                 PasscodeAction.REMOVE -> {
                     when (status.type) {
                         PasscodeType.OK -> actionRemoveOk()
                         else -> actionRemoveError()
                     }
                 }
+
                 PasscodeAction.CREATE -> {
                     when (status.type) {
                         PasscodeType.NO_CONFIRM -> actionCreateNoConfirm()
@@ -421,6 +405,7 @@ class PassCodeActivity : AppCompatActivity(), NumberKeyboardListener, EnableBiom
             BiometricStatus.ENABLED_BY_USER -> {
                 passCodeViewModel.setBiometricsState(enabled = true)
             }
+
             BiometricStatus.DISABLED_BY_USER -> {
                 passCodeViewModel.setBiometricsState(enabled = false)
             }
@@ -434,12 +419,39 @@ class PassCodeActivity : AppCompatActivity(), NumberKeyboardListener, EnableBiom
             ACTION_REMOVE -> {
                 return PasscodeAction.REMOVE
             }
+
             ACTION_CREATE -> {
                 return PasscodeAction.CREATE
             }
+
             else -> {
                 return PasscodeAction.CHECK
             }
+        }
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+        return when (keyCode) {
+
+            in KeyEvent.KEYCODE_0..KeyEvent.KEYCODE_9 -> {
+                val number = keyCode - KeyEvent.KEYCODE_0
+                passCodeViewModel.onNumberClicked(number)
+                binding.numberKeyboard.setFocusOnKey(number)
+                true
+            }
+
+            KeyEvent.KEYCODE_DEL -> {
+                passCodeViewModel.onBackspaceClicked()
+                true
+            }
+
+            KeyEvent.KEYCODE_ESCAPE -> {
+                PassCodeManager.onActivityStopped(this)
+                super.onBackPressed()
+                true
+            }
+
+            else -> super.onKeyUp(keyCode, event)
         }
     }
 

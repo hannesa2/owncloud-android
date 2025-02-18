@@ -1,7 +1,9 @@
 /**
  * ownCloud Android client application
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * @author Aitor Ballesteros Pavón
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -16,7 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 package com.owncloud.android.testutil
 
 import com.owncloud.android.domain.capabilities.model.CapabilityBooleanType
@@ -25,7 +26,7 @@ import com.owncloud.android.domain.capabilities.model.OCCapability
 val OC_CAPABILITY =
     OCCapability(
         accountName = OC_ACCOUNT_NAME,
-        versionMayor = 2,
+        versionMajor = 2,
         versionMinor = 1,
         versionMicro = 0,
         versionString = "1.0.0",
@@ -52,5 +53,18 @@ val OC_CAPABILITY =
         filesUndelete = CapabilityBooleanType.FALSE,
         filesVersioning = CapabilityBooleanType.FALSE,
         filesPrivateLinks = CapabilityBooleanType.TRUE,
-        filesOcisProviders = null,
+        filesAppProviders = null,
+        spaces = null,
+        passwordPolicy = null,
     )
+
+val OC_CAPABILITY_WITH_FILES_APP_PROVIDERS = OC_CAPABILITY.copy(
+    filesAppProviders = OCCapability.AppProviders(
+        enabled = true,
+        version = "1.1.1",
+        appsUrl = "/app-url",
+        openUrl = "/open-url",
+        openWebUrl = "/open-with-web",
+        newUrl = "/new-url",
+    )
+)

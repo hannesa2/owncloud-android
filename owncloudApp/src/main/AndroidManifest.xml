@@ -2,7 +2,7 @@
   ownCloud Android client application
 
   Copyright (C) 2012  Bartek Przybylski
-  Copyright (C) 2016 ownCloud GmbH.
+  Copyright (C) 2023 ownCloud GmbH.
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License version 2,
@@ -19,28 +19,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <!--
-         GET_ACCOUNTS is needed for API < 23.
-        For API >= 23 results in the addition of CONTACTS group to the list of permissions that may be
-        dynamically disabled or enabled by the user after installation; but it is not important,
-        since GET_ACCOUNTS is an special case, the permission is not really needed to access accounts
-        owned by the app, our use case.
-        See note in http://developer.android.com/intl/es/reference/android/Manifest.permission.html#GET_ACCOUNTS
-    -->
-    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-    <!--
-         USE_CREDENTIALS, MANAGE_ACCOUNTS and AUTHENTICATE_ACCOUNTS are needed for API < 23.
-        In API >= 23 the do not exist anymore
-    -->
-    <uses-permission android:name="android.permission.USE_CREDENTIALS" />
-    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
-    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
-    <!--
-         WRITE_EXTERNAL_STORAGE may be enabled or disabled by the user after installation in
+        WRITE_EXTERNAL_STORAGE may be enabled or disabled by the user after installation in
         API >= 23; the app needs to handle this
     -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <!--
-         Next permissions are always approved in installation time,
+        Notifications are off by default since API 33;
+        See note in https://developer.android.com/develop/ui/views/notifications/notification-permission
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!--
+        Next permissions are always approved in installation time,
         the apps needs to do nothing special in runtime
     -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -52,48 +41,69 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+    <uses-sdk tools:overrideLibrary="com.google.zxing.client.android" />
 
     <application
         android:name=".MainApp"
         android:allowBackup="false"
         android:icon="@mipmap/icon"
         android:label="@string/app_name"
-        android:manageSpaceActivity="com.owncloud.android.ui.activity.ManageSpaceActivity"
+        android:localeConfig="@xml/locales_config"
         android:networkSecurityConfig="@xml/network_security_config"
         android:preserveLegacyExternalStorage="true"
         android:requestLegacyExternalStorage="true"
         android:resizeableActivity="true"
         android:supportsPictureInPicture="false"
+        android:taskAffinity=""
         android:theme="@style/Theme.ownCloud.Toolbar">
+        <activity
+            android:name=".ui.preview.PreviewVideoActivity"
+            android:label="@string/video_preview_label"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
+            android:theme="@style/Theme.ownCloud.Video"
+            android:exported="false" />
 
-        <meta-data android:name="android.content.APP_RESTRICTIONS"
+        <meta-data
+            android:name="android.content.APP_RESTRICTIONS"
             android:resource="@xml/managed_configurations" />
+
         <activity
             android:name=".presentation.releasenotes.ReleaseNotesActivity"
+            android:label="@string/release_notes_label"
             android:exported="false" />
-        <activity android:name=".presentation.settings.privacypolicy.PrivacyPolicyActivity" />
+        <activity
+            android:name=".presentation.settings.privacypolicy.PrivacyPolicyActivity"
+            android:label="@string/actionbar_privacy_policy" />
         <activity android:name=".presentation.settings.SettingsActivity" />
         <activity android:name=".presentation.migration.StorageMigrationActivity" />
         <activity
             android:name=".ui.activity.SplashActivity"
-            android:theme="@style/Theme.ownCloud.Splash"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.ownCloud.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <meta-data android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+
         </activity>
         <activity
             android:name=".ui.activity.FileDisplayActivity"
+            android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.ownCloud.Toolbar.Drawer"
             android:windowSoftInputMode="adjustPan" />
-        <activity android:name=".presentation.accounts.AccountsManagementActivity" />
         <activity
             android:name=".ui.activity.ReceiveExternalFilesActivity"
             android:configChanges="orientation|screenSize"
+            android:label="@string/receive_external_files_label"
             android:excludeFromRecents="true"
-            android:taskAffinity=""
-            android:exported="true">
+            android:exported="true"
+            android:taskAffinity="">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
 
@@ -111,6 +121,7 @@
         </activity>
         <activity
             android:name=".ui.preview.PreviewImageActivity"
+            android:label="@string/image_preview_label"
             android:theme="@style/Theme.ownCloud.Overlay" />
 
         <service
@@ -173,38 +184,46 @@
         </provider>
 
         <service android:name=".services.OperationsService" />
-        <service android:name=".media.MediaService" />
+        <service
+            android:name=".media.MediaService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false">
+        </service>
 
         <activity
             android:name=".presentation.security.passcode.PassCodeActivity"
-            android:theme="@style/Theme.ownCloud"
-            android:screenOrientation="portrait"/>
+            android:label="@string/passcode_label"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.ownCloud" />
         <activity
             android:name=".presentation.conflicts.ConflictsResolveActivity"
             android:theme="@style/Theme.ownCloud" />
         <activity
             android:name=".presentation.logging.LogsListActivity"
+            android:label="@string/prefs_log_open_logs_list_view"
             android:configChanges="orientation|screenSize" />
         <activity android:name=".ui.errorhandling.ErrorShowActivity" />
         <activity
             android:name=".ui.activity.UploadListActivity"
+            android:label="@string/bottom_nav_uploads"
             android:theme="@style/Theme.ownCloud.Toolbar.Drawer" />
         <activity
             android:name=".ui.activity.WhatsNewActivity"
+            android:label="@string/whats_new_label"
             android:configChanges="keyboardHidden|orientation|screenSize" />
         <activity
             android:name=".ui.activity.CopyToClipboardActivity"
             android:icon="@drawable/copy_link"
             android:label="@string/copy_link" />
-        <activity android:name=".ui.activity.FolderPickerActivity" />
-        <activity android:name=".ui.activity.UploadPathActivity" />
+        <activity android:name=".ui.activity.FolderPickerActivity"
+            android:label="@string/folder_picker_label"/>
         <activity
             android:name=".presentation.sharing.ShareActivity"
+            android:exported="false"
             android:label="@string/share_dialog_title"
             android:launchMode="singleTop"
-            android:theme="@style/Theme.ownCloud"
-            android:windowSoftInputMode="adjustResize"
-            android:exported="true">
+            android:theme="@style/Theme.ownCloud.Toolbar"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
@@ -214,21 +233,15 @@
                 android:resource="@xml/users_and_groups_searchable" />
         </activity>
         <activity
-            android:name=".ui.activity.ManageSpaceActivity"
-            android:label="@string/manage_space_title"
-            android:theme="@style/Theme.ownCloud" />
-        <activity
-            android:name=".ui.preview.PreviewVideoActivity"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
-            android:theme="@style/Theme.ownCloud.Fullscreen" />
-        <activity
             android:name=".presentation.security.pattern.PatternActivity"
             android:screenOrientation="portrait"
+            android:label="@string/pattern_label"
             android:theme="@style/Theme.ownCloud" />
         <activity android:name=".presentation.security.biometric.BiometricActivity" />
         <activity
             android:name=".presentation.authentication.LoginActivity"
             android:exported="true"
+            android:label="@string/login_label"
             android:launchMode="singleTask"
             android:theme="@style/Theme.ownCloud.Toolbar">
             <intent-filter>
@@ -241,6 +254,15 @@
                     android:host="@string/oauth2_redirect_uri_path"
                     android:scheme="@string/oauth2_redirect_uri_scheme" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="@string/deep_link_uri_schemes" />
+            </intent-filter>
         </activity>
+
     </application>
+
 </manifest>

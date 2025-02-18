@@ -10,12 +10,14 @@
   <string name="actionbar_upload_from_apps">Más alkalmazásokból származó tartalom</string>
   <string name="actionbar_upload_files">Fájlok</string>
   <string name="actionbar_open_with">Megnyitás a következővel</string>
+  <string name="actionbar_open_with_read_only">Megnyitás (csak olvasható)</string>
   <string name="actionbar_mkdir">Új mappa</string>
   <string name="actionbar_settings">Beállítások</string>
   <string name="actionbar_see_details">Részletek</string>
   <string name="actionbar_send_file">Küldés</string>
   <string name="actionbar_descending">Csökkenő</string>
   <string name="actionbar_sort_title">Rendezés elve</string>
+  <string name="fab_new_file">Új dokumentum</string>
   <string name="drawer_item_all_files">Összes fájl</string>
   <string name="drawer_item_only_available_offline">Offline elérhető</string>
   <string name="drawer_item_shared_by_link_files">Linkkel osztottam meg</string>
@@ -33,12 +35,17 @@
   <string name="prefs_subsection_logging">Logolás</string>
   <string name="prefs_subsection_more">Több</string>
   <string name="prefs_subsection_security">Biztonság</string>
+  <string name="prefs_subsection_whatsnew">Mi az újdonság a legújabb verzióban?</string>
+  <string name="prefs_subsection_security_summary">Zárak beállítása az alkalmazáshoz való hozzáféréshez és az érintések engedélyezése más látható ablakoknál</string>
+  <string name="prefs_subsection_logging_summary">Az alkalmazás végrehajtása során keletkező naplófájlok nyomon követése</string>
   <string name="prefs_subsection_more_summary">Applikáció információk, visszajelzés, egyéb</string>
   <string name="prefs_accounts">Fiókok</string>
   <string name="prefs_manage_accounts">Fiókok kezelése</string>
   <string name="prefs_passcode">Jelszavas zár</string>
   <string name="prefs_biometric">Biometrikus azonosítás</string>
   <string name="prefs_biometric_summary">Adjon meg zárolási jelszót vagy mintát a beállítás engedélyezéséhez</string>
+  <string name="prefs_lock_application">Alkalmazás lezárása</string>
+  <string name="prefs_lock_application_entries_immediately">Azonnal</string>
   <string name="prefs_touches_with_other_visible_windows">Érintkezik más látható ablakkal</string>
   <string name="prefs_touches_with_other_visible_windows_summary">Engedélyezze az érintéseket, amikor a kép takarásban van egy másik ablak által.</string>
   <string name="confirmation_touches_with_other_windows_title">Biztos, hogy engedélyezi ezt a funkciót?</string>
@@ -87,9 +94,11 @@
   <string name="illegal_argument_exception_message">Érvényes MŰVELET szükséges</string>
   <!--Bottom navigation bar-->
   <string name="bottom_nav_files">Fájlkezelő</string>
+  <string name="bottom_nav_personal">Személyes</string>
   <string name="bottom_nav_uploads">Feltöltések</string>
   <string name="bottom_nav_offline">Offline</string>
   <string name="bottom_nav_links">Hivatkozások</string>
+  <string name="bottom_nav_shares">Megosztások</string>
   <string name="recommend_subject">Próbálja ki a(z) %1$s appot az okostelefonján!</string>
   <string name="recommend_text">Szeretnélek meghívni, hogy használd a(z) %1$s alkalmazást az okostelefonodon!\nTöltsd le innen: %2$s</string>
   <string name="error_reason">mivel</string>
@@ -139,6 +148,7 @@
   <string name="filedetails_size">Méret:</string>
   <string name="filedetails_type">Típus:</string>
   <string name="filedetails_created">Létrehozva:</string>
+  <string name="filedetails_last_sync">Utoljára szinkronizálva:</string>
   <string name="filedetails_modified">Módosítva:</string>
   <string name="filedetails_download">Letöltés</string>
   <string name="filedetails_sync_file">Szinkronizálás</string>
@@ -173,7 +183,6 @@
   <string name="uploader_upload_failed_ssl_certificate_not_trusted">A kiszolgáló tanúsítványa nem megbízható</string>
   <string name="uploader_upload_text_dialog_title">Adja meg az új fájlt nevét</string>
   <string name="uploader_upload_text_dialog_filename_error_empty">A fájlnév nem lehet üres</string>
-  <string name="uploader_upload_text_dialog_filename_error_length_max">A fájlnév legfeljebb %d karakter hosszú lehet</string>
   <string name="uploader_upload_text_filename_hint">Fájlnév</string>
   <string name="uploader_upload_camera_upload_files">Fényképezőgép feltöltési fájlok feltöltése</string>
   <string name="uploader_upload_picture_upload_files">%dúj kép kerül feltöltésre</string>
@@ -309,7 +318,6 @@
   <string name="sync_file_fail_msg">A távoli fájl nem volt ellenőrizhető</string>
   <string name="sync_file_nothing_to_do_msg">Az állományok már szinkronizáltak</string>
   <string name="create_dir_fail_msg">A mappát nem lehet létrehozni</string>
-  <string name="filename_forbidden_characters">Tiltott karakterek: / \\ &lt; &gt; : \" | ? *</string>
   <string name="filename_forbidden_characters_from_server">A fájlnév legalább egy érvénytelen karaktert tartalmaz</string>
   <string name="filename_empty">A fájlnév nem lehet üres</string>
   <string name="wait_a_moment">Egy pillanat…</string>
@@ -358,7 +366,6 @@
   <string name="confirmation_disable_videos_upload_message">Biztos letiltja ezt a funkciót? A függőben lévő videók nem lesznek feltöltve</string>
   <string name="proper_pics_folder_warning_camera_upload">Ellenőrizze, hogy a kijelölt mappa megegyezik azzal, ahová a kamera a képeket menti. Ellenkező esetben ez a funkció nem lesz képes felismerni a képeket. Tartsa észben, hogy a képek legalább 15 perccel az elkészülés után kerülnek feltöltésre.</string>
   <string name="proper_videos_folder_warning_camera_upload">Ellenőrizze, hogy a kijelölt mappa megegyezik azzal, ahová a kamera a videókat menti. Ellenkező esetben ez a funkció nem lesz képes felismerni a videókat. Tartsa észben, hogy a videók legalább 15 perccel az elkészülés után kerülnek feltöltésre.</string>
-  <string name="conflict_title">Fájlütközés</string>
   <string name="conflict_description">A következő fájlban konfliktus található %1$s, érintsd meg, hogy megold</string>
   <string name="conflict_message">Mely fájlokat tartja meg? Ha mindkét verziót kiválasztja, akkor a helyi fájl nevéhez hozzá lesz adva egy szám.</string>
   <string name="conflict_keep_both">Mindkettő megtartása</string>
@@ -487,12 +494,7 @@
   <string name="edit_share_done">kész</string>
   <string name="action_upload_retry">Újraprobálkozás</string>
   <string name="action_upload_clear">Törlés</string>
-  <string name="manage_space_title">Helykezelés</string>
-  <string name="manage_space_description">Beállítások, adatbázis és kiszolgáló tanúsítványok %1$s az adatok véglegesen törlődnek. \ n \ n A letöltött fájlok érintetlenül maradnak. \ n \ n Ez a folyamat eltarthat egy ideig.</string>
-  <string name="manage_space_clear_data">Adatok törlése</string>
-  <string name="manage_space_error">Egyes fájlokat nem lehet törölni.</string>
   <string name="local_file_not_found_toast">A fájl nem található a helyi fájlrendszerben</string>
-  <string name="confirmation_remove_files_alert">Tényleg szeretné eltávolítani a kijelölt elemeket?</string>
   <string name="confirmation_remove_folders_alert">Tényleg szeretné eltávolítani a kijelölt elemeket és azok tartalmát?</string>
   <string name="failed_upload_quota_exceeded_text">Nincs elegendő hely a fiókban</string>
   <string name="auth_forbidden">Tiltott hitelesítés</string>
@@ -564,4 +566,6 @@
   <!--Release Notes-->
   <string name="release_notes_proceed">Végrehajtás</string>
   <!--Open in web-->
+  <!--oCIS accounts warning-->
+  <string name="tab_label_ascii">szöveg</string>
 </resources>

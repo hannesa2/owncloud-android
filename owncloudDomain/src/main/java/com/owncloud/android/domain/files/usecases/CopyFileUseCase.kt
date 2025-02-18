@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author Abel García de Prada
- * Copyright (C) 2021 ownCloud GmbH.
+ * @author Juan Carlos Garrote Gascón
+ *
+ * Copyright (C) 2023 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -16,11 +18,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.owncloud.android.domain.files.usecases
 
 import com.owncloud.android.domain.BaseUseCaseWithResult
 import com.owncloud.android.domain.exceptions.CopyIntoDescendantException
-import com.owncloud.android.domain.exceptions.CopyIntoSameFolderException
 import com.owncloud.android.domain.files.FileRepository
 import com.owncloud.android.domain.files.model.OCFile
 
@@ -30,31 +32,32 @@ import com.owncloud.android.domain.files.model.OCFile
  * Copying files to a descendant or copying files to the same directory will throw an exception.
  */
 class CopyFileUseCase(
-    private val fileRepository: FileRepository
-) : BaseUseCaseWithResult<Unit, CopyFileUseCase.Params>() {
+    private val fileRepository: FileRepository,
+) : BaseUseCaseWithResult<List<OCFile>, CopyFileUseCase.Params>() {
 
-    override fun run(params: Params) {
+    override fun run(params: Params): List<OCFile> {
         validateOrThrowException(params.listOfFilesToCopy, params.targetFolder)
-
         return fileRepository.copyFile(
             listOfFilesToCopy = params.listOfFilesToCopy,
-            targetFolder = params.targetFolder
+            targetFolder = params.targetFolder,
+            replace = params.replace,
+            isUserLogged = params.isUserLogged,
         )
     }
 
-    @Throws(IllegalArgumentException::class, CopyIntoSameFolderException::class, CopyIntoDescendantException::class)
+    @Throws(IllegalArgumentException::class, CopyIntoDescendantException::class)
     fun validateOrThrowException(listOfFilesToCopy: List<OCFile>, targetFolder: OCFile) {
         require(listOfFilesToCopy.isNotEmpty())
 
-        if (listOfFilesToCopy.any { targetFolder.remotePath.startsWith(it.remotePath) }) {
+        if (listOfFilesToCopy.any { targetFolder.remotePath.startsWith(it.remotePath) && targetFolder.spaceId == it.spaceId }) {
             throw CopyIntoDescendantException()
-        } else if (listOfFilesToCopy.any { it.parentId == targetFolder.id }) {
-            throw CopyIntoSameFolderException()
         }
     }
 
     data class Params(
         val listOfFilesToCopy: List<OCFile>,
-        val targetFolder: OCFile
+        val targetFolder: OCFile,
+        val replace: List<Boolean?> = emptyList(),
+        val isUserLogged: Boolean,
     )
 }

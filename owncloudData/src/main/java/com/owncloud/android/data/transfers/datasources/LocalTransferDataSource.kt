@@ -2,8 +2,9 @@
  * ownCloud Android client application
  *
  * @author Juan Carlos Garrote Gascón
+ * @author Aitor Ballesteros Pavón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -20,10 +21,10 @@
 
 package com.owncloud.android.data.transfers.datasources
 
-import androidx.lifecycle.LiveData
 import com.owncloud.android.domain.transfers.model.OCTransfer
 import com.owncloud.android.domain.transfers.model.TransferResult
 import com.owncloud.android.domain.transfers.model.TransferStatus
+import kotlinx.coroutines.flow.Flow
 
 interface LocalTransferDataSource {
     fun saveTransfer(transfer: OCTransfer): Long
@@ -38,6 +39,7 @@ interface LocalTransferDataSource {
     )
 
     fun updateTransferLocalPath(id: Long, localPath: String)
+    fun updateTransferSourcePath(id: Long, sourcePath: String)
     fun updateTransferStorageDirectoryInLocalPath(
         id: Long,
         oldDirectory: String,
@@ -48,7 +50,7 @@ interface LocalTransferDataSource {
     fun deleteAllTransfersFromAccount(accountName: String)
     fun getTransferById(id: Long): OCTransfer?
     fun getAllTransfers(): List<OCTransfer>
-    fun getAllTransfersAsLiveData(): LiveData<List<OCTransfer>>
+    fun getAllTransfersAsStream(): Flow<List<OCTransfer>>
     fun getLastTransferFor(remotePath: String, accountName: String): OCTransfer?
     fun getCurrentAndPendingTransfers(): List<OCTransfer>
     fun getFailedTransfers(): List<OCTransfer>

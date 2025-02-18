@@ -4,7 +4,10 @@
  * @author David A. Velasco
  * @author David González Verdugo
  * @author Christian Schabesberger
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Aitor Ballesteros Pavón
+ * @author Juan Carlos Garrote Gascón
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,12 +24,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http:></http:>//www.gnu.org/licenses/>.
  */
+
 package com.owncloud.android.ui.preview
 
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Message
+import android.view.KeyEvent
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.Window
@@ -37,13 +43,16 @@ import androidx.viewpager.widget.ViewPager
 import androidx.viewpager.widget.ViewPager.OnPageChangeListener
 import androidx.work.WorkInfo
 import com.owncloud.android.R
-import com.owncloud.android.presentation.authentication.AccountUtils
-import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider
-import com.owncloud.android.datamodel.FileDataStorageManager
+import com.owncloud.android.data.providers.SharedPreferencesProvider
+import com.owncloud.android.domain.exceptions.AccountNotFoundException
 import com.owncloud.android.domain.files.model.FileListOption
 import com.owncloud.android.domain.files.model.OCFile
+import com.owncloud.android.domain.files.model.OCFile.Companion.ROOT_PARENT_ID
 import com.owncloud.android.domain.files.usecases.SortFilesUseCase
 import com.owncloud.android.domain.utils.Event
+import com.owncloud.android.extensions.showErrorInSnackbar
+import com.owncloud.android.presentation.authentication.AccountUtils
+import com.owncloud.android.presentation.common.UIResult
 import com.owncloud.android.presentation.files.SortOrder
 import com.owncloud.android.presentation.files.SortType
 import com.owncloud.android.presentation.files.operations.FileOperation
@@ -83,6 +92,7 @@ class PreviewImageActivity : FileActivity(),
         // ActionBar
         supportActionBar?.run {
             setDisplayHomeAsUpEnabled(true)
+            setHomeActionContentDescription(R.string.common_back)
             setHomeButtonEnabled(true)
         }
         showActionBar(false)
@@ -124,9 +134,24 @@ class PreviewImageActivity : FileActivity(),
     }
 
     private fun startObservingFileOperations() {
-        fileOperationsViewModel.removeFileLiveData.observe(this, Event.EventObserver {
-            if (it.isSuccess) {
-                finish()
+        fileOperationsViewModel.removeFileLiveData.observe(this, Event.EventObserver { uiResult ->
+            when (uiResult) {
+                is UIResult.Error -> {
+                    dismissLoadingDialog()
+                    showErrorInSnackbar(R.string.remove_fail_msg, uiResult.getThrowableOrNull())
+                }
+
+                is UIResult.Loading -> showLoadingDialog(R.string.wait_a_moment)
+                is UIResult.Success -> {
+                    dismissLoadingDialog()
+                    finish()
+                }
+            }
+        })
+
+        fileOperationsViewModel.syncFileLiveData.observe(this, Event.EventObserver { uiResult ->
+            if (uiResult is UIResult.Error && uiResult.error is AccountNotFoundException) {
+                showRequestAccountChangeNotice(getString(R.string.sync_fail_ticker_unauthorized), false)
             }
         })
     }
@@ -137,17 +162,17 @@ class PreviewImageActivity : FileActivity(),
             0,
             file.remotePath.lastIndexOf(file.fileName)
         )
-        var parentFolder = storageManager.getFileByPath(parentPath)
+        var parentFolder = storageManager.getFileByPath(parentPath, file.spaceId)
         if (parentFolder == null) {
             // should not be necessary
-            parentFolder = storageManager.getFileByPath(OCFile.ROOT_PATH)
+            parentFolder = storageManager.getFileByPath(OCFile.ROOT_PATH, file.spaceId)
         }
 
         val sharedPreferencesProvider: SharedPreferencesProvider by inject()
         val sortType = sharedPreferencesProvider.getInt(SortType.PREF_FILE_LIST_SORT_TYPE, SortType.SORT_TYPE_BY_NAME.ordinal)
         val sortOrder = sharedPreferencesProvider.getInt(SortOrder.PREF_FILE_LIST_SORT_ORDER, SortOrder.SORT_ORDER_ASCENDING.ordinal)
         val sortFilesUseCase: SortFilesUseCase by inject()
-        val imageFiles = sortFilesUseCase.execute(
+        val imageFiles = sortFilesUseCase(
             SortFilesUseCase.Params(
                 listOfFiles = storageManager.getFolderImages(parentFolder),
                 sortType = com.owncloud.android.domain.files.usecases.SortType.fromPreferences(sortType),
@@ -251,6 +276,7 @@ class PreviewImageActivity : FileActivity(),
             putExtra(EXTRA_FILE, file)
             putExtra(EXTRA_ACCOUNT, AccountUtils.getCurrentOwnCloudAccount(this@PreviewImageActivity))
         }
+        finishAffinity()
         startActivity(showDetailsIntent)
     }
 
@@ -321,7 +347,7 @@ class PreviewImageActivity : FileActivity(),
         require(file.isImage) { "Non-image file passed as argument" }
 
         // Update file according to DB file, if it is possible
-        if (file.id!! > FileDataStorageManager.ROOT_PARENT_ID) {
+        if (file.id!! > ROOT_PARENT_ID) {
             file = storageManager.getFileById(file.id!!)
         }
         if (file != null) {
@@ -367,6 +393,21 @@ class PreviewImageActivity : FileActivity(),
 
     private fun updateActionBarTitle(title: String) {
         supportActionBar?.title = title
+    }
+
+    // The main_menu won't be displayed
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        return false
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+        return when (keyCode) {
+            KeyEvent.KEYCODE_TAB -> {
+                showSystemUI(fullScreenAnchorView)
+                true
+            }
+            else -> super.onKeyUp(keyCode, event)
+        }
     }
 
     companion object {

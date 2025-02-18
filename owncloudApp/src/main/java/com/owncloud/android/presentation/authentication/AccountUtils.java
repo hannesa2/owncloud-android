@@ -1,8 +1,10 @@
 /**
  * ownCloud Android client application
  * <p>
+ * @author Aitor Ballesteros Pavón
+ * <p>
  * Copyright (C) 2012  Bartek Przybylski
- * Copyright (C) 2020 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -27,11 +29,14 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 
 import com.owncloud.android.MainApp;
+import com.owncloud.android.domain.capabilities.model.OCCapability;
 import com.owncloud.android.lib.common.accounts.AccountUtils.Constants;
 import timber.log.Timber;
 
 import java.util.Locale;
 
+import static com.owncloud.android.data.authentication.AuthenticationConstantsKt.KEY_FEATURE_ALLOWED;
+import static com.owncloud.android.data.authentication.AuthenticationConstantsKt.KEY_FEATURE_SPACES;
 import static com.owncloud.android.data.authentication.AuthenticationConstantsKt.SELECTED_ACCOUNT;
 import static com.owncloud.android.lib.common.accounts.AccountUtils.Constants.OAUTH_SUPPORTED_TRUE;
 
@@ -76,6 +81,14 @@ public class AccountUtils {
     public static Account[] getAccounts(Context context) {
         AccountManager accountManager = AccountManager.get(context);
         return accountManager.getAccountsByType(MainApp.Companion.getAccountType());
+    }
+
+    public static void deleteAccounts(Context context) {
+        AccountManager accountManager = AccountManager.get(context);
+        Account[] accounts = getAccounts(context);
+        for (Account account : accounts) {
+            accountManager.removeAccount(account, null, null, null);
+        }
     }
 
     public static boolean exists(String accountName, Context context) {
@@ -131,6 +144,15 @@ public class AccountUtils {
             }
         }
         return null;
+    }
+
+    public static boolean isSpacesFeatureAllowedForAccount(Context context, Account account, OCCapability capability) {
+        if (capability == null || !capability.isSpacesAllowed()) {
+            return false;
+        }
+        AccountManager accountManager = AccountManager.get(context);
+        String spacesFeatureValue = accountManager.getUserData(account, KEY_FEATURE_SPACES);
+        return KEY_FEATURE_ALLOWED.equals(spacesFeatureValue);
     }
 
     public static boolean setCurrentOwnCloudAccount(Context context, String accountName) {

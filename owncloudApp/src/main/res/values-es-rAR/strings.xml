@@ -10,12 +10,14 @@
   <string name="actionbar_upload_from_apps">Contenido de otras aplicaciones</string>
   <string name="actionbar_upload_files">Archivos</string>
   <string name="actionbar_open_with">Abrir con</string>
+  <string name="actionbar_open_with_read_only">Abrir con (sólo lectura)</string>
   <string name="actionbar_mkdir">Nueva Carpeta</string>
   <string name="actionbar_settings">Configuración</string>
   <string name="actionbar_see_details">Detalles</string>
   <string name="actionbar_send_file">Mandar</string>
   <string name="actionbar_descending">Orden Descendiente</string>
   <string name="actionbar_sort_title">Ordenar por</string>
+  <string name="fab_new_file">Nuevo documento</string>
   <string name="drawer_item_all_files">Todos los archivos</string>
   <string name="drawer_item_only_available_offline">Disponible sin conexión</string>
   <string name="drawer_item_shared_by_link_files">Compartido por enlace</string>
@@ -33,6 +35,7 @@
   <string name="prefs_subsection_logging">Registrando</string>
   <string name="prefs_subsection_more">Más</string>
   <string name="prefs_subsection_security">Seguridad</string>
+  <string name="prefs_subsection_whatsnew">¿Qué hay de nuevo en la última versión?</string>
   <string name="prefs_accounts">Cuentas</string>
   <string name="prefs_manage_accounts">Gestionar cuentas</string>
   <string name="prefs_passcode">Bloqueo con clave</string>
@@ -47,15 +50,20 @@
   <string name="prefs_touches_with_other_visible_windows_summary">Permitir clicks mientras que la vista está oscurecida por otra ventana visible. Habilítalo para utilizar aplicaciones de filtro de luz.</string>
   <string name="confirmation_touches_with_other_windows_title">¿Estás seguro que quieres habilitar esta funcionalidad?</string>
   <string name="confirmation_touches_with_other_windows_message">Utiliza esta funcionalidad bajo tu propia responsabilidad, una aplicación maliciosa podría tratar de engañarte a realizar algunas acciones, sin que te des cuenta, utilizando otras vistas.</string>
+  <string name="prefs_subsection_video_uploads">Subir videos automáticamente</string>
   <string name="prefs_camera_picture_upload">Carga de imágenes</string>
   <string name="prefs_camera_picture_upload_summary">Cargar imágenes automáticamente tomadas desde la cámara</string>
   <string name="prefs_camera_picture_upload_path_title">Ruta de carga de la imagen</string>
+  <string name="prefs_camera_picture_upload_conditions_title">Condiciones para ejecutar cargas</string>
   <string name="prefs_camera_picture_upload_on_wifi">Cargar imágenes solamente con WiFi</string>
   <string name="prefs_camera_video_upload">Carga de videos</string>
   <string name="prefs_camera_video_upload_summary">Cargar videos automáticamente tomados desde la cámara</string>
   <string name="prefs_camera_video_upload_path_title">Ruta de carga del video</string>
   <string name="prefs_camera_video_upload_on_wifi">Cargar videos solamente con WiFi</string>
   <string name="prefs_subsection_advanced">Avanzado</string>
+  <string name="prefs_show_hidden_files">Mostrar archivos ocultos</string>
+  <string name="prefs_log_open_logs_list_view">Archivos de registro</string>
+  <string name="prefs_log_no_logs_list_view">¡Carpeta de registros vacía!</string>
   <string name="prefs_log_title">Activar bitacora</string>
   <string name="prefs_log_summary">Esto es usado para registrar problemas</string>
   <string name="prefs_log_title_history">Historial de la bitacora</string>
@@ -85,9 +93,11 @@
   <string name="illegal_argument_exception_message">Se necesita una ACCION válida para poder pasar a</string>
   <!--Bottom navigation bar-->
   <string name="bottom_nav_files">Archivos</string>
+  <string name="bottom_nav_personal">Personal</string>
   <string name="bottom_nav_uploads">Cargas</string>
   <string name="bottom_nav_offline">Fuera de línea</string>
   <string name="bottom_nav_links">Vínculos</string>
+  <string name="bottom_nav_shares">Compartidos</string>
   <string name="recommend_subject">¡Intento %1$s en tu teléfono inteligente!</string>
   <string name="recommend_text">Quiero invitarte a usar %1$s en tu teléfono inteligente!\nDescárgalo aquí: %2$s</string>
   <string name="error_reason">porque</string>
@@ -133,6 +143,7 @@
   <string name="filedetails_size">Tamaño:</string>
   <string name="filedetails_type">Tipo:</string>
   <string name="filedetails_created">Creado:</string>
+  <string name="filedetails_last_sync">Ultima sincronización:</string>
   <string name="filedetails_modified">Modificado:</string>
   <string name="filedetails_download">Descargar</string>
   <string name="filedetails_sync_file">Sincronizar</string>
@@ -167,7 +178,6 @@
   <string name="uploader_upload_failed_ssl_certificate_not_trusted">El certificado del servidor no es confiable</string>
   <string name="uploader_upload_text_dialog_title">Inserte un nombre para el archivo nuevo</string>
   <string name="uploader_upload_text_dialog_filename_error_empty">El nombre de archivo no debe quedar vacío</string>
-  <string name="uploader_upload_text_dialog_filename_error_length_max">El nombre de archivo no debe ser mayor a %d caracteres</string>
   <string name="uploader_upload_text_filename_hint">Nombre de archivo</string>
   <string name="uploader_upload_camera_upload_files">Subiendo archivos de la cámara marcados como subir</string>
   <string name="uploader_upload_available_offline_files">Subiendo archivos disponibles sin conexión</string>
@@ -294,7 +304,6 @@
   <string name="sync_file_fail_msg">No pudo comprobarse el archivo remoto</string>
   <string name="sync_file_nothing_to_do_msg">Ya está sincronizado</string>
   <string name="create_dir_fail_msg">La carpeta puede no haber sido creada</string>
-  <string name="filename_forbidden_characters">Caracteres prohibidos: / \\ &lt; &gt; : \" | ? *</string>
   <string name="filename_forbidden_characters_from_server">El nombre del archivo contiene algún caracter inválido</string>
   <string name="filename_empty">El nombre de archivo no puede estar vacío</string>
   <string name="wait_a_moment">Esperá un momento</string>
@@ -343,7 +352,6 @@
   <string name="confirmation_disable_videos_upload_message">¿Está seguro que quiere deshabilitar esta funcionalidad? Los videos pendientes no serán subidos</string>
   <string name="proper_pics_folder_warning_camera_upload">Por favor asegurate que la carpeta seleccionada es donde la cámara que estas usando guarda las fotos sacadas. De otro modo, esta funcionalidad no será capaz de detectar tus fotos. Tené en cuenta que las fotos serán subidas al menos 15 minutos después de haber sido tomadas.</string>
   <string name="proper_videos_folder_warning_camera_upload">Por favor asegurate de que la carpeta seleccionada es donde la cámara que estas usando guardas los videos grabados. De otro modo, esta funcionalidad no será capaz de detectar tus videos. Tené en cuenta que los videos serán subidos al menos 15 minutos después de haber sido grabados.</string>
-  <string name="conflict_title">Conflicto con el archivo</string>
   <string name="conflict_description">Hay un conflicto con el archivo %1$s, presione para resolverlo</string>
   <string name="conflict_message">¿Qué archivos desea mantener? Si selecciona ambas versiones, al archivo local se le agregará un número a su nombre.</string>
   <string name="conflict_keep_both">Mantener ambas</string>
@@ -468,12 +476,7 @@
   <string name="edit_share_done">hecho</string>
   <string name="action_upload_retry">Reintentar</string>
   <string name="action_upload_clear">Borrar</string>
-  <string name="manage_space_title">Administrar espacio</string>
-  <string name="manage_space_description">Los ajustes, certificados de base de datos y servidor de %1$s serán elminados permanentemente. \n\nLos Archivos descargados no serán tocados.\n\nEste proceso puede tardar en completarse.</string>
-  <string name="manage_space_clear_data">Limpiar datos</string>
-  <string name="manage_space_error">Algunos archivos no pueden ser eliminados.</string>
   <string name="local_file_not_found_toast">El archivo no ha sido encontrado en el sistema local de archivos.</string>
-  <string name="confirmation_remove_files_alert">¿Realmente quieres eliminar los items seleccionados?</string>
   <string name="confirmation_remove_folders_alert">¿Realmente quieres eliminar los ítems seleccionados y su contenido?</string>
   <string name="failed_upload_quota_exceeded_text">No hay suficiente espacio en la cuenta</string>
   <string name="auth_forbidden">Verificación prohibida</string>
@@ -542,4 +545,6 @@
   <!--Release Notes-->
   <string name="release_notes_proceed">Prosiga</string>
   <!--Open in web-->
+  <!--oCIS accounts warning-->
+  <string name="tab_label_ascii">Texto</string>
 </resources>

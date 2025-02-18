@@ -28,9 +28,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider
-import com.owncloud.android.data.storage.LegacyStorageProvider
-import com.owncloud.android.data.storage.LocalStorageProvider
+import com.owncloud.android.data.providers.SharedPreferencesProvider
+import com.owncloud.android.data.providers.LegacyStorageProvider
+import com.owncloud.android.data.providers.LocalStorageProvider
 import com.owncloud.android.domain.files.usecases.UpdateAlreadyDownloadedFilesPathUseCase
 import com.owncloud.android.domain.transfers.usecases.GetAllTransfersUseCase
 import com.owncloud.android.domain.transfers.usecases.UpdatePendingUploadsPathUseCase
@@ -83,13 +83,13 @@ class MigrationViewModel(
     }
 
     private fun updatePendingUploadsPath() {
-        updatePendingUploadsPathUseCase.execute(
+        updatePendingUploadsPathUseCase(
             UpdatePendingUploadsPathUseCase.Params(
                 oldDirectory = legacyStorageDirectoryPath,
                 newDirectory = localStorageProvider.getRootFolderPath()
             )
         )
-        val uploads = getAllTransfersUseCase.execute(Unit)
+        val uploads = getAllTransfersUseCase(Unit)
         val accountsNames = mutableListOf<String>()
         accountProvider.getLoggedAccounts().forEach { account ->
             accountsNames.add(localStorageProvider.getTemporalPath(account.name))
@@ -98,7 +98,7 @@ class MigrationViewModel(
     }
 
     private fun updateAlreadyDownloadedFilesPath() {
-        updateAlreadyDownloadedFilesPathUseCase.execute(
+        updateAlreadyDownloadedFilesPathUseCase(
             UpdateAlreadyDownloadedFilesPathUseCase.Params(
                 oldDirectory = legacyStorageDirectoryPath,
                 newDirectory = localStorageProvider.getRootFolderPath()

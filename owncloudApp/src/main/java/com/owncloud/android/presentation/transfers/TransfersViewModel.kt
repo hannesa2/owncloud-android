@@ -3,7 +3,7 @@
  *
  * @author Juan Carlos Garrote Gascón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2023 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -27,9 +27,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import com.owncloud.android.domain.files.model.OCFile
+import com.owncloud.android.domain.spaces.model.OCSpace
+import com.owncloud.android.domain.spaces.usecases.GetSpacesFromEveryAccountUseCaseAsStream
 import com.owncloud.android.domain.transfers.model.OCTransfer
 import com.owncloud.android.domain.transfers.usecases.ClearSuccessfulTransfersUseCase
-import com.owncloud.android.domain.transfers.usecases.GetAllTransfersAsLiveDataUseCase
+import com.owncloud.android.domain.transfers.usecases.GetAllTransfersAsStreamUseCase
 import com.owncloud.android.providers.CoroutinesDispatcherProvider
 import com.owncloud.android.providers.WorkManagerProvider
 import com.owncloud.android.usecases.transfers.downloads.CancelDownloadForFileUseCase
@@ -44,6 +46,10 @@ import com.owncloud.android.usecases.transfers.uploads.RetryUploadFromContentUri
 import com.owncloud.android.usecases.transfers.uploads.RetryUploadFromSystemUseCase
 import com.owncloud.android.usecases.transfers.uploads.UploadFilesFromContentUriUseCase
 import com.owncloud.android.usecases.transfers.uploads.UploadFilesFromSystemUseCase
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class TransfersViewModel(
@@ -56,31 +62,36 @@ class TransfersViewModel(
     private val clearFailedTransfersUseCase: ClearFailedTransfersUseCase,
     private val retryFailedUploadsUseCase: RetryFailedUploadsUseCase,
     private val clearSuccessfulTransfersUseCase: ClearSuccessfulTransfersUseCase,
-    getAllTransfersAsLiveDataUseCase: GetAllTransfersAsLiveDataUseCase,
+    getAllTransfersAsStreamUseCase: GetAllTransfersAsStreamUseCase,
     private val cancelDownloadForFileUseCase: CancelDownloadForFileUseCase,
     private val cancelUploadForFileUseCase: CancelUploadForFileUseCase,
     private val cancelUploadsRecursivelyUseCase: CancelUploadsRecursivelyUseCase,
     private val cancelDownloadsRecursivelyUseCase: CancelDownloadsRecursivelyUseCase,
+    getSpacesFromEveryAccountUseCaseAsStream: GetSpacesFromEveryAccountUseCaseAsStream,
     private val coroutinesDispatcherProvider: CoroutinesDispatcherProvider,
     workManagerProvider: WorkManagerProvider,
 ) : ViewModel() {
-
-    private val _transfersListLiveData = MediatorLiveData<List<OCTransfer>>()
-    val transfersListLiveData: LiveData<List<OCTransfer>>
-        get() = _transfersListLiveData
-
     private val _workInfosListLiveData = MediatorLiveData<List<WorkInfo>>()
     val workInfosListLiveData: LiveData<List<WorkInfo>>
         get() = _workInfosListLiveData
 
-    private var transfersLiveData = getAllTransfersAsLiveDataUseCase.execute(Unit)
+    val transfersWithSpaceStateFlow: StateFlow<List<Pair<OCTransfer, OCSpace?>>> = combine(
+        getAllTransfersAsStreamUseCase(Unit),
+        getSpacesFromEveryAccountUseCaseAsStream(Unit)
+    ) { transfers: List<OCTransfer>, spaces: List<OCSpace> ->
+        transfers.map { transfer ->
+            val spaceForTransfer = spaces.firstOrNull { space -> transfer.spaceId == space.id && transfer.accountName == space.accountName }
+            Pair(transfer, spaceForTransfer)
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = emptyList()
+    )
 
     private var workInfosLiveData = workManagerProvider.getRunningUploadsWorkInfosLiveData()
 
     init {
-        _transfersListLiveData.addSource(transfersLiveData) { transfers ->
-            _transfersListLiveData.postValue(transfers)
-        }
         _workInfosListLiveData.addSource(workInfosLiveData) { workInfos ->
             _workInfosListLiveData.postValue(workInfos)
         }
@@ -89,14 +100,16 @@ class TransfersViewModel(
     fun uploadFilesFromContentUri(
         accountName: String,
         listOfContentUris: List<Uri>,
-        uploadFolderPath: String
+        uploadFolderPath: String,
+        spaceId: String?
     ) {
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            uploadFilesFromContentUriUseCase.execute(
+            uploadFilesFromContentUriUseCase(
                 UploadFilesFromContentUriUseCase.Params(
                     accountName = accountName,
                     listOfContentUris = listOfContentUris,
-                    uploadFolderPath = uploadFolderPath
+                    uploadFolderPath = uploadFolderPath,
+                    spaceId = spaceId,
                 )
             )
         }
@@ -105,14 +118,16 @@ class TransfersViewModel(
     fun uploadFilesFromSystem(
         accountName: String,
         listOfLocalPaths: List<String>,
-        uploadFolderPath: String
+        uploadFolderPath: String,
+        spaceId: String?,
     ) {
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            uploadFilesFromSystemUseCase.execute(
+            uploadFilesFromSystemUseCase(
                 UploadFilesFromSystemUseCase.Params(
                     accountName = accountName,
                     listOfLocalPaths = listOfLocalPaths,
-                    uploadFolderPath = uploadFolderPath
+                    uploadFolderPath = uploadFolderPath,
+                    spaceId = spaceId,
                 )
             )
         }
@@ -120,7 +135,7 @@ class TransfersViewModel(
 
     fun cancelUpload(upload: OCTransfer) {
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            cancelUploadUseCase.execute(
+            cancelUploadUseCase(
                 CancelUploadUseCase.Params(upload = upload)
             )
         }
@@ -128,23 +143,23 @@ class TransfersViewModel(
 
     fun cancelTransfersForFile(ocFile: OCFile) {
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            cancelUploadForFileUseCase.execute(CancelUploadForFileUseCase.Params(ocFile))
-            cancelDownloadForFileUseCase.execute(CancelDownloadForFileUseCase.Params(ocFile))
+            cancelUploadForFileUseCase(CancelUploadForFileUseCase.Params(ocFile))
+            cancelDownloadForFileUseCase(CancelDownloadForFileUseCase.Params(ocFile))
         }
     }
 
     fun cancelTransfersRecursively(ocFiles: List<OCFile>, accountName: String) {
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            cancelDownloadsRecursivelyUseCase.execute(CancelDownloadsRecursivelyUseCase.Params(ocFiles, accountName))
+            cancelDownloadsRecursivelyUseCase(CancelDownloadsRecursivelyUseCase.Params(ocFiles, accountName))
         }
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            cancelUploadsRecursivelyUseCase.execute(CancelUploadsRecursivelyUseCase.Params(ocFiles, accountName))
+            cancelUploadsRecursivelyUseCase(CancelUploadsRecursivelyUseCase.Params(ocFiles, accountName))
         }
     }
 
     fun retryUploadFromSystem(id: Long) {
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            retryUploadFromSystemUseCase.execute(
+            retryUploadFromSystemUseCase(
                 RetryUploadFromSystemUseCase.Params(uploadIdInStorageManager = id)
             )
         }
@@ -152,7 +167,7 @@ class TransfersViewModel(
 
     fun retryUploadFromContentUri(id: Long) {
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            retryUploadFromContentUriUseCase.execute(
+            retryUploadFromContentUriUseCase(
                 RetryUploadFromContentUriUseCase.Params(uploadIdInStorageManager = id)
             )
         }
@@ -160,25 +175,25 @@ class TransfersViewModel(
 
     fun retryUploadsForAccount(accountName: String) {
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            retryFailedUploadsForAccountUseCase.execute(RetryFailedUploadsForAccountUseCase.Params(accountName))
+            retryFailedUploadsForAccountUseCase(RetryFailedUploadsForAccountUseCase.Params(accountName))
         }
     }
 
     fun clearFailedTransfers() {
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            clearFailedTransfersUseCase.execute(Unit)
+            clearFailedTransfersUseCase(Unit)
         }
     }
 
     fun retryFailedTransfers() {
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            retryFailedUploadsUseCase.execute(Unit)
+            retryFailedUploadsUseCase(Unit)
         }
     }
 
     fun clearSuccessfulTransfers() {
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            clearSuccessfulTransfersUseCase.execute(Unit)
+            clearSuccessfulTransfersUseCase(Unit)
         }
     }
 }

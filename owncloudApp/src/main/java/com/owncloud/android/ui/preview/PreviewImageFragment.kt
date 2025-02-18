@@ -6,33 +6,34 @@
  * @author Christian Schabesberger
  * @author Abel García de Prada
  * @author Shashvat Kedia
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Juan Carlos Garrote Gascón
+ * @author Aitor Ballesteros Pavón
  *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
  * as published by the Free Software Foundation.
- *
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http:></http:>//www.gnu.org/licenses/>.
  */
+
 package com.owncloud.android.ui.preview
 
 import android.accounts.Account
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
@@ -47,19 +48,28 @@ import com.bumptech.glide.request.target.Target
 import com.github.chrisbanes.photoview.PhotoView
 import com.owncloud.android.R
 import com.owncloud.android.databinding.PreviewImageFragmentBinding
-import com.owncloud.android.databinding.TopProgressBarBinding
 import com.owncloud.android.domain.files.model.MIME_SVG
 import com.owncloud.android.domain.files.model.OCFile
+import com.owncloud.android.extensions.collectLatestLifecycleFlow
+import com.owncloud.android.extensions.filterMenuOptions
 import com.owncloud.android.extensions.sendDownloadedFilesByShareSheet
-import com.owncloud.android.files.FileMenuFilter
 import com.owncloud.android.presentation.files.operations.FileOperation
 import com.owncloud.android.presentation.files.operations.FileOperationsViewModel
 import com.owncloud.android.presentation.files.removefile.RemoveFilesDialogFragment
-import com.owncloud.android.ui.controller.TransferProgressController
-import com.owncloud.android.ui.dialog.ConfirmationDialogFragment
+import com.owncloud.android.presentation.files.removefile.RemoveFilesDialogFragment.Companion.TAG_REMOVE_FILES_DIALOG_FRAGMENT
 import com.owncloud.android.ui.fragment.FileFragment
 import com.owncloud.android.utils.PreferenceUtils
+import info.hannes.edgedetection.utils.createPdf
+import info.hannes.edgedetection.utils.decodeBitmapFromFile
+import info.hannes.edgedetection.utils.rotate
+import info.hannes.edgedetection.utils.store
+import info.hannes.edgedetection.utils.viewPdf
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 import java.io.File
 
@@ -74,22 +84,19 @@ import java.io.File
  * MUST BE KEPT: the system uses it when tries to reinstantiate a fragment automatically
  * (for instance, when the device is turned a aside).
  *
- *
  * DO NOT CALL IT: an [OCFile] and [Account] must be provided for a successful
  * construction
  */
 class PreviewImageFragment : FileFragment() {
 
-    private var progressController: TransferProgressController? = null
     private val bitmap: Bitmap? = null
     private var account: Account? = null
     private var ignoreFirstSavedState = false
 
     private var _binding: PreviewImageFragmentBinding? = null
     private val binding get() = _binding!!
-    private var _bindingTopProgress: TopProgressBarBinding? = null
-    private val bindingTopProgress get() = _bindingTopProgress!!
 
+    private val previewImageViewModel by viewModel<PreviewImageViewModel>()
     private val fileOperationsViewModel: FileOperationsViewModel by inject()
 
     /**
@@ -113,7 +120,6 @@ class PreviewImageFragment : FileFragment() {
         super.onCreateView(inflater, container, savedInstanceState)
         // Inflate the layout for this fragment
         _binding = PreviewImageFragmentBinding.inflate(inflater, container, false)
-        _bindingTopProgress = TopProgressBarBinding.bind(binding.root)
         return binding.root.apply {
             // Allow or disallow touches with other visible windows
             filterTouchesWhenObscured = PreferenceUtils.shouldDisallowTouchesWithOtherVisibleWindows(context)
@@ -123,7 +129,6 @@ class PreviewImageFragment : FileFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        _bindingTopProgress = null
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -136,10 +141,6 @@ class PreviewImageFragment : FileFragment() {
             (requireActivity() as PreviewImageActivity).toggleFullScreen()
         }
 
-        progressController = TransferProgressController(mContainerActivity).apply {
-            setProgressBar(bindingTopProgress.syncProgressBar)
-            hideProgressBar()
-        }
         savedInstanceState?.let {
             if (!ignoreFirstSavedState) {
                 val file: OCFile? = it.getParcelable(ARG_FILE)
@@ -175,14 +176,8 @@ class PreviewImageFragment : FileFragment() {
         file?.let {
             loadAndShowImage()
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        super.onCreateOptionsMenu(menu, inflater)
-        inflater.inflate(R.menu.file_actions_menu, menu)
+        isOpen = true
+        currentFilePreviewing = file
     }
 
     /**
@@ -190,42 +185,33 @@ class PreviewImageFragment : FileFragment() {
      */
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
-        file?.let {
-            // Update the file
-            file = mContainerActivity.storageManager.getFileById(it.id ?: -1)
-            val fileMenuFilter = FileMenuFilter(
-                it,
-                mContainerActivity.storageManager.account,
-                mContainerActivity,
-                activity
-            )
-            fileMenuFilter.filter(menu, false, false, false, false)
+        val safeFile = file
+        // Update the file
+        file = mContainerActivity.storageManager.getFileById(file.id ?: -1)
+        val accountName = mContainerActivity.storageManager.account.name
+        previewImageViewModel.filterMenuOptions(safeFile, accountName)
+
+        collectLatestLifecycleFlow(previewImageViewModel.menuOptions) { menuOptions ->
+            val hasWritePermission = safeFile.hasWritePermission
+            menu.filterMenuOptions(menuOptions, hasWritePermission)
         }
 
-        // additional restriction for this fragment
-        // TODO allow renaming in PreviewImageFragment
-        menu.findItem(R.id.action_rename_file)?.apply {
-            isVisible = false
-            isEnabled = false
+        setRolesAccessibilityToMenuItems(menu)
+
+        menu.findItem(R.id.action_send_pdf)?.apply {
+            isVisible = true
+            isEnabled = true
         }
 
-        // additional restriction for this fragment
-        // TODO allow refresh file in PreviewImageFragment
-        menu.findItem(R.id.action_sync_file)?.apply {
-            isVisible = false
-            isEnabled = false
+        menu.findItem(R.id.action_rotate)?.apply {
+            isVisible = true
+            isEnabled = true
         }
+    }
 
-        // additional restriction for this fragment
-        menu.findItem(R.id.action_move)?.apply {
-            isVisible = false
-            isEnabled = false
-        }
-
-        // additional restriction for this fragment
-        menu.findItem(R.id.action_copy)?.apply {
-            isVisible = false
-            isEnabled = false
+    private fun setRolesAccessibilityToMenuItems(menu: Menu) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            menu.findItem(R.id.action_see_details)?.contentDescription = "${getString(R.string.actionbar_see_details)} ${getString(R.string.button_role_accessibility)}"
         }
     }
 
@@ -238,35 +224,64 @@ class PreviewImageFragment : FileFragment() {
                 mContainerActivity.fileOperationsHelper.showShareFile(file)
                 true
             }
+
             R.id.action_open_file_with -> {
                 openFile()
                 true
             }
+
             R.id.action_remove_file -> {
                 val dialog = RemoveFilesDialogFragment.newInstance(file)
-                dialog.show(requireFragmentManager(), ConfirmationDialogFragment.FTAG_CONFIRMATION)
+                dialog.show(requireFragmentManager(), TAG_REMOVE_FILES_DIALOG_FRAGMENT)
                 true
             }
+
             R.id.action_see_details -> {
                 seeDetails()
                 true
             }
+
             R.id.action_send_file -> {
                 requireActivity().sendDownloadedFilesByShareSheet(listOf(file))
                 true
             }
+
             R.id.action_sync_file -> {
                 mContainerActivity.fileOperationsHelper.syncFile(file)
                 true
             }
+
             R.id.action_set_available_offline -> {
                 fileOperationsViewModel.performOperation(FileOperation.SetFilesAsAvailableOffline(listOf(file)))
                 true
             }
+
             R.id.action_unset_available_offline -> {
                 fileOperationsViewModel.performOperation(FileOperation.UnsetFilesAsAvailableOffline(listOf(file)))
                 true
             }
+            R.id.action_send_pdf -> {
+                requireContext().externalCacheDir?.let { path ->
+                    requireContext().viewPdf(File(file.storagePath).createPdf(path))
+                }
+                true
+            }
+            R.id.action_rotate -> {
+                CoroutineScope(Dispatchers.Main).launch {
+                    // obtain result by running given block on IO thread
+                    // suspends coroutine until it's ready (without blocking the main thread)
+                    val bitmapRotate = withContext(Dispatchers.IO) {
+                        val rotatedBitmap = file.storagePath?.decodeBitmapFromFile()?.rotate(90f)
+                        rotatedBitmap?.store(File(file.storagePath), requireContext())
+                        rotatedBitmap
+                    }
+                    // executed on main thread
+                    Timber.d("set rotate bitmap ${Thread.currentThread().name} bitmapRotate=$bitmapRotate")
+                    binding.photoView.setImageBitmap(bitmapRotate)
+                }
+                true
+            }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -281,6 +296,8 @@ class PreviewImageFragment : FileFragment() {
         // {@link FragmentStatePagerAdapter} when the fragment in swiped further than the
         // valid offscreen distance, and onStop() is never called before than that
         super.onDestroy()
+        isOpen = false
+        currentFilePreviewing = null
     }
 
     /**
@@ -304,11 +321,11 @@ class PreviewImageFragment : FileFragment() {
     override fun onFileContentChanged() = loadAndShowImage()
 
     override fun updateViewForSyncInProgress() {
-        progressController?.showProgressBar()
+        // Nothing to do here, sync is not shown in previews
     }
 
     override fun updateViewForSyncOff() {
-        progressController?.hideProgressBar()
+        // Nothing to do here, sync is not shown in previews
     }
 
     private fun loadAndShowImage() {
@@ -366,6 +383,8 @@ class PreviewImageFragment : FileFragment() {
         private const val ARG_FILE = "FILE"
         private const val ARG_ACCOUNT = "ACCOUNT"
         private const val ARG_IGNORE_FIRST = "IGNORE_FIRST"
+        var isOpen: Boolean = false
+        var currentFilePreviewing: OCFile? = null
 
         /**
          * Public factory method to create a new fragment that previews an image.
