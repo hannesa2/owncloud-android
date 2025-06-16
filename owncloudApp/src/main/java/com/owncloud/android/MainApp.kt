@@ -370,7 +370,7 @@ class MainApp : Application() {
                 try {
                     pInfo = appContext.packageManager.getPackageInfo(packageName, 0)
                     if (pInfo != null) {
-                        version = pInfo.versionName
+                        version = pInfo.versionName!!
                     }
                 } catch (e: PackageManager.NameNotFoundException) {
                     Timber.e(e, "Trying to get packageName")
