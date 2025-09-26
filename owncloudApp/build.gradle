@@ -75,7 +75,7 @@ dependencies {
     implementation libs.timber
 
     //noinspection UseTomlInstead
-    implementation 'com.github.hannesa2:edgeDetect:1.0'
+    implementation "com.github.hannesa2:edgeDetect:1.2"
 
     // Tests
     testImplementation project(":owncloudTestUtil")
