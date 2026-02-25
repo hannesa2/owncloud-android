@@ -3,8 +3,9 @@
  *
  * @author Juan Carlos Garrote Gascón
  * @author David Crespo Ríos
+ * @author Aitor Ballesteros Pavón
  *
- * Copyright (C) 2021 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -30,8 +31,8 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import com.owncloud.android.R
 import com.owncloud.android.presentation.settings.advanced.SettingsAdvancedFragment
-import com.owncloud.android.presentation.settings.autouploads.SettingsPictureUploadsFragment
-import com.owncloud.android.presentation.settings.autouploads.SettingsVideoUploadsFragment
+import com.owncloud.android.presentation.settings.automaticuploads.SettingsPictureUploadsFragment
+import com.owncloud.android.presentation.settings.automaticuploads.SettingsVideoUploadsFragment
 import com.owncloud.android.presentation.settings.logging.SettingsLogsFragment
 import com.owncloud.android.presentation.settings.more.SettingsMoreFragment
 import com.owncloud.android.presentation.settings.security.SettingsSecurityFragment
@@ -70,7 +71,7 @@ class SettingsActivity : AppCompatActivity() {
             is SettingsMoreFragment -> R.string.prefs_subsection_more
             else -> R.string.actionbar_settings
         }
-
+        setTitle(titleId)
         supportActionBar?.setTitle(titleId)
     }
 

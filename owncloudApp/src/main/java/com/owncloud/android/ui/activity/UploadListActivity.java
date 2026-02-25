@@ -6,8 +6,10 @@
  * @author masensio
  * @author Christian Schabesberger
  * @author Juan Carlos Garrote Gascón
+ * @author Aitor Ballesteros Pavón
+ * @author Jorge Aguado Recio
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2025 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -30,14 +32,16 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.KeyEvent;
+import android.view.Menu;
 import android.view.View;
 
 import androidx.fragment.app.FragmentTransaction;
 import com.owncloud.android.R;
-import com.owncloud.android.presentation.authentication.AccountUtils;
 import com.owncloud.android.lib.common.operations.RemoteOperation;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.operations.CheckCurrentCredentialsOperation;
+import com.owncloud.android.presentation.authentication.AccountUtils;
 import com.owncloud.android.presentation.transfers.TransferListFragment;
 import com.owncloud.android.presentation.transfers.TransfersViewModel;
 import com.owncloud.android.utils.MimetypeIconUtil;
@@ -74,7 +78,7 @@ public class UploadListActivity extends FileActivity {
         setFile(null);
 
         // setup toolbar
-        setupRootToolbar(getString(R.string.uploads_view_title), false);
+        setupRootToolbar(getString(R.string.uploads_view_title), false, false);
 
         // setup drawer
         setupDrawer();
@@ -90,7 +94,7 @@ public class UploadListActivity extends FileActivity {
 
     private void createUploadListFragment() {
         //UploadListFragment uploadList = new UploadListFragment();
-        TransferListFragment uploadList = new TransferListFragment();
+        TransferListFragment uploadList = TransferListFragment.newInstance(getAccount());
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.add(R.id.left_fragment_container, uploadList, TAG_UPLOAD_LIST_FRAGMENT);
         transaction.commit();
@@ -170,4 +174,23 @@ public class UploadListActivity extends FileActivity {
         }
     }
 
+    // The main_menu won't be displayed
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        return false;
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+            if (findViewById(R.id.owncloud_app_bar).hasFocus()) {
+                boolean nonEmptyView = findViewById(R.id.left_fragment_container).requestFocus();
+                if (!nonEmptyView) {
+                    findViewById(R.id.bottom_nav_view).requestFocus();
+                }
+                return true;
+            }
+        }
+        return super.onKeyUp(keyCode, event);
+    }
 }

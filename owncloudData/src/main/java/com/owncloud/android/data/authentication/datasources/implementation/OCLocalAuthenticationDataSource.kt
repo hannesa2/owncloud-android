@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author David González Verdugo
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2025 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -26,11 +28,14 @@ import android.net.Uri
 import com.owncloud.android.data.authentication.KEY_CLIENT_REGISTRATION_CLIENT_EXPIRATION_DATE
 import com.owncloud.android.data.authentication.KEY_CLIENT_REGISTRATION_CLIENT_ID
 import com.owncloud.android.data.authentication.KEY_CLIENT_REGISTRATION_CLIENT_SECRET
+import com.owncloud.android.data.authentication.KEY_FEATURE_ALLOWED
+import com.owncloud.android.data.authentication.KEY_FEATURE_SPACES
+import com.owncloud.android.data.authentication.KEY_IS_KITEWORKS_SERVER
 import com.owncloud.android.data.authentication.KEY_OAUTH2_REFRESH_TOKEN
 import com.owncloud.android.data.authentication.KEY_OAUTH2_SCOPE
 import com.owncloud.android.data.authentication.SELECTED_ACCOUNT
 import com.owncloud.android.data.authentication.datasources.LocalAuthenticationDataSource
-import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider
+import com.owncloud.android.data.providers.SharedPreferencesProvider
 import com.owncloud.android.domain.authentication.oauth.model.ClientRegistrationInfo
 import com.owncloud.android.domain.exceptions.AccountNotFoundException
 import com.owncloud.android.domain.exceptions.AccountNotNewException
@@ -40,6 +45,7 @@ import com.owncloud.android.domain.user.model.UserInfo
 import com.owncloud.android.lib.common.SingleSessionManager
 import com.owncloud.android.lib.common.accounts.AccountUtils
 import com.owncloud.android.lib.common.accounts.AccountUtils.Constants.ACCOUNT_VERSION
+import com.owncloud.android.lib.common.accounts.AccountUtils.Constants.KEY_ACCOUNT_UUID
 import com.owncloud.android.lib.common.accounts.AccountUtils.Constants.KEY_DISPLAY_NAME
 import com.owncloud.android.lib.common.accounts.AccountUtils.Constants.KEY_ID
 import com.owncloud.android.lib.common.accounts.AccountUtils.Constants.KEY_OC_ACCOUNT_VERSION
@@ -163,6 +169,15 @@ class OCLocalAuthenticationDataSource(
             // with external authorizations, the password is never input in the app
             accountManager.addAccountExplicitly(newAccount, password, null)
 
+            // Only fresh accounts will support spaces
+            accountManager.setUserData(newAccount, KEY_FEATURE_SPACES, KEY_FEATURE_ALLOWED)
+
+            if (serverInfo is ServerInfo.OIDCServer && serverInfo.oidcServerConfiguration.isKiteworksServer) {
+                accountManager.setUserData(newAccount, KEY_IS_KITEWORKS_SERVER, "true")
+            } else {
+                accountManager.setUserData(newAccount, KEY_IS_KITEWORKS_SERVER, "false")
+            }
+
             /// add the new account as default in preferences, if there is none already
             val defaultAccount: Account? = getCurrentAccount()
             if (defaultAccount == null) {
@@ -219,9 +234,8 @@ class OCLocalAuthenticationDataSource(
         return null
     }
 
-    private fun getAccounts(): Array<Account> {
-        return accountManager.getAccountsByType(accountType)
-    }
+    private fun getAccounts(): Array<Account> =
+        accountManager.getAccountsByType(accountType)
 
     private fun getCurrentAccount(): Account? {
         val ocAccounts = getAccounts()
@@ -250,5 +264,15 @@ class OCLocalAuthenticationDataSource(
     override fun getBaseUrl(accountName: String): String {
         val account = getAccountIfExists(accountName) ?: throw AccountNotFoundException()
         return accountManager.getUserData(account, KEY_OC_BASE_URL)
+    }
+
+    override fun getUserId(accountName: String): String? {
+        val account = getAccountIfExists(accountName) ?: throw AccountNotFoundException()
+        return accountManager.getUserData(account, KEY_ACCOUNT_UUID)
+    }
+
+    override fun saveIdForAccount(accountName: String, uuid: String) {
+        val account = getAccountIfExists(accountName) ?: throw AccountNotFoundException()
+        accountManager.setUserData(account, KEY_ACCOUNT_UUID, uuid)
     }
 }

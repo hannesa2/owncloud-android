@@ -22,7 +22,7 @@ package com.owncloud.android.domain.authentication.usecases
 import com.owncloud.android.domain.authentication.AuthenticationRepository
 import com.owncloud.android.domain.exceptions.AccountNotFoundException
 import com.owncloud.android.testutil.OC_ACCOUNT_NAME
-import com.owncloud.android.testutil.OC_BASE_URL
+import com.owncloud.android.testutil.OC_SECURE_BASE_URL
 import io.mockk.every
 import io.mockk.spyk
 import io.mockk.verify
@@ -41,7 +41,7 @@ class GetBaseUrlUseCaseTest {
     @Test
     fun `get base url - ko - invalid params`() {
         val invalidGetBaseUrlUseCaseParams = useCaseParams.copy(accountName = "")
-        val getBaseUrlUseCaseResult = useCase.execute(invalidGetBaseUrlUseCaseParams)
+        val getBaseUrlUseCaseResult = useCase(invalidGetBaseUrlUseCaseParams)
 
         assertTrue(getBaseUrlUseCaseResult.isError)
         assertTrue(getBaseUrlUseCaseResult.getThrowableOrNull() is IllegalArgumentException)
@@ -51,12 +51,12 @@ class GetBaseUrlUseCaseTest {
 
     @Test
     fun `get base url - ok`() {
-        every { repository.getBaseUrl(any()) } returns OC_BASE_URL
+        every { repository.getBaseUrl(any()) } returns OC_SECURE_BASE_URL
 
-        val getBaseUrlUseCaseResult = useCase.execute(useCaseParams)
+        val getBaseUrlUseCaseResult = useCase(useCaseParams)
 
         assertTrue(getBaseUrlUseCaseResult.isSuccess)
-        assertEquals(OC_BASE_URL, getBaseUrlUseCaseResult.getDataOrNull())
+        assertEquals(OC_SECURE_BASE_URL, getBaseUrlUseCaseResult.getDataOrNull())
 
         verify(exactly = 1) { repository.getBaseUrl(any()) }
     }
@@ -65,7 +65,7 @@ class GetBaseUrlUseCaseTest {
     fun `get base url - ko - another exception`() {
         every { repository.getBaseUrl(any()) } throws AccountNotFoundException()
 
-        val getBaseUrlUseCaseResult = useCase.execute(useCaseParams)
+        val getBaseUrlUseCaseResult = useCase(useCaseParams)
 
         assertTrue(getBaseUrlUseCaseResult.isError)
         assertTrue(getBaseUrlUseCaseResult.getThrowableOrNull() is AccountNotFoundException)

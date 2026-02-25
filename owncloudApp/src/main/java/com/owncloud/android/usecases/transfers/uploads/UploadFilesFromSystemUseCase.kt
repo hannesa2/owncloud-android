@@ -3,8 +3,9 @@
  *
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2025 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -22,7 +23,7 @@
 package com.owncloud.android.usecases.transfers.uploads
 
 import com.owncloud.android.domain.BaseUseCase
-import com.owncloud.android.domain.camerauploads.model.UploadBehavior
+import com.owncloud.android.domain.automaticuploads.model.UploadBehavior
 import com.owncloud.android.domain.transfers.TransferRepository
 import com.owncloud.android.domain.transfers.model.OCTransfer
 import com.owncloud.android.domain.transfers.model.TransferStatus
@@ -37,7 +38,6 @@ import java.io.File
  * - (FAB) Picture from camera
  * - Share with oC - Plain Text
  * - Share with oC - Files
- * - Conflicts - Keep local
  * - Conflicts - Keep both
  *
  * It stores the upload in the database and then enqueue a new worker to upload the single file
@@ -60,6 +60,7 @@ class UploadFilesFromSystemUseCase(
                 localFile = localFile,
                 uploadPath = params.uploadFolderPath.plus(localFile.name),
                 accountName = params.accountName,
+                spaceId = params.spaceId,
             )
 
             enqueueSingleUpload(
@@ -76,6 +77,7 @@ class UploadFilesFromSystemUseCase(
         localFile: File,
         uploadPath: String,
         accountName: String,
+        spaceId: String?,
     ): Long {
         val ocTransfer = OCTransfer(
             localPath = localFile.absolutePath,
@@ -85,7 +87,8 @@ class UploadFilesFromSystemUseCase(
             status = TransferStatus.TRANSFER_QUEUED,
             localBehaviour = UploadBehavior.MOVE,
             forceOverwrite = false,
-            createdBy = UploadEnqueuedBy.ENQUEUED_BY_USER
+            createdBy = UploadEnqueuedBy.ENQUEUED_BY_USER,
+            spaceId = spaceId,
         )
 
         return transferRepository.saveTransfer(ocTransfer).also {
@@ -106,14 +109,16 @@ class UploadFilesFromSystemUseCase(
             lastModifiedInSeconds = lastModifiedInSeconds,
             behavior = UploadBehavior.MOVE.toString(),
             uploadPath = uploadPath,
-            uploadIdInStorageManager = uploadIdInStorageManager
+            uploadIdInStorageManager = uploadIdInStorageManager,
+            createdBy = UploadEnqueuedBy.ENQUEUED_BY_USER
         )
-        uploadFileFromSystemUseCase.execute(uploadFileParams)
+        uploadFileFromSystemUseCase(uploadFileParams)
     }
 
     data class Params(
         val accountName: String,
         val listOfLocalPaths: List<String>,
         val uploadFolderPath: String,
+        val spaceId: String?,
     )
 }

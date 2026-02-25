@@ -9,6 +9,15 @@ android {
         targetSdkVersion sdkTargetVersion
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -16,12 +25,21 @@ android {
         }
     }
     namespace "com.owncloud.android.testutil"
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
 }
 
 dependencies {
     implementation project(':owncloudDomain')
-    implementation project(':owncloud-android-library:owncloudComLibrary')
+    implementation project(':owncloudData')
+    implementation project(':owncloudComLibrary')
+    implementation libs.kotlin.stdlib
+    implementation libs.androidx.lifecycle.livedata.ktx
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$orgJetbrainsKotlin"
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$androidxLifecycle"
+    // Detekt
+    detektPlugins libs.detekt.formatting
+    detektPlugins libs.detekt.libraries
 }

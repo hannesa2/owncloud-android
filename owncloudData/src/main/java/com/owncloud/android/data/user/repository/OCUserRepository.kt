@@ -3,8 +3,9 @@
  *
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2025 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -21,15 +22,18 @@
 
 package com.owncloud.android.data.user.repository
 
+import com.owncloud.android.data.authentication.datasources.LocalAuthenticationDataSource
 import com.owncloud.android.data.user.datasources.LocalUserDataSource
 import com.owncloud.android.data.user.datasources.RemoteUserDataSource
 import com.owncloud.android.domain.user.UserRepository
 import com.owncloud.android.domain.user.model.UserAvatar
 import com.owncloud.android.domain.user.model.UserInfo
 import com.owncloud.android.domain.user.model.UserQuota
+import kotlinx.coroutines.flow.Flow
 
 class OCUserRepository(
     private val localUserDataSource: LocalUserDataSource,
+    private val localAuthenticationDataSource: LocalAuthenticationDataSource,
     private val remoteUserDataSource: RemoteUserDataSource
 ) : UserRepository {
     override fun getUserInfo(accountName: String): UserInfo = remoteUserDataSource.getUserInfo(accountName)
@@ -41,9 +45,28 @@ class OCUserRepository(
     override fun getStoredUserQuota(accountName: String): UserQuota? =
         localUserDataSource.getQuotaForAccount(accountName)
 
+    override fun getStoredUserQuotaAsFlow(accountName: String): Flow<UserQuota?> =
+        localUserDataSource.getQuotaForAccountAsFlow(accountName)
+
     override fun getAllUserQuotas(): List<UserQuota> =
         localUserDataSource.getAllUserQuotas()
 
+    override fun getAllUserQuotasAsFlow(): Flow<List<UserQuota>> =
+        localUserDataSource.getAllUserQuotasAsFlow()
+
     override fun getUserAvatar(accountName: String): UserAvatar =
         remoteUserDataSource.getUserAvatar(accountName)
+
+    override fun getUserId(accountName: String): String =
+        localAuthenticationDataSource.getUserId(accountName)
+            ?: remoteUserDataSource.getUserId(accountName).also {
+                localAuthenticationDataSource.saveIdForAccount(accountName, it)
+            }
+
+    override fun getUserPermissions(accountName: String, accountId: String): List<String> =
+        remoteUserDataSource.getUserPermissions(accountName, accountId)
+
+    override fun getUserGroups(accountName: String): List<String> =
+        remoteUserDataSource.getUserGroups(accountName)
+
 }

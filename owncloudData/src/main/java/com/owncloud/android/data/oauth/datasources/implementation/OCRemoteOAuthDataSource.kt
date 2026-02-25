@@ -2,7 +2,10 @@
  * ownCloud Android client application
  *
  * @author Abel García de Prada
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2025 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -46,7 +49,9 @@ class OCRemoteOAuthDataSource(
             oidcService.getOIDCServerDiscovery(ownCloudClient)
         }
 
-        return serverConfiguration.toModel()
+        return serverConfiguration.toModel().run {
+            if (ownCloudClient.isKiteworksServer) copy(isKiteworksServer = true) else this
+        }
     }
 
     override fun performTokenRequest(tokenRequest: TokenRequest): TokenResponse {
@@ -83,16 +88,16 @@ class OCRemoteOAuthDataSource(
      **************************************************************************************************************/
     private fun OIDCDiscoveryResponse.toModel(): OIDCServerConfiguration =
         OIDCServerConfiguration(
-            authorizationEndpoint = this.authorization_endpoint,
-            checkSessionIframe = this.check_session_iframe,
-            endSessionEndpoint = this.end_session_endpoint,
+            authorizationEndpoint = this.authorizationEndpoint,
+            checkSessionIframe = this.checkSessionIframe,
+            endSessionEndpoint = this.endSessionEndpoint,
             issuer = this.issuer,
-            registrationEndpoint = this.registration_endpoint,
-            responseTypesSupported = this.response_types_supported,
-            scopesSupported = this.scopes_supported,
-            tokenEndpoint = this.token_endpoint,
-            tokenEndpointAuthMethodsSupported = this.token_endpoint_auth_methods_supported,
-            userInfoEndpoint = this.userinfo_endpoint
+            registrationEndpoint = this.registrationEndpoint,
+            responseTypesSupported = this.responseTypesSupported,
+            scopesSupported = this.scopesSupported,
+            tokenEndpoint = this.tokenEndpoint,
+            tokenEndpointAuthMethodsSupported = this.tokenEndpointAuthMethodsSupported,
+            userInfoEndpoint = this.userinfoEndpoint
         )
 
     private fun TokenRequest.toParams(): TokenRequestParams =
@@ -102,16 +107,24 @@ class OCRemoteOAuthDataSource(
                     tokenEndpoint = this.tokenEndpoint,
                     authorizationCode = this.authorizationCode,
                     grantType = this.grantType,
+                    scope = this.scope,
+                    clientId = this.clientId,
+                    clientSecret = this.clientSecret,
                     redirectUri = this.redirectUri,
                     clientAuth = this.clientAuth,
-                    codeVerifier = this.codeVerifier
+                    codeVerifier = this.codeVerifier,
+                    useAuthorizationHeader = this.useAuthorizationHeader
                 )
             is TokenRequest.RefreshToken ->
                 TokenRequestParams.RefreshToken(
                     tokenEndpoint = this.tokenEndpoint,
                     grantType = this.grantType,
+                    scope = this.scope,
+                    clientId = this.clientId,
+                    clientSecret = this.clientSecret,
                     clientAuth = this.clientAuth,
-                    refreshToken = this.refreshToken
+                    refreshToken = this.refreshToken,
+                    useAuthorizationHeader = this.useAuthorizationHeader
                 )
         }
 

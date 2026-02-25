@@ -1,24 +1,23 @@
 /**
  * ownCloud Android client application
  *
+ * @author Abel García de Prada
  *
- * Copyright (C) 2020 ownCloud GmbH.
- *
+ * Copyright (C) 2023 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
  * as published by the Free Software Foundation.
- *
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http:></http:>//www.gnu.org/licenses/>.
  */
+
 package com.owncloud.android.utils
 
 import android.accounts.Account
@@ -47,19 +46,14 @@ import java.util.Random
 
 object NotificationUtils {
 
-    val pendingIntentFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-    } else {
-        PendingIntent.FLAG_UPDATE_CURRENT
-    }
+    const val pendingIntentFlags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
 
     @JvmStatic
-    fun newNotificationBuilder(context: Context, channelId: String): NotificationCompat.Builder {
-        return NotificationCompat.Builder(context, channelId).apply {
+    fun newNotificationBuilder(context: Context, channelId: String): NotificationCompat.Builder =
+         NotificationCompat.Builder(context, channelId).apply {
             color = ContextCompat.getColor(context, R.color.primary)
             setSmallIcon(R.drawable.notification_icon)
         }
-    }
 
     fun createBasicNotification(
         context: Context,
@@ -115,11 +109,7 @@ object NotificationUtils {
                 addFlags(Intent.FLAG_FROM_BACKGROUND)
             }
 
-        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_ONE_SHOT
-        } else {
-            PendingIntent.FLAG_ONE_SHOT
-        }
+        val pendingIntent = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_ONE_SHOT
 
         return PendingIntent.getActivity(context, System.currentTimeMillis().toInt(), updateCredentialsIntent, pendingIntent)
     }
@@ -132,7 +122,7 @@ object NotificationUtils {
         return PendingIntent.getActivity(context, System.currentTimeMillis().toInt(), showUploadListIntent, pendingIntentFlags)
     }
 
-    fun composePendingIntentToCameraUploads(context: Context, notificationKey: String): PendingIntent {
+    fun composePendingIntentToAutomaticUploads(context: Context, notificationKey: String): PendingIntent {
         val openSettingsActivity = Intent(context, SettingsActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             putExtra(KEY_NOTIFICATION_INTENT, notificationKey)
@@ -166,7 +156,7 @@ object NotificationUtils {
      * @param account        account which the file in conflict belongs to
      */
     @JvmStatic
-    fun notifyConflict(fileInConflict: OCFile, account: Account?, context: Context) {
+    fun notifyConflict(fileInConflict: OCFile, context: Context) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notificationBuilder = newNotificationBuilder(context, FILE_SYNC_CONFLICT_NOTIFICATION_CHANNEL_ID)
         notificationBuilder

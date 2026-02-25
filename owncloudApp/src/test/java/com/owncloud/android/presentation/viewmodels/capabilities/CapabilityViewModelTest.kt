@@ -25,6 +25,7 @@ import androidx.lifecycle.MutableLiveData
 import com.owncloud.android.domain.UseCaseResult
 import com.owncloud.android.domain.capabilities.model.OCCapability
 import com.owncloud.android.domain.capabilities.usecases.GetCapabilitiesAsLiveDataUseCase
+import com.owncloud.android.domain.capabilities.usecases.GetStoredCapabilitiesUseCase
 import com.owncloud.android.domain.capabilities.usecases.RefreshCapabilitiesFromServerAsyncUseCase
 import com.owncloud.android.domain.utils.Event
 import com.owncloud.android.presentation.common.UIResult
@@ -62,6 +63,7 @@ class CapabilityViewModelTest {
 
     private lateinit var getCapabilitiesAsLiveDataUseCase: GetCapabilitiesAsLiveDataUseCase
     private lateinit var refreshCapabilitiesFromServerUseCase: RefreshCapabilitiesFromServerAsyncUseCase
+    private lateinit var getStoredCapabilitiesUseCase: GetStoredCapabilitiesUseCase
     private lateinit var ocContextProvider: ContextProvider
 
     private val capabilitiesLiveData = MutableLiveData<OCCapability>()
@@ -84,7 +86,7 @@ class CapabilityViewModelTest {
         Dispatchers.setMain(testCoroutineDispatcher)
         ocContextProvider = mockk(relaxed = true)
 
-        //TODO: Add tests when is not connected
+        // To do: Add tests when is not connected
         every { ocContextProvider.isConnected() } returns true
 
         Dispatchers.setMain(testCoroutineDispatcher)
@@ -111,13 +113,15 @@ class CapabilityViewModelTest {
     private fun initTest() {
         getCapabilitiesAsLiveDataUseCase = spyk(mockkClass(GetCapabilitiesAsLiveDataUseCase::class))
         refreshCapabilitiesFromServerUseCase = spyk(mockkClass(RefreshCapabilitiesFromServerAsyncUseCase::class))
+        getStoredCapabilitiesUseCase = spyk(mockkClass(GetStoredCapabilitiesUseCase::class))
 
-        every { getCapabilitiesAsLiveDataUseCase.execute(any()) } returns capabilitiesLiveData
+        every { getCapabilitiesAsLiveDataUseCase(any()) } returns capabilitiesLiveData
 
         capabilityViewModel = CapabilityViewModel(
             accountName = testAccountName,
             getCapabilitiesAsLiveDataUseCase = getCapabilitiesAsLiveDataUseCase,
             refreshCapabilitiesFromServerAsyncUseCase = refreshCapabilitiesFromServerUseCase,
+            getStoredCapabilitiesUseCase = getStoredCapabilitiesUseCase,
             coroutineDispatcherProvider = coroutineDispatcherProvider
         )
     }
@@ -154,8 +158,8 @@ class CapabilityViewModelTest {
         assertEquals(expectedValue, value)
 
         // Calls performed during OCCapabilityViewModel initialization
-        verify(exactly = 1) { getCapabilitiesAsLiveDataUseCase.execute(any()) }
-        verify(exactly = 1) { refreshCapabilitiesFromServerUseCase.execute(any()) }
+        verify(exactly = 1) { getCapabilitiesAsLiveDataUseCase(any()) }
+        verify(exactly = 1) { refreshCapabilitiesFromServerUseCase(any()) }
     }
 
     @Test
@@ -180,14 +184,14 @@ class CapabilityViewModelTest {
         expectedValue: Event<UIResult<Unit>?>
     ) {
         initTest()
-        coEvery { refreshCapabilitiesFromServerUseCase.execute(any()) } returns useCaseResult
+        coEvery { refreshCapabilitiesFromServerUseCase(any()) } returns useCaseResult
 
         capabilityViewModel.refreshCapabilitiesFromNetwork()
 
         val value = capabilityViewModel.capabilities.getLastEmittedValue()
         assertEquals(expectedValue, value)
 
-        coVerify(exactly = 2) { refreshCapabilitiesFromServerUseCase.execute(any()) }
-        verify(exactly = 1) { getCapabilitiesAsLiveDataUseCase.execute(any()) }
+        coVerify(exactly = 2) { refreshCapabilitiesFromServerUseCase(any()) }
+        verify(exactly = 1) { getCapabilitiesAsLiveDataUseCase(any()) }
     }
 }

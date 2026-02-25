@@ -1,0 +1,209 @@
+/**
+ * ownCloud Android client application
+ *
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2025 ownCloud GmbH.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2,
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.owncloud.android.presentation.spaces.createspace
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.view.isVisible
+import androidx.core.widget.doOnTextChanged
+import androidx.fragment.app.DialogFragment
+import com.owncloud.android.R
+import com.owncloud.android.databinding.CreateSpaceDialogBinding
+import com.owncloud.android.domain.spaces.model.OCSpace
+import com.owncloud.android.utils.DisplayUtils
+
+class CreateSpaceDialogFragment : DialogFragment() {
+    private var _binding: CreateSpaceDialogBinding? = null
+    private val binding get() = _binding!!
+
+    private lateinit var createSpaceListener: CreateSpaceListener
+
+    private val forbiddenRegex = Regex(FORBIDDEN_CHARACTERS)
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        _binding = CreateSpaceDialogBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val currentSpace = requireArguments().getParcelable<OCSpace>(ARG_CURRENT_SPACE)
+        val isEditMode = requireArguments().getBoolean(ARG_EDIT_SPACE_MODE)
+        val canEditQuota = requireArguments().getBoolean(ARG_CAN_EDIT_SPACE_QUOTA)
+        binding.apply {
+            cancelCreateSpaceButton.setOnClickListener { dialog?.dismiss() }
+            createSpaceDialogNameValue.doOnTextChanged { _, _, _, _ ->
+                updateUI()
+            }
+
+            createSpaceDialogQuotaValue.doOnTextChanged { _, _, _, _ ->
+                updateUI()
+            }
+
+            createSpaceDialogQuotaSwitch.setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) { createSpaceDialogQuotaValue.setText("1") }
+                updateUI()
+                createSpaceDialogQuotaNoRestrictionLabel.isVisible = !isChecked
+                createSpaceDialogQuotaLayout.isVisible = isChecked
+                createSpaceDialogQuotaUnitLabel.isVisible = isChecked
+            }
+
+            if (isEditMode) {
+                createSpaceDialogTitle.text = getString(R.string.edit_space)
+                createSpaceDialogQuotaSection.isVisible = canEditQuota
+
+                currentSpace?.let {
+                    createSpaceDialogNameValue.setText(it.name)
+                    createSpaceDialogSubtitleValue.setText(it.description)
+                    val totalQuota = it.quota?.total ?: 0L
+                    if (totalQuota != 0L) {
+                        createSpaceDialogQuotaSwitch.isChecked = true
+                        val formattedQuota = DisplayUtils.formatFromBytes(totalQuota)
+                        createSpaceDialogQuotaValue.setText(formattedQuota.first)
+                        createSpaceDialogQuotaUnitLabel.text = formattedQuota.second
+                    }
+                }
+
+                createSpaceButton.apply {
+                    text = getString(R.string.share_confirm_public_link_button)
+                    contentDescription = getString(R.string.share_confirm_public_link_button)
+                }
+            }
+
+            createSpaceButton.setOnClickListener {
+                val spaceName = createSpaceDialogNameValue.text.toString()
+                val spaceSubtitle = createSpaceDialogSubtitleValue.text.toString()
+                val spaceQuota = if (createSpaceDialogQuotaSwitch.isChecked) convertToBytes(createSpaceDialogQuotaValue.text.toString(),
+                        createSpaceDialogQuotaUnitLabel.text.toString()) else 0L
+
+                if (isEditMode) {
+                    currentSpace?.let {
+                        createSpaceListener.editSpace(
+                            spaceId = it.id,
+                            spaceName = spaceName,
+                            spaceSubtitle = spaceSubtitle,
+                            spaceQuota = if (canEditQuota) spaceQuota else null
+                        )
+                    }
+                } else {
+                    createSpaceListener.createSpace(
+                        spaceName = spaceName,
+                        spaceSubtitle = spaceSubtitle,
+                        spaceQuota = spaceQuota
+                    )
+                }
+                dialog?.dismiss()
+            }
+        }
+    }
+
+    private fun validateName(spaceName: String): String? =
+        when {
+            spaceName.trim().isEmpty() -> getString(R.string.create_space_dialog_empty_error)
+            spaceName.length > 255 -> getString(R.string.create_space_dialog_length_error)
+            spaceName.contains(forbiddenRegex) -> getString(R.string.create_space_dialog_characters_error)
+            else -> null
+        }
+
+    private fun validateQuota(spaceQuota: String): String? {
+        if (!binding.createSpaceDialogQuotaSwitch.isChecked) return null
+
+        return when {
+            spaceQuota.isEmpty() -> getString(R.string.create_space_dialog_quota_empty_error)
+            spaceQuota.toDouble() == MIN_SPACE_QUOTA_LIMIT -> getString(R.string.create_space_dialog_quota_zero_error)
+            spaceQuota.toDouble() > MAX_SPACE_QUOTA_LIMIT -> getString(R.string.create_space_dialog_quota_too_large_error)
+            else -> null
+        }
+    }
+
+    private fun updateUI() {
+        val nameError = validateName(binding.createSpaceDialogNameValue.text.toString())
+        val quotaValue = convertToBytes(binding.createSpaceDialogQuotaValue.text.toString(), binding.createSpaceDialogQuotaUnitLabel.text.toString())
+        val quotaError = validateQuota(quotaValue.toString())
+        val noErrors = nameError == null && quotaError == null
+
+        val colorButton = if (noErrors) {
+            resources.getColor(R.color.primary_button_background_color, null)
+        } else {
+            resources.getColor(R.color.grey, null)
+        }
+
+        binding.createSpaceDialogNameValue.error = nameError
+        binding.createSpaceDialogQuotaValue.error = quotaError
+        binding.createSpaceButton.apply {
+            setTextColor(colorButton)
+            isEnabled = noErrors
+        }
+    }
+
+    private fun convertToBytes(spaceQuotaValue: String, spaceQuotaUnit: String): Long {
+        val quotaNumber = spaceQuotaValue.toDoubleOrNull() ?: return 0L
+        val multiplier = when (spaceQuotaUnit) {
+            DisplayUtils.sizeSuffixes[0] -> B_MULTIPLIER
+            DisplayUtils.sizeSuffixes[1] -> KB_MULTIPLIER
+            DisplayUtils.sizeSuffixes[2] -> MB_MULTIPLIER
+            DisplayUtils.sizeSuffixes[3] -> GB_MULTIPLIER
+            DisplayUtils.sizeSuffixes[4] -> TB_MULTIPLIER
+            DisplayUtils.sizeSuffixes[5] -> PB_MULTIPLIER
+            else -> B_MULTIPLIER
+        }
+        return (quotaNumber * multiplier).toLong()
+    }
+
+    interface CreateSpaceListener {
+        fun createSpace(spaceName: String, spaceSubtitle: String, spaceQuota: Long)
+        fun editSpace(spaceId: String, spaceName: String, spaceSubtitle: String, spaceQuota: Long?)
+    }
+
+    companion object {
+        private const val ARG_EDIT_SPACE_MODE = "EDIT_SPACE_MODE"
+        private const val ARG_CAN_EDIT_SPACE_QUOTA = "CAN_EDIT_SPACE_QUOTA"
+        private const val ARG_CURRENT_SPACE = "CURRENT_SPACE"
+        private const val FORBIDDEN_CHARACTERS = """[/\\.:?*"'><|]"""
+        private const val MIN_SPACE_QUOTA_LIMIT = 0.0
+        private const val MAX_SPACE_QUOTA_LIMIT = 1_000_000_000_000_000.0
+        private const val B_MULTIPLIER = 1L
+        private const val KB_MULTIPLIER = 1_000L
+        private const val MB_MULTIPLIER = 1_000_000L
+        private const val GB_MULTIPLIER = 1_000_000_000L
+        private const val TB_MULTIPLIER = 1_000_000_000_000L
+        private const val PB_MULTIPLIER = 1_000_000_000_000_000L
+
+        fun newInstance(
+            isEditMode: Boolean,
+            canEditQuota: Boolean,
+            currentSpace: OCSpace?,
+            listener: CreateSpaceListener
+        ): CreateSpaceDialogFragment {
+            val args = Bundle().apply {
+                putBoolean(ARG_EDIT_SPACE_MODE, isEditMode)
+                putBoolean(ARG_CAN_EDIT_SPACE_QUOTA, canEditQuota)
+                putParcelable(ARG_CURRENT_SPACE, currentSpace)
+            }
+            return CreateSpaceDialogFragment().apply {
+                createSpaceListener = listener
+                arguments = args
+            }
+        }
+    }
+}

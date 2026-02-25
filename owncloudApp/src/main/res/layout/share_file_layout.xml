@@ -63,6 +63,7 @@
                 android:layout_marginStart="4dp"
                 android:layout_toEndOf="@+id/shareFileIcon"
                 android:text="@string/placeholder_filesize"
+                android:textColor="@color/list_item_lastmod_and_filesize_text"
                 android:textSize="12sp" />
 
             <ImageButton
@@ -73,7 +74,8 @@
                 android:padding="@dimen/standard_half_padding"
                 android:src="@drawable/copy_link"
                 android:scaleType="centerCrop"
-                android:background="@color/transparent"/>
+                android:background="@color/transparent"
+                android:contentDescription="@string/content_description_get_private_link" />
 
         </RelativeLayout>
 
@@ -103,7 +105,8 @@
                     android:text="@string/share_with_user_section_title"
                     android:textAllCaps="true"
                     android:textColor="@color/white"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:accessibilityHeading="true"/>
 
                 <ImageButton
                     android:id="@+id/addUserButton"
@@ -111,7 +114,8 @@
                     android:layout_height="48dp"
                     android:layout_alignParentEnd="true"
                     android:background="@color/transparent"
-                    android:src="@drawable/ic_add" />
+                    android:src="@drawable/ic_add"
+                    android:contentDescription="@string/content_description_add_share" />
 
             </RelativeLayout>
 
@@ -156,7 +160,8 @@
                     android:text="@string/share_via_link_section_title"
                     android:textAllCaps="true"
                     android:textColor="@color/white"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:accessibilityHeading="true"/>
 
                 <ImageButton
                     android:id="@+id/addPublicLinkButton"
@@ -164,7 +169,8 @@
                     android:layout_height="48dp"
                     android:layout_alignParentEnd="true"
                     android:background="@color/transparent"
-                    android:src="@drawable/ic_add" />
+                    android:src="@drawable/ic_add"
+                    android:contentDescription="@string/content_description_add_public_link" />
 
             </RelativeLayout>
 
@@ -178,6 +184,7 @@
                 android:paddingRight="@dimen/standard_half_padding"
                 android:paddingTop="@dimen/standard_padding"
                 android:text="@string/share_warning_about_forwarding_public_links"
+                android:textColor="@color/warning_grey_text"
                 android:textSize="15sp" />
 
             <ListView

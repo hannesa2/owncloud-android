@@ -4,7 +4,11 @@
  * @author David A. Velasco
  * @author David González Verdugo
  * @author Christian Schabesberger
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Aitor Ballesteros Pavón
+ * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2025 ownCloud GmbH.
  *
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,12 +25,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http:></http:>//www.gnu.org/licenses/>.
  */
+
 package com.owncloud.android.ui.preview
 
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Message
+import android.view.KeyEvent
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.Window
@@ -37,17 +44,21 @@ import androidx.viewpager.widget.ViewPager
 import androidx.viewpager.widget.ViewPager.OnPageChangeListener
 import androidx.work.WorkInfo
 import com.owncloud.android.R
-import com.owncloud.android.presentation.authentication.AccountUtils
-import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider
-import com.owncloud.android.datamodel.FileDataStorageManager
+import com.owncloud.android.data.providers.SharedPreferencesProvider
+import com.owncloud.android.domain.exceptions.AccountNotFoundException
 import com.owncloud.android.domain.files.model.FileListOption
 import com.owncloud.android.domain.files.model.OCFile
+import com.owncloud.android.domain.files.model.OCFile.Companion.ROOT_PARENT_ID
 import com.owncloud.android.domain.files.usecases.SortFilesUseCase
 import com.owncloud.android.domain.utils.Event
+import com.owncloud.android.extensions.showErrorInSnackbar
+import com.owncloud.android.presentation.authentication.AccountUtils
+import com.owncloud.android.presentation.common.UIResult
 import com.owncloud.android.presentation.files.SortOrder
 import com.owncloud.android.presentation.files.SortType
 import com.owncloud.android.presentation.files.operations.FileOperation
 import com.owncloud.android.presentation.files.operations.FileOperationsViewModel
+import com.owncloud.android.presentation.spaces.SpacesListViewModel
 import com.owncloud.android.ui.activity.FileActivity
 import com.owncloud.android.ui.activity.FileDisplayActivity
 import com.owncloud.android.ui.fragment.FileFragment
@@ -56,6 +67,7 @@ import com.owncloud.android.usecases.transfers.DOWNLOAD_FINISH_MESSAGE
 import com.owncloud.android.utils.PreferenceUtils
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import timber.log.Timber
 
 /**
@@ -65,7 +77,9 @@ class PreviewImageActivity : FileActivity(),
     FileFragment.ContainerActivity,
     OnPageChangeListener {
 
-    private val previewImageViewModel: PreviewImageViewModel by viewModel()
+    private val previewImageViewModel by viewModel <PreviewImageViewModel> {
+        parametersOf(file)
+    }
     private val fileOperationsViewModel: FileOperationsViewModel by viewModel()
 
     private lateinit var viewPager: ViewPager
@@ -75,6 +89,13 @@ class PreviewImageActivity : FileActivity(),
     private var localBroadcastManager: LocalBroadcastManager? = null
     private var fullScreenAnchorView: View? = null
 
+    var mHideSystemUiHandler: Handler = object : Handler() {
+        override fun handleMessage(msg: Message) {
+            hideSystemUI(fullScreenAnchorView)
+            showActionBar(false)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY)
         super.onCreate(savedInstanceState)
@@ -83,6 +104,7 @@ class PreviewImageActivity : FileActivity(),
         // ActionBar
         supportActionBar?.run {
             setDisplayHomeAsUpEnabled(true)
+            setHomeActionContentDescription(R.string.common_back)
             setHomeButtonEnabled(true)
         }
         showActionBar(false)
@@ -124,9 +146,31 @@ class PreviewImageActivity : FileActivity(),
     }
 
     private fun startObservingFileOperations() {
-        fileOperationsViewModel.removeFileLiveData.observe(this, Event.EventObserver {
-            if (it.isSuccess) {
-                finish()
+        fileOperationsViewModel.removeFileLiveData.observe(this, Event.EventObserver { uiResult ->
+            when (uiResult) {
+                is UIResult.Error -> {
+                    dismissLoadingDialog()
+                    showErrorInSnackbar(R.string.remove_fail_msg, uiResult.getThrowableOrNull())
+                }
+
+                is UIResult.Loading -> {
+                    showLoadingDialog(R.string.wait_a_moment)
+                }
+                is UIResult.Success -> {
+
+                    // Refresh the spaces and update the quota
+                    val spacesListViewModel: SpacesListViewModel by viewModel { parametersOf(account.name, false) }
+                    spacesListViewModel.refreshSpacesFromServer()
+
+                    dismissLoadingDialog()
+                    finish()
+                }
+            }
+        })
+
+        fileOperationsViewModel.syncFileLiveData.observe(this, Event.EventObserver { uiResult ->
+            if (uiResult is UIResult.Error && uiResult.error is AccountNotFoundException) {
+                showRequestAccountChangeNotice(getString(R.string.sync_fail_ticker_unauthorized), false)
             }
         })
     }
@@ -137,17 +181,17 @@ class PreviewImageActivity : FileActivity(),
             0,
             file.remotePath.lastIndexOf(file.fileName)
         )
-        var parentFolder = storageManager.getFileByPath(parentPath)
+        var parentFolder = storageManager.getFileByPath(parentPath, file.spaceId)
         if (parentFolder == null) {
             // should not be necessary
-            parentFolder = storageManager.getFileByPath(OCFile.ROOT_PATH)
+            parentFolder = storageManager.getFileByPath(OCFile.ROOT_PATH, file.spaceId)
         }
 
         val sharedPreferencesProvider: SharedPreferencesProvider by inject()
         val sortType = sharedPreferencesProvider.getInt(SortType.PREF_FILE_LIST_SORT_TYPE, SortType.SORT_TYPE_BY_NAME.ordinal)
         val sortOrder = sharedPreferencesProvider.getInt(SortOrder.PREF_FILE_LIST_SORT_ORDER, SortOrder.SORT_ORDER_ASCENDING.ordinal)
         val sortFilesUseCase: SortFilesUseCase by inject()
-        val imageFiles = sortFilesUseCase.execute(
+        val imageFiles = sortFilesUseCase(
             SortFilesUseCase.Params(
                 listOfFiles = storageManager.getFolderImages(parentFolder),
                 sortType = com.owncloud.android.domain.files.usecases.SortType.fromPreferences(sortType),
@@ -194,13 +238,6 @@ class PreviewImageActivity : FileActivity(),
         delayedHide()
     }
 
-    var mHideSystemUiHandler: Handler = object : Handler() {
-        override fun handleMessage(msg: Message) {
-            hideSystemUI(fullScreenAnchorView)
-            showActionBar(false)
-        }
-    }
-
     private fun delayedHide(delayMillis: Int = INITIAL_HIDE_DELAY) {
         mHideSystemUiHandler.removeMessages(0)
         mHideSystemUiHandler.sendEmptyMessageDelayed(0, delayMillis.toLong())
@@ -217,19 +254,17 @@ class PreviewImageActivity : FileActivity(),
         }
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                if (isDrawerOpen()) {
-                    closeDrawer()
-                } else {
-                    backToDisplayActivity()
-                }
-                true
+    override fun onOptionsItemSelected(item: MenuItem): Boolean =
+        if (item.itemId == android.R.id.home) {
+            if (isDrawerOpen()) {
+                closeDrawer()
+            } else {
+                backToDisplayActivity()
             }
-            else -> super.onOptionsItemSelected(item)
+            true
+        } else {
+            super.onOptionsItemSelected(item)
         }
-    }
 
     override fun onResume() {
         super.onResume()
@@ -251,6 +286,7 @@ class PreviewImageActivity : FileActivity(),
             putExtra(EXTRA_FILE, file)
             putExtra(EXTRA_ACCOUNT, AccountUtils.getCurrentOwnCloudAccount(this@PreviewImageActivity))
         }
+        finishAffinity()
         startActivity(showDetailsIntent)
     }
 
@@ -265,10 +301,14 @@ class PreviewImageActivity : FileActivity(),
         if (operationsServiceBinder != null) {
             savedPosition = position
             hasSavedPosition = true
-            val currentFile = previewImagePagerAdapter.getFileAt(position)
-            updateActionBarTitle(currentFile.fileName)
-            if (!previewImagePagerAdapter.pendingErrorAt(position)) {
-                fileOperationsViewModel.performOperation(FileOperation.SynchronizeFileOperation(currentFile, account.name))
+            if (previewImagePagerAdapter.count != 0) {
+                val currentFile = previewImagePagerAdapter.getFileAt(position)
+                updateActionBarTitle(currentFile.fileName)
+                if (!previewImagePagerAdapter.pendingErrorAt(position)) {
+                    fileOperationsViewModel.performOperation(FileOperation.SynchronizeFileOperation(currentFile, account.name))
+                }
+            } else {
+                backToDisplayActivity()
             }
 
             // Call to reset image zoom to initial state
@@ -321,7 +361,7 @@ class PreviewImageActivity : FileActivity(),
         require(file.isImage) { "Non-image file passed as argument" }
 
         // Update file according to DB file, if it is possible
-        if (file.id!! > FileDataStorageManager.ROOT_PARENT_ID) {
+        if (file.id!! > ROOT_PARENT_ID) {
             file = storageManager.getFileById(file.id!!)
         }
         if (file != null) {
@@ -368,6 +408,18 @@ class PreviewImageActivity : FileActivity(),
     private fun updateActionBarTitle(title: String) {
         supportActionBar?.title = title
     }
+
+    // The main_menu won't be displayed
+    override fun onCreateOptionsMenu(menu: Menu): Boolean =
+        false
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean =
+        if (keyCode == KeyEvent.KEYCODE_TAB) {
+            showSystemUI(fullScreenAnchorView)
+            true
+        } else {
+            super.onKeyUp(keyCode, event)
+        }
 
     companion object {
         private const val INITIAL_HIDE_DELAY = 0 // immediate hide

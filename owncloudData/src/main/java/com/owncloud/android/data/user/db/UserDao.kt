@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author Abel García de Prada
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -24,6 +26,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.owncloud.android.data.ProviderMeta
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UserDao {
@@ -32,8 +35,16 @@ interface UserDao {
         accountName: String
     ): UserQuotaEntity?
 
+    @Query(SELECT_QUOTA)
+    fun getQuotaForAccountAsFlow(
+        accountName: String
+    ): Flow<UserQuotaEntity?>
+
     @Query(SELECT_ALL_QUOTAS)
     fun getAllUserQuotas(): List<UserQuotaEntity>
+
+    @Query(SELECT_ALL_QUOTAS)
+    fun getAllUserQuotasAsFlow(): Flow<List<UserQuotaEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertOrReplace(userQuotaEntity: UserQuotaEntity)

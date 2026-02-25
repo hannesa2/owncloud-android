@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author David González Verdugo
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Juan Carlos Garrote Gascón
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -22,7 +24,7 @@ package com.owncloud.android.domain.capabilities.model
 data class OCCapability(
     val id: Int? = null,
     var accountName: String?,
-    val versionMayor: Int,
+    val versionMajor: Int,
     val versionMinor: Int,
     val versionMicro: Int,
     val versionString: String?,
@@ -49,26 +51,47 @@ data class OCCapability(
     val filesUndelete: CapabilityBooleanType,
     val filesVersioning: CapabilityBooleanType,
     val filesPrivateLinks: CapabilityBooleanType,
-    val filesOcisProviders: OcisProvider?,
+    val filesAppProviders: AppProviders?,
+    val spaces: Spaces?,
+    val passwordPolicy: PasswordPolicy?,
 ) {
     fun isChunkingAllowed(): Boolean {
         val doubleChunkingVersion = davChunkingVersion.toDoubleOrNull()
         return (filesBigFileChunking.isTrue && doubleChunkingVersion != null && doubleChunkingVersion >= 1.0)
     }
 
-    fun isFetchingAvatarAllowed(): Boolean {
-        return filesSharingUserProfilePicture.isTrue || filesSharingUserProfilePicture.isUnknown
-    }
+    fun isFetchingAvatarAllowed(): Boolean =
+        filesSharingUserProfilePicture.isTrue || filesSharingUserProfilePicture.isUnknown
 
-    fun isOpenInWebAllowed(): Boolean = filesOcisProviders?.openWebUrl?.isNotBlank() ?: false
+    fun isOpenInWebAllowed(): Boolean = filesAppProviders?.openWebUrl?.isNotBlank() ?: false
 
-    data class OcisProvider(
+    fun isSpacesAllowed(): Boolean = spaces?.enabled == true
+
+    fun isSpacesProjectsAllowed(): Boolean = spaces?.projects == true
+
+    data class AppProviders(
         val enabled: Boolean,
         val version: String,
         val appsUrl: String?,
         val openUrl: String?,
         val openWebUrl: String?,
         val newUrl: String?,
+    )
+
+    data class Spaces(
+        val enabled: Boolean,
+        val projects: Boolean,
+        val shareJail: Boolean?,
+        val hasMultiplePersonalSpaces: Boolean?,
+    )
+
+    data class PasswordPolicy(
+        val maxCharacters: Int?,
+        val minCharacters: Int?,
+        val minDigits: Int?,
+        val minLowercaseCharacters: Int?,
+        val minSpecialCharacters: Int?,
+        val minUppercaseCharacters: Int?,
     )
 }
 

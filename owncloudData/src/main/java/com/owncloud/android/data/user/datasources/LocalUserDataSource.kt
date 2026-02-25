@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author Abel García de Prada
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -20,6 +22,7 @@
 package com.owncloud.android.data.user.datasources
 
 import com.owncloud.android.domain.user.model.UserQuota
+import kotlinx.coroutines.flow.Flow
 
 interface LocalUserDataSource {
     fun saveQuotaForAccount(
@@ -31,7 +34,13 @@ interface LocalUserDataSource {
         accountName: String
     ): UserQuota?
 
+    fun getQuotaForAccountAsFlow(
+        accountName: String
+    ): Flow<UserQuota?>
+
     fun getAllUserQuotas(): List<UserQuota>
+
+    fun getAllUserQuotasAsFlow(): Flow<List<UserQuota>>
 
     fun deleteQuotaForAccount(
         accountName: String

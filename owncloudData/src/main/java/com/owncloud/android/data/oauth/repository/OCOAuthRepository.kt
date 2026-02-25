@@ -27,8 +27,9 @@ import com.owncloud.android.domain.authentication.oauth.model.TokenRequest
 import com.owncloud.android.domain.authentication.oauth.model.TokenResponse
 
 class OCOAuthRepository(
-    private val oidcRemoteOAuthDataSource: RemoteOAuthDataSource
+    private val oidcRemoteOAuthDataSource: RemoteOAuthDataSource,
 ) : OAuthRepository {
+
     override fun performOIDCDiscovery(baseUrl: String): OIDCServerConfiguration =
         oidcRemoteOAuthDataSource.performOIDCDiscovery(baseUrl)
 

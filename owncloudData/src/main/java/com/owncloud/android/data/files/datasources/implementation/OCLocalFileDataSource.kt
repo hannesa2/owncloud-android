@@ -3,8 +3,9 @@
  *
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
+ * @author Aitor Ballesteros Pavón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -26,6 +27,7 @@ import com.owncloud.android.data.files.datasources.LocalFileDataSource
 import com.owncloud.android.data.files.db.FileDao
 import com.owncloud.android.data.files.db.OCFileAndFileSync
 import com.owncloud.android.data.files.db.OCFileEntity
+import com.owncloud.android.data.spaces.datasources.implementation.OCLocalSpacesDataSource.Companion.toModel
 import com.owncloud.android.domain.availableoffline.model.AvailableOfflineStatus
 import com.owncloud.android.domain.files.model.MIME_DIR
 import com.owncloud.android.domain.files.model.MIME_PREFIX_IMAGE
@@ -40,38 +42,35 @@ import java.util.UUID
 class OCLocalFileDataSource(
     private val fileDao: FileDao,
 ) : LocalFileDataSource {
-    override fun copyFile(sourceFile: OCFile, targetFolder: OCFile, finalRemotePath: String, remoteId: String) {
-        fileDao.copy(
-            sourceFile = sourceFile.toEntity(),
-            targetFolder = targetFolder.toEntity(),
-            finalRemotePath = finalRemotePath,
-            remoteId = remoteId
-        )
-    }
-
     override fun getFileById(fileId: Long): OCFile? =
         fileDao.getFileById(fileId)?.toModel()
 
     override fun getFileByIdAsFlow(fileId: Long): Flow<OCFile?> =
         fileDao.getFileByIdAsFlow(fileId).map { it?.toModel() }
 
-    override fun getFileByRemotePath(remotePath: String, owner: String): OCFile? {
-        fileDao.getFileByOwnerAndRemotePath(owner, remotePath)?.let { return it.toModel() }
+    override fun getFileWithSyncInfoByIdAsFlow(id: Long): Flow<OCFileWithSyncInfo?> =
+        fileDao.getFileWithSyncInfoByIdAsFlow(id).map { it?.toModel() }
+
+    override fun getFileByRemotePath(remotePath: String, owner: String, spaceId: String?): OCFile? {
+        fileDao.getFileByOwnerAndRemotePath(owner, remotePath, spaceId)?.let { return it.toModel() }
 
         // If root folder do not exists, create and return it.
-        if (remotePath == ROOT_PATH) {
+        return if (remotePath == ROOT_PATH) {
             val rootFolder = OCFile(
                 parentId = ROOT_PARENT_ID,
                 owner = owner,
                 remotePath = ROOT_PATH,
                 length = 0,
                 mimeType = MIME_DIR,
-                modificationTimestamp = 0
+                modificationTimestamp = 0,
+                spaceId = spaceId,
+                permissions = "CK",
             )
-            fileDao.mergeRemoteAndLocalFile(rootFolder.toEntity()).also { return getFileById(it) }
+            val idFile = fileDao.mergeRemoteAndLocalFile(rootFolder.toEntity())
+            getFileById(idFile)
+        } else {
+            null
         }
-
-        return null
     }
 
     override fun getFileByRemoteId(remoteId: String): OCFile? =
@@ -127,6 +126,16 @@ class OCLocalFileDataSource(
             it.toModel()
         }
 
+    override fun getDownloadedFilesForAccount(owner: String): List<OCFile> =
+        fileDao.getDownloadedFilesForAccount(accountOwner = owner).map {
+            it.toModel()
+        }
+
+    override fun getFilesWithLastUsageOlderThanGivenTime(milliseconds: Long): List<OCFile> =
+        fileDao.getFilesWithLastUsageOlderThanGivenTime(milliseconds).map {
+            it.toModel()
+        }
+
     override fun moveFile(sourceFile: OCFile, targetFolder: OCFile, finalRemotePath: String, finalStoragePath: String) =
         fileDao.moveFile(
             sourceFile = sourceFile.toEntity(),
@@ -135,9 +144,19 @@ class OCLocalFileDataSource(
             finalStoragePath = finalStoragePath
         )
 
-    override fun saveFilesInFolderAndReturnThem(listOfFiles: List<OCFile>, folder: OCFile): List<OCFile> {
-        // TODO: If it is root, add 0 as parent Id
-        val folderContent = fileDao.insertFilesInFolderAndReturnThem(
+    override fun copyFile(sourceFile: OCFile, targetFolder: OCFile, finalRemotePath: String, remoteId: String, replace: Boolean?) {
+        fileDao.copy(
+            sourceFile = sourceFile.toEntity(),
+            targetFolder = targetFolder.toEntity(),
+            finalRemotePath = finalRemotePath,
+            remoteId = remoteId,
+            replace = replace,
+        )
+    }
+
+    override fun saveFilesInFolderAndReturnTheFilesThatChanged(listOfFiles: List<OCFile>, folder: OCFile): List<OCFile> {
+        // To do: If it is root, add 0 as parent Id
+        val folderContent = fileDao.insertFilesInFolderAndReturnTheFilesThatChanged(
             folder = folder.toEntity(),
             folderContent = listOfFiles.map { it.toEntity() }
         )
@@ -185,8 +204,12 @@ class OCLocalFileDataSource(
         fileDao.updateDownloadedFilesStorageDirectoryInStoragePath(oldDirectory, newDirectory)
     }
 
+    override fun updateFileWithLastUsage(fileId: Long, lastUsage: Long?) {
+        fileDao.updateFileWithLastUsage(fileId, lastUsage)
+    }
+
     override fun saveUploadWorkerUuid(fileId: Long, workerUuid: UUID) {
-        TODO("Not yet implemented")
+        // Not yet implemented
     }
 
     override fun saveDownloadWorkerUuid(fileId: Long, workerUuid: UUID) {
@@ -196,6 +219,16 @@ class OCLocalFileDataSource(
     override fun cleanWorkersUuid(fileId: Long) {
         fileDao.updateSyncStatusForFile(fileId, null)
     }
+
+    @VisibleForTesting
+    fun OCFileAndFileSync.toModel(): OCFileWithSyncInfo =
+        OCFileWithSyncInfo(
+            file = file.toModel(),
+            uploadWorkerUuid = fileSync?.uploadWorkerUuid,
+            downloadWorkerUuid = fileSync?.downloadWorkerUuid,
+            isSynchronizing = fileSync?.isSynchronizing == true,
+            space = space?.toModel(),
+        )
 
     companion object {
         @VisibleForTesting
@@ -220,10 +253,11 @@ class OCLocalFileDataSource(
                 needsToUpdateThumbnail = needsToUpdateThumbnail,
                 fileIsDownloading = fileIsDownloading,
                 lastSyncDateForData = lastSyncDateForData,
-                lastSyncDateForProperties = lastSyncDateForProperties,
+                lastUsage = lastUsage,
                 modifiedAtLastSyncForData = modifiedAtLastSyncForData,
                 etagInConflict = etagInConflict,
-                treeEtag = treeEtag
+                treeEtag = treeEtag,
+                spaceId = spaceId,
             )
 
         @VisibleForTesting
@@ -247,20 +281,12 @@ class OCLocalFileDataSource(
                 needsToUpdateThumbnail = needsToUpdateThumbnail,
                 fileIsDownloading = fileIsDownloading,
                 lastSyncDateForData = lastSyncDateForData,
-                lastSyncDateForProperties = lastSyncDateForProperties,
+                lastUsage = lastUsage,
                 modifiedAtLastSyncForData = modifiedAtLastSyncForData,
                 etagInConflict = etagInConflict,
                 treeEtag = treeEtag,
-                name = fileName
+                name = fileName,
+                spaceId = spaceId,
             ).apply { this@toEntity.id?.let { modelId -> this.id = modelId } }
     }
-
-    @VisibleForTesting
-    fun OCFileAndFileSync.toModel(): OCFileWithSyncInfo =
-        OCFileWithSyncInfo(
-            file = file.toModel(),
-            uploadWorkerUuid = fileSync?.uploadWorkerUuid,
-            downloadWorkerUuid = fileSync?.downloadWorkerUuid,
-            isSynchronizing = fileSync?.isSynchronizing == true,
-        )
 }

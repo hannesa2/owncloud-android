@@ -23,7 +23,7 @@ import androidx.lifecycle.ViewModel
 import com.owncloud.android.MainApp
 import com.owncloud.android.MainApp.Companion.versionCode
 import com.owncloud.android.R
-import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider
+import com.owncloud.android.data.providers.SharedPreferencesProvider
 import com.owncloud.android.providers.ContextProvider
 
 class ReleaseNotesViewModel(
@@ -31,22 +31,33 @@ class ReleaseNotesViewModel(
     private val contextProvider: ContextProvider
 ) : ViewModel() {
 
-    fun getReleaseNotes(): List<ReleaseNote> {
-        return releaseNotesList
-    }
+    fun getReleaseNotes(): List<ReleaseNote> =
+        releaseNotesList
 
     fun updateVersionCode() {
         preferencesProvider.putInt(MainApp.PREFERENCE_KEY_LAST_SEEN_VERSION_CODE, versionCode)
     }
 
-    fun shouldWhatsNewSectionBeVisible(): Boolean {
-        return contextProvider.getBoolean(R.bool.release_notes_enabled) && getReleaseNotes().isNotEmpty()
-    }
+    fun shouldWhatsNewSectionBeVisible(): Boolean =
+        contextProvider.getBoolean(R.bool.release_notes_enabled) && getReleaseNotes().isNotEmpty()
 
     companion object {
         val releaseNotesList = listOf(
-            ReleaseNote(R.string.release_notes_3_0_4_title1, R.string.release_notes_3_0_4_subtitle1, ReleaseNoteType.SECURITY),
-            ReleaseNote(R.string.release_notes_3_0_4_title2, R.string.release_notes_3_0_4_subtitle2, ReleaseNoteType.CHANGE),
+            ReleaseNote(
+                title = R.string.release_notes_4_7_0_title_space_management,
+                subtitle = R.string.release_notes_4_7_0_subtitle_space_management,
+                type = ReleaseNoteType.ENHANCEMENT
+            ),
+            ReleaseNote(
+                title = R.string.release_notes_4_7_0_title_new_layout_for_spaces,
+                subtitle = R.string.release_notes_4_7_0_subtitle_new_layout_for_spaces,
+                type = ReleaseNoteType.ENHANCEMENT
+            ),
+            ReleaseNote(
+                title = R.string.release_notes_bugfixes_title,
+                subtitle = R.string.release_notes_bugfixes_subtitle,
+                type = ReleaseNoteType.BUGFIX
+            ),
         )
     }
 }

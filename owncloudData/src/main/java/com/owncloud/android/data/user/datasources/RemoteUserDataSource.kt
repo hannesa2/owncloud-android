@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author Abel García de Prada
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2025 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -27,4 +29,7 @@ interface RemoteUserDataSource {
     fun getUserInfo(accountName: String): UserInfo
     fun getUserQuota(accountName: String): UserQuota
     fun getUserAvatar(accountName: String): UserAvatar
+    fun getUserId(accountName: String): String
+    fun getUserPermissions(accountName: String, accountId: String): List<String>
+    fun getUserGroups(accountName: String): List<String>
 }

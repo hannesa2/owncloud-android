@@ -5,9 +5,10 @@
  * @author Christian Schabesberger
  * @author David González Verdugo
  * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
  *
  * Copyright (C) 2012  Bartek Przybylski
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2025 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -44,8 +45,6 @@ import com.owncloud.android.domain.authentication.oauth.model.TokenRequest;
 import com.owncloud.android.domain.authentication.oauth.model.TokenResponse;
 import com.owncloud.android.lib.common.accounts.AccountTypeUtils;
 import com.owncloud.android.lib.common.accounts.AccountUtils;
-import com.owncloud.android.presentation.authentication.AuthenticatorConstants;
-import com.owncloud.android.presentation.authentication.LoginActivity;
 import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 import timber.log.Timber;
@@ -338,20 +337,34 @@ public class AccountAuthenticator extends AbstractAccountAuthenticator {
         @NotNull Lazy<OIDCDiscoveryUseCase> oidcDiscoveryUseCase = inject(OIDCDiscoveryUseCase.class);
         OIDCDiscoveryUseCase.Params oidcDiscoveryUseCaseParams = new OIDCDiscoveryUseCase.Params(baseUrl);
         UseCaseResult<OIDCServerConfiguration> oidcServerConfigurationUseCaseResult =
-                oidcDiscoveryUseCase.getValue().execute(oidcDiscoveryUseCaseParams);
+                oidcDiscoveryUseCase.getValue().invoke(oidcDiscoveryUseCaseParams);
 
         String tokenEndpoint;
 
         String clientId = accountManager.getUserData(account, KEY_CLIENT_REGISTRATION_CLIENT_ID);
         String clientSecret = accountManager.getUserData(account, KEY_CLIENT_REGISTRATION_CLIENT_SECRET);
 
+        String clientIdForRequest = null;
+        String clientSecretForRequest = null;
+        Boolean useAuthorizationHeader = true;
+
+        boolean isKiteworksServer = Boolean.parseBoolean(accountManager.getUserData(account, AccountUtils.Constants.KEY_IS_KITEWORKS_SERVER));
+
         if (clientId == null) {
             Timber.d("Client Id not stored. Let's use the hardcoded one");
-            clientId = mContext.getString(R.string.oauth2_client_id);
+            if (isKiteworksServer) {
+                clientId = mContext.getString(R.string.kiteworks_client_id);
+            } else {
+                clientId = mContext.getString(R.string.oauth2_client_id);
+            }
         }
         if (clientSecret == null) {
             Timber.d("Client Secret not stored. Let's use the hardcoded one");
-            clientSecret = mContext.getString(R.string.oauth2_client_secret);
+            if (isKiteworksServer) {
+                clientSecret = mContext.getString(R.string.kiteworks_client_secret);
+            } else {
+                clientSecret = mContext.getString(R.string.oauth2_client_secret);
+            }
         }
 
         if (oidcServerConfigurationUseCaseResult.isSuccess()) {
@@ -361,6 +374,12 @@ public class AccountAuthenticator extends AbstractAccountAuthenticator {
             // Use token endpoint retrieved from oidc discovery
             tokenEndpoint = oidcServerConfigurationUseCaseResult.getDataOrNull().getTokenEndpoint();
 
+            if (oidcServerConfigurationUseCaseResult.getDataOrNull() != null &&
+            oidcServerConfigurationUseCaseResult.getDataOrNull().isTokenEndpointAuthMethodSupportedClientSecretPost()) {
+                clientIdForRequest = clientId;
+                clientSecretForRequest = clientSecret;
+                useAuthorizationHeader = false;
+            }
         } else {
             Timber.d("OIDC Discovery failed. Server discovery info: [ %s ]",
                     oidcServerConfigurationUseCaseResult.getThrowableOrNull().toString());
@@ -370,17 +389,28 @@ public class AccountAuthenticator extends AbstractAccountAuthenticator {
 
         String clientAuth = OAuthUtils.Companion.getClientAuth(clientSecret, clientId);
 
+        String scope;
+        if (isKiteworksServer) {
+            scope = mContext.getResources().getString(R.string.kiteworks_openid_scope);
+        } else {
+            scope = mContext.getResources().getString(R.string.oauth2_openid_scope);
+        }
+
         TokenRequest oauthTokenRequest = new TokenRequest.RefreshToken(
                 baseUrl,
                 tokenEndpoint,
                 clientAuth,
+                scope,
+                clientIdForRequest,
+                clientSecretForRequest,
+                useAuthorizationHeader,
                 refreshToken
         );
 
         // Token exchange
         @NotNull Lazy<RequestTokenUseCase> requestTokenUseCase = inject(RequestTokenUseCase.class);
         RequestTokenUseCase.Params requestTokenParams = new RequestTokenUseCase.Params(oauthTokenRequest);
-        UseCaseResult<TokenResponse> tokenResponseResult = requestTokenUseCase.getValue().execute(requestTokenParams);
+        UseCaseResult<TokenResponse> tokenResponseResult = requestTokenUseCase.getValue().invoke(requestTokenParams);
 
         TokenResponse safeTokenResponse = tokenResponseResult.getDataOrNull();
         if (safeTokenResponse != null) {

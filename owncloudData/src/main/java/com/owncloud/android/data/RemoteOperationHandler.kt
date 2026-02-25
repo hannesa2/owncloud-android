@@ -3,8 +3,9 @@
  *
  * @author David González Verdugo
  * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2025 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -44,14 +45,17 @@ import com.owncloud.android.domain.exceptions.LocalStorageNotCopiedException
 import com.owncloud.android.domain.exceptions.LocalStorageNotMovedException
 import com.owncloud.android.domain.exceptions.LocalStorageNotRemovedException
 import com.owncloud.android.domain.exceptions.MoveIntoDescendantException
+import com.owncloud.android.domain.exceptions.NetworkErrorException
 import com.owncloud.android.domain.exceptions.NoConnectionWithServerException
 import com.owncloud.android.domain.exceptions.NoNetworkConnectionException
 import com.owncloud.android.domain.exceptions.OAuth2ErrorAccessDeniedException
 import com.owncloud.android.domain.exceptions.OAuth2ErrorException
 import com.owncloud.android.domain.exceptions.PartialCopyDoneException
 import com.owncloud.android.domain.exceptions.PartialMoveDoneException
+import com.owncloud.android.domain.exceptions.PayloadTooLongException
 import com.owncloud.android.domain.exceptions.QuotaExceededException
 import com.owncloud.android.domain.exceptions.RedirectToNonSecureException
+import com.owncloud.android.domain.exceptions.ResourceLockedException
 import com.owncloud.android.domain.exceptions.SSLErrorException
 import com.owncloud.android.domain.exceptions.ServerConnectionTimeoutException
 import com.owncloud.android.domain.exceptions.ServerNotReachableException
@@ -90,10 +94,9 @@ private fun <T> handleRemoteOperationResult(
     when (remoteOperationResult.code) {
         RemoteOperationResult.ResultCode.WRONG_CONNECTION -> throw NoConnectionWithServerException()
         RemoteOperationResult.ResultCode.NO_NETWORK_CONNECTION -> throw NoNetworkConnectionException()
-        RemoteOperationResult.ResultCode.TIMEOUT -> {
+        RemoteOperationResult.ResultCode.TIMEOUT ->
             if (remoteOperationResult.exception is SocketTimeoutException) throw ServerResponseTimeoutException()
             else throw ServerConnectionTimeoutException()
-        }
         RemoteOperationResult.ResultCode.HOST_NOT_AVAILABLE -> throw ServerNotReachableException()
         RemoteOperationResult.ResultCode.SERVICE_UNAVAILABLE -> throw ServiceUnavailableException()
         RemoteOperationResult.ResultCode.SSL_RECOVERABLE_PEER_UNVERIFIED -> throw remoteOperationResult.exception as CertificateCombinedException
@@ -140,6 +143,9 @@ private fun <T> handleRemoteOperationResult(
         RemoteOperationResult.ResultCode.SHARE_NOT_FOUND -> throw ShareNotFoundException(remoteOperationResult.httpPhrase)
         RemoteOperationResult.ResultCode.SHARE_FORBIDDEN -> throw ShareForbiddenException(remoteOperationResult.httpPhrase)
         RemoteOperationResult.ResultCode.TOO_EARLY -> throw TooEarlyException()
-        else -> throw Exception()
+        RemoteOperationResult.ResultCode.NETWORK_ERROR -> throw NetworkErrorException()
+        RemoteOperationResult.ResultCode.RESOURCE_LOCKED -> throw ResourceLockedException()
+        RemoteOperationResult.ResultCode.PAYLOAD_TOO_LONG -> throw PayloadTooLongException()
+        else -> throw Exception("An unknown error has occurred")
     }
 }

@@ -21,18 +21,24 @@
 package com.owncloud.android.ui.activity
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.owncloud.android.BuildConfig
-import com.owncloud.android.MainApp
+import com.google.zxing.integration.android.IntentIntegrator
 import com.owncloud.android.R
-import com.owncloud.android.data.preferences.datasources.implementation.OCSharedPreferencesProvider
+import com.owncloud.android.data.providers.implementation.OCSharedPreferencesProvider
+import com.owncloud.android.presentation.files.filelist.MainFileListFragment
 import com.owncloud.android.presentation.security.LockTimeout
 import com.owncloud.android.presentation.security.PREFERENCE_LOCK_TIMEOUT
 import com.owncloud.android.providers.MdmProvider
 import com.owncloud.android.utils.CONFIGURATION_ALLOW_SCREENSHOTS
+import com.owncloud.android.utils.CONFIGURATION_DEVICE_PROTECTION
 import com.owncloud.android.utils.CONFIGURATION_LOCK_DELAY_TIME
+import com.owncloud.android.utils.CONFIGURATION_OAUTH2_OPEN_ID_PROMPT
 import com.owncloud.android.utils.CONFIGURATION_OAUTH2_OPEN_ID_SCOPE
+import com.owncloud.android.utils.CONFIGURATION_REDACT_AUTH_HEADER_LOGS
+import com.owncloud.android.utils.CONFIGURATION_SEND_LOGIN_HINT_AND_USER
 import com.owncloud.android.utils.CONFIGURATION_SERVER_URL
 import com.owncloud.android.utils.CONFIGURATION_SERVER_URL_INPUT_VISIBILITY
 
@@ -43,19 +49,36 @@ class SplashActivity : AppCompatActivity() {
 
         val mdmProvider = MdmProvider(this)
 
-        if (BuildConfig.FLAVOR == MainApp.MDM_FLAVOR) {
+        if (mdmProvider.isMdmFlavor()) {
             with(mdmProvider) {
                 cacheStringRestriction(CONFIGURATION_SERVER_URL, R.string.server_url_configuration_feedback_ok)
                 cacheBooleanRestriction(CONFIGURATION_SERVER_URL_INPUT_VISIBILITY, R.string.server_url_input_visibility_configuration_feedback_ok)
                 cacheIntegerRestriction(CONFIGURATION_LOCK_DELAY_TIME, R.string.lock_delay_configuration_feedback_ok)
                 cacheBooleanRestriction(CONFIGURATION_ALLOW_SCREENSHOTS, R.string.allow_screenshots_configuration_feedback_ok)
                 cacheStringRestriction(CONFIGURATION_OAUTH2_OPEN_ID_SCOPE, R.string.oauth2_open_id_scope_configuration_feedback_ok)
+                cacheStringRestriction(CONFIGURATION_OAUTH2_OPEN_ID_PROMPT, R.string.oauth2_open_id_prompt_configuration_feedback_ok)
+                cacheBooleanRestriction(CONFIGURATION_DEVICE_PROTECTION, R.string.device_protection_configuration_feedback_ok)
+                cacheBooleanRestriction(CONFIGURATION_REDACT_AUTH_HEADER_LOGS, R.string.redact_auth_header_logs_configuration_feedback_ok)
+                cacheBooleanRestriction(CONFIGURATION_SEND_LOGIN_HINT_AND_USER, R.string.send_login_hint_and_user_configuration_feedback_ok)
             }
         }
 
         checkLockDelayEnforced(mdmProvider)
 
-        startActivity(Intent(this, FileDisplayActivity::class.java))
+        val intentLaunch = Intent(this, FileDisplayActivity::class.java)
+        intentLaunch.getStringExtra(MainFileListFragment.SHORTCUT_EXTRA)?.let {
+            if (it == "QR") {
+                IntentIntegrator(this).initiateScan()
+                return
+            } else {
+                intentLaunch.putExtra(
+                    MainFileListFragment.SHORTCUT_EXTRA,
+                    intent.getStringExtra(MainFileListFragment.SHORTCUT_EXTRA)
+                )
+            }
+        }
+
+        startActivity(intentLaunch)
         finish()
     }
 
@@ -67,5 +90,29 @@ class SplashActivity : AppCompatActivity() {
         if (lockTimeout != LockTimeout.DISABLED) {
             OCSharedPreferencesProvider(this@SplashActivity).putString(PREFERENCE_LOCK_TIMEOUT, lockTimeout.name)
         }
+    }
+
+    private fun displayToast(toast: String) {
+        Toast.makeText(this, toast, Toast.LENGTH_LONG).show()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
+        if (result != null) {
+            if (result.contents == null) {
+                displayToast("Cancelled from fragment")
+            } else {
+                var url = result.contents
+                if (!result.contents.startsWith("http://") && !result.contents.startsWith("https://"))
+                    url = "http://" + result.contents
+
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                startActivity(browserIntent)
+
+                displayToast(result.contents)
+            }
+        }
+        finish()
     }
 }
