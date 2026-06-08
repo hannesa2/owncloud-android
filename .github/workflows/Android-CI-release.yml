@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Publish apk
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4.0.0
@@ -44,6 +44,16 @@ jobs:
           fi
           echo "PRE_RELEASE=$prerelease" >> $GITHUB_ENV
           echo "prerelease=$prerelease"
+      - name: kvm support
+        run: |
+          egrep -c '(vmx|svm)' /proc/cpuinfo
+          id
+          sudo adduser $USER kvm
+          sudo chown -R $USER /dev/kvm
+          id
+      - name: prepare
+        run: |
+          sudo apt-get update && sudo apt-get install -y exiftool imagemagick xdg-utils libimage-exiftool-perl zsh jq xorg
       - name: Install Android SDK
         uses: malinskiy/action-android/install-sdk@release/0.1.3
       - name: Decrypt keystore
