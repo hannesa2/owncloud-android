@@ -3,8 +3,10 @@
  *
  * @author Juan Carlos Garrote Gascón
  * @author David Crespo Ríos
+ * @author Aitor Ballesteros Pavón
+ * @author Jorge Aguado Recio
  *
- * Copyright (C) 2021 ownCloud GmbH.
+ * Copyright (C) 2026 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -24,14 +26,16 @@ package com.owncloud.android.presentation.settings
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import com.owncloud.android.R
+import com.owncloud.android.extensions.adaptInfiniteEdges
 import com.owncloud.android.presentation.settings.advanced.SettingsAdvancedFragment
-import com.owncloud.android.presentation.settings.autouploads.SettingsPictureUploadsFragment
-import com.owncloud.android.presentation.settings.autouploads.SettingsVideoUploadsFragment
+import com.owncloud.android.presentation.settings.automaticuploads.SettingsPictureUploadsFragment
+import com.owncloud.android.presentation.settings.automaticuploads.SettingsVideoUploadsFragment
 import com.owncloud.android.presentation.settings.logging.SettingsLogsFragment
 import com.owncloud.android.presentation.settings.more.SettingsMoreFragment
 import com.owncloud.android.presentation.settings.security.SettingsSecurityFragment
@@ -42,6 +46,9 @@ class SettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
+
+        val settingsRoot = findViewById<View>(R.id.settings_root)
+        adaptInfiniteEdges(settingsRoot)
 
         val toolbar = findViewById<Toolbar>(R.id.standard_toolbar).apply {
             isVisible = true
@@ -70,7 +77,7 @@ class SettingsActivity : AppCompatActivity() {
             is SettingsMoreFragment -> R.string.prefs_subsection_more
             else -> R.string.actionbar_settings
         }
-
+        setTitle(titleId)
         supportActionBar?.setTitle(titleId)
     }
 

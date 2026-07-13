@@ -4,8 +4,10 @@
  * @author Bartek Przybylski
  * @author David A. Velasco
  * @author David González Verdugo
+ * @author Jorge Aguado Recio
+ *
  * Copyright (C) 2011  Bartek Przybylski
- * Copyright (C) 2020 ownCloud GmbH.
+ * Copyright (C) 2026 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -27,6 +29,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.text.format.DateUtils;
 import android.util.DisplayMetrics;
+import android.util.Pair;
 
 import androidx.core.content.ContextCompat;
 import com.google.android.material.snackbar.Snackbar;
@@ -35,12 +38,18 @@ import com.owncloud.android.R;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.net.IDN;
 import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * A helper class for some string operations.
@@ -49,8 +58,12 @@ public class DisplayUtils {
 
     private static final String OWNCLOUD_APP_NAME = "ownCloud";
 
-    private static final String[] sizeSuffixes = {"B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
+    public static final String[] sizeSuffixes = {"B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
     private static final int[] sizeScales = {0, 0, 1, 1, 1, 2, 2, 2, 2};
+
+    private static final String DATE_FORMAT_DISPLAY = "dd/MM/yyyy HH:mm";
+    private static final String DATE_FORMAT_ISO_WITHOUT_MILLISECONDS = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    public static final String DATE_FORMAT_ISO = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
     private static Map<String, String> mimeType2HumanReadable;
 
@@ -79,7 +92,7 @@ public class DisplayUtils {
      * @param bytes Input file size
      * @return Like something readable like "12 MB"
      */
-    public static String bytesToHumanReadable(long bytes, Context context) {
+    public static String bytesToHumanReadable(long bytes, Context context, boolean includeMultipleDecimals) {
         if (bytes < 0) {
             return context.getString(R.string.common_pending);
 
@@ -95,6 +108,10 @@ public class DisplayUtils {
                     sizeScales[attachedSuff],
                     BigDecimal.ROUND_HALF_UP
             ).stripTrailingZeros();
+
+            if (!includeMultipleDecimals && readableResult.scale() > 0) { // Only for decimal numbers
+                readableResult = readableResult.setScale(1, BigDecimal.ROUND_HALF_UP);
+            }
 
             // Unscale only values with ten exponent
             return (readableResult.scale() < 0 ?
@@ -249,6 +266,37 @@ public class DisplayUtils {
             return (int) resources.getDimension(R.dimen.nav_drawer_header_height) + displayCutoutDP;
         } else {
             return (int) resources.getDimension(R.dimen.nav_drawer_header_height);
+        }
+    }
+
+    public static Pair<String, String> formatFromBytes(long bytes) {
+        BigDecimal value = new BigDecimal(bytes);
+        BigDecimal baseUnit = new BigDecimal(1000L);
+        int unitIndex = 0;
+
+        while (value.compareTo(baseUnit) >= 0 && unitIndex < sizeSuffixes.length - 1) {
+            value = value.divide(baseUnit);
+            unitIndex++;
+        }
+
+        if (value.compareTo(BigDecimal.ONE) >= 0) {
+            value = value.setScale(1, RoundingMode.HALF_UP);
+        } else {
+            value = value.round(new MathContext(1, RoundingMode.HALF_UP));
+        }
+
+        return new Pair<>(value.stripTrailingZeros().toPlainString(), sizeSuffixes[unitIndex]);
+    }
+
+    public static String displayDateToHumanReadable(String date) throws ParseException {
+        SimpleDateFormat parser = new SimpleDateFormat(DATE_FORMAT_ISO, Locale.ROOT);
+        parser.setTimeZone(TimeZone.getTimeZone("UTC"));
+        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT_DISPLAY, Locale.ROOT);
+        try {
+            return formatter.format(parser.parse(date));
+        } catch (ParseException e) {
+            parser.applyPattern(DATE_FORMAT_ISO_WITHOUT_MILLISECONDS);
+            return formatter.format(parser.parse(date));
         }
     }
 }

@@ -2,8 +2,9 @@
  * ownCloud Android client application
  *
  * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2025 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -30,8 +31,8 @@ import com.owncloud.android.domain.transfers.model.TransferResult
 import com.owncloud.android.domain.transfers.model.TransferStatus
 
 @StringRes
-fun OCTransfer.statusToStringRes(): Int {
-     return when (status) {
+fun OCTransfer.statusToStringRes(): Int =
+    when (status) {
          TransferStatus.TRANSFER_IN_PROGRESS -> R.string.uploader_upload_in_progress_ticker
          TransferStatus.TRANSFER_SUCCEEDED -> R.string.uploads_view_upload_status_succeeded
          TransferStatus.TRANSFER_QUEUED -> R.string.uploads_view_upload_status_queued
@@ -49,12 +50,13 @@ fun OCTransfer.statusToStringRes(): Int {
              TransferResult.QUOTA_EXCEEDED -> R.string.failed_upload_quota_exceeded_text
              TransferResult.SSL_RECOVERABLE_PEER_UNVERIFIED -> R.string.ssl_certificate_not_trusted
              TransferResult.UNKNOWN -> R.string.uploads_view_upload_status_unknown_fail
+             TransferResult.FILE_TOO_LARGE -> R.string.uploads_view_upload_status_failed_payload_error
              // Should not get here; cancelled uploads should be wiped out
              TransferResult.CANCELLED -> R.string.uploads_view_upload_status_cancelled
              // Should not get here; status should be UPLOAD_SUCCESS
              TransferResult.UPLOADED -> R.string.uploads_view_upload_status_succeeded
              // We don't know the specific forbidden error message because it is not being saved in transfers storage
-             TransferResult.SPECIFIC_FORBIDDEN -> R.string.uploader_upload_forbidden
+             TransferResult.SPECIFIC_FORBIDDEN -> R.string.uploads_view_upload_status_failed_permission_error
              // We don't know the specific unavailable service error message because it is not being saved in transfers storage
              TransferResult.SPECIFIC_SERVICE_UNAVAILABLE -> R.string.service_unavailable
              // We don't know the specific unsupported media type error message because it is not being saved in transfers storage
@@ -63,8 +65,6 @@ fun OCTransfer.statusToStringRes(): Int {
              null -> R.string.uploads_view_upload_status_unknown_fail
          }
     }
-}
 
-fun OCTransfer.isContentUri(context: Context): Boolean {
-    return DocumentFile.isDocumentUri(context, Uri.parse(localPath))
-}
+fun OCTransfer.isContentUri(context: Context): Boolean =
+    DocumentFile.isDocumentUri(context, Uri.parse(localPath))

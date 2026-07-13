@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author Abel García de Prada
- * Copyright (C) 2021 ownCloud GmbH.
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2025 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -31,32 +33,40 @@ import com.owncloud.android.testutil.oauth.OC_TOKEN_REQUEST_REFRESH
 import com.owncloud.android.testutil.oauth.OC_TOKEN_RESPONSE
 
 val OC_REMOTE_OIDC_DISCOVERY_RESPONSE = OIDCDiscoveryResponse(
-    authorization_endpoint = OC_OIDC_SERVER_CONFIGURATION.authorizationEndpoint,
-    check_session_iframe = OC_OIDC_SERVER_CONFIGURATION.checkSessionIframe,
-    end_session_endpoint = OC_OIDC_SERVER_CONFIGURATION.endSessionEndpoint,
+    authorizationEndpoint = OC_OIDC_SERVER_CONFIGURATION.authorizationEndpoint,
+    checkSessionIframe = OC_OIDC_SERVER_CONFIGURATION.checkSessionIframe,
+    endSessionEndpoint = OC_OIDC_SERVER_CONFIGURATION.endSessionEndpoint,
     issuer = OC_OIDC_SERVER_CONFIGURATION.issuer,
-    registration_endpoint = OC_OIDC_SERVER_CONFIGURATION.registrationEndpoint,
-    response_types_supported = OC_OIDC_SERVER_CONFIGURATION.responseTypesSupported,
-    scopes_supported = OC_OIDC_SERVER_CONFIGURATION.scopesSupported,
-    token_endpoint = OC_OIDC_SERVER_CONFIGURATION.tokenEndpoint,
-    token_endpoint_auth_methods_supported = OC_OIDC_SERVER_CONFIGURATION.tokenEndpointAuthMethodsSupported,
-    userinfo_endpoint = OC_OIDC_SERVER_CONFIGURATION.userInfoEndpoint
+    registrationEndpoint = OC_OIDC_SERVER_CONFIGURATION.registrationEndpoint,
+    responseTypesSupported = OC_OIDC_SERVER_CONFIGURATION.responseTypesSupported,
+    scopesSupported = OC_OIDC_SERVER_CONFIGURATION.scopesSupported,
+    tokenEndpoint = OC_OIDC_SERVER_CONFIGURATION.tokenEndpoint,
+    tokenEndpointAuthMethodsSupported = OC_OIDC_SERVER_CONFIGURATION.tokenEndpointAuthMethodsSupported,
+    userinfoEndpoint = OC_OIDC_SERVER_CONFIGURATION.userInfoEndpoint
 )
 
 val OC_REMOTE_TOKEN_REQUEST_PARAMS_ACCESS = TokenRequestParams.Authorization(
     tokenEndpoint = OC_TOKEN_REQUEST_ACCESS.tokenEndpoint,
     clientAuth = OC_TOKEN_REQUEST_ACCESS.clientAuth,
     grantType = OC_TOKEN_REQUEST_ACCESS.grantType,
+    scope = OC_TOKEN_REQUEST_ACCESS.scope,
+    clientId = null,
+    clientSecret = null,
     authorizationCode = OC_TOKEN_REQUEST_ACCESS.authorizationCode,
     redirectUri = OC_TOKEN_REQUEST_ACCESS.redirectUri,
-    codeVerifier = OC_TOKEN_REQUEST_ACCESS.codeVerifier
+    codeVerifier = OC_TOKEN_REQUEST_ACCESS.codeVerifier,
+    useAuthorizationHeader = true
 )
 
 val OC_REMOTE_TOKEN_REQUEST_PARAMS_REFRESH = TokenRequestParams.RefreshToken(
     tokenEndpoint = OC_TOKEN_REQUEST_REFRESH.tokenEndpoint,
     clientAuth = OC_TOKEN_REQUEST_REFRESH.clientAuth,
     grantType = OC_TOKEN_REQUEST_REFRESH.grantType,
-    refreshToken = OC_TOKEN_REQUEST_REFRESH.refreshToken
+    scope = OC_TOKEN_REQUEST_REFRESH.scope,
+    clientId = null,
+    clientSecret = null,
+    refreshToken = OC_TOKEN_REQUEST_REFRESH.refreshToken,
+    useAuthorizationHeader = true
 )
 
 val OC_REMOTE_TOKEN_RESPONSE = TokenResponse(

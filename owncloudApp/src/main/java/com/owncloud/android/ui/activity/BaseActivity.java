@@ -1,7 +1,7 @@
 /**
  * ownCloud Android client application
  * <p>
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2026 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -35,6 +35,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import com.google.android.material.snackbar.Snackbar;
 import com.owncloud.android.MainApp;
+import com.owncloud.android.R;
 import com.owncloud.android.presentation.authentication.AccountUtils;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.domain.files.model.OCFile;
@@ -155,7 +156,7 @@ public abstract class BaseActivity extends AppCompatActivity {
      * @param mandatoryCreation When 'true', if an account is not created by the user, the app will be closed.
      *                          To use when no ownCloud account is available.
      */
-    protected void createAccount(boolean mandatoryCreation) {
+    private void createAccount(boolean mandatoryCreation) {
         AccountManager am = AccountManager.get(getApplicationContext());
         am.addAccount(MainApp.Companion.getAccountType(),
                 null,
@@ -212,7 +213,14 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     public FileDataStorageManager getStorageManager() {
-        return mStorageManager;
+        if (mStorageManager == null) {
+            if (getAccount() == null) {
+                swapToDefaultAccount();
+            }
+            return mStorageManager = new FileDataStorageManager(getAccount());
+        } else {
+            return mStorageManager;
+        }
     }
 
     /**
@@ -312,12 +320,17 @@ public abstract class BaseActivity extends AppCompatActivity {
      */
     public void showSnackMessage(String message) {
         final View rootView = findViewById(android.R.id.content);
+        final View bottomNavView = findViewById(R.id.bottom_nav_view);
 
         if (rootView == null) {
             // If root view is not available don't let the app brake. show the notification anyway.
             Toast.makeText(this, message, Toast.LENGTH_LONG).show();
             return;
         }
-        Snackbar.make(rootView, message, Snackbar.LENGTH_LONG).show();
+        Snackbar snackbar = Snackbar.make(rootView, message, Snackbar.LENGTH_LONG);
+        if (bottomNavView != null && bottomNavView.getVisibility() == View.VISIBLE) {
+            snackbar.setAnchorView(bottomNavView);
+        }
+        snackbar.show();
     }
 }

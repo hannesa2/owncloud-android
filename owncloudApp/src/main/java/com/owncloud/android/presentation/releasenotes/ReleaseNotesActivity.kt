@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author David Crespo Ríos
- * Copyright (C) 2022 ownCloud GmbH.
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2026 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -23,6 +25,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.owncloud.android.BuildConfig
 import com.owncloud.android.MainApp
@@ -47,6 +51,7 @@ class ReleaseNotesActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         _binding = ReleaseNotesActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        adaptInfiniteEdges()
         setData()
         initView()
     }
@@ -81,6 +86,14 @@ class ReleaseNotesActivity : AppCompatActivity() {
         binding.txtFooter.text = footer
     }
 
+    private fun adaptInfiniteEdges() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val systemInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            binding.root.setPadding(systemInsets.left, systemInsets.top, systemInsets.right, systemInsets.bottom)
+            insets
+        }
+    }
+
     companion object {
         fun runIfNeeded(context: Context) {
             if (context is ReleaseNotesActivity) {
@@ -93,14 +106,14 @@ class ReleaseNotesActivity : AppCompatActivity() {
 
         private fun shouldShow(context: Context): Boolean {
             val showReleaseNotes = context.resources.getBoolean(R.bool.release_notes_enabled) && !BuildConfig.DEBUG
+                    && BuildConfig.FLAVOR != MainApp.QA_FLAVOR
 
             return firstRunAfterUpdate() && showReleaseNotes &&
                     ReleaseNotesViewModel.releaseNotesList.isNotEmpty() &&
                     (context is FileDisplayActivity || context is LoginActivity)
         }
 
-        private fun firstRunAfterUpdate(): Boolean {
-            return MainApp.getLastSeenVersionCode() != versionCode
-        }
+        private fun firstRunAfterUpdate(): Boolean =
+            MainApp.getLastSeenVersionCode() != versionCode
     }
 }

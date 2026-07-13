@@ -28,7 +28,7 @@ import android.os.SystemClock
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
 import com.owncloud.android.MainApp.Companion.appContext
-import com.owncloud.android.data.preferences.datasources.implementation.OCSharedPreferencesProvider
+import com.owncloud.android.data.providers.implementation.OCSharedPreferencesProvider
 import com.owncloud.android.presentation.security.LockTimeout
 import com.owncloud.android.presentation.security.PREFERENCE_LAST_UNLOCK_TIMESTAMP
 import com.owncloud.android.presentation.security.PREFERENCE_LOCK_TIMEOUT
@@ -47,7 +47,7 @@ object BiometricManager {
         mutableSetOf(BiometricActivity::class.java, PassCodeActivity::class.java, PatternActivity::class.java)
     private val visibleActivities: MutableSet<Class<*>> = mutableSetOf()
     private val preferencesProvider = OCSharedPreferencesProvider(appContext)
-    private val biometricManager: BiometricManager = BiometricManager.from(appContext)
+    private val androidBiometricManager: BiometricManager = BiometricManager.from(appContext)
 
     fun onActivityStarted(activity: Activity) {
         if (!exemptOfBiometricActivities.contains(activity.javaClass) && biometricShouldBeRequested()) {
@@ -60,11 +60,11 @@ object BiometricManager {
                 activity.startActivity(i)
             } else if (isPassCodeEnabled()) {
                 // Cancel biometric lock and use passcode unlock method
-                PassCodeManager.onBiometricCancelled(activity)
+                PassCodeManager.onBiometricCancelled(activity = activity, biometricHasFailed = false)
                 visibleActivities.add(activity.javaClass)
             } else if (isPatternEnabled()) {
                 // Cancel biometric lock and use pattern unlock method
-                PatternManager.onBiometricCancelled(activity)
+                PatternManager.onBiometricCancelled(activity = activity, biometricHasFailed = false)
                 visibleActivities.add(activity.javaClass)
             }
 
@@ -92,16 +92,13 @@ object BiometricManager {
         else false
     }
 
-    fun isBiometricEnabled(): Boolean {
-        return preferencesProvider.getBoolean(BiometricActivity.PREFERENCE_SET_BIOMETRIC, false)
-    }
+    fun isBiometricEnabled(): Boolean =
+        preferencesProvider.getBoolean(BiometricActivity.PREFERENCE_SET_BIOMETRIC, false)
 
-    fun isHardwareDetected(): Boolean {
-        return biometricManager.canAuthenticate(BIOMETRIC_WEAK) != BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE &&
-                biometricManager.canAuthenticate(BIOMETRIC_WEAK) != BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE
-    }
+    fun isHardwareDetected(): Boolean =
+        androidBiometricManager.canAuthenticate(BIOMETRIC_WEAK) != BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE &&
+                androidBiometricManager.canAuthenticate(BIOMETRIC_WEAK) != BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE
 
-    fun hasEnrolledBiometric(): Boolean {
-        return biometricManager.canAuthenticate(BIOMETRIC_WEAK) != BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED
-    }
+    fun hasEnrolledBiometric(): Boolean =
+        androidBiometricManager.canAuthenticate(BIOMETRIC_WEAK) != BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED
 }

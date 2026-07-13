@@ -1,0 +1,5 @@
+Enhancement: Workflow to validate source strings
+
+A new workflow has been added to validate the source strings and prevent errors in translation CI system from the first step
+
+https://github.com/owncloud/android/pull/4807

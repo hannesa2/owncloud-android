@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author David González Verdugo
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2026 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -21,7 +23,7 @@ package com.owncloud.android.data.capabilities.datasources.implementation
 
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
+import androidx.lifecycle.map
 import com.owncloud.android.data.capabilities.datasources.LocalCapabilitiesDataSource
 import com.owncloud.android.data.capabilities.db.OCCapabilityDao
 import com.owncloud.android.data.capabilities.db.OCCapabilityEntity
@@ -33,14 +35,14 @@ class OCLocalCapabilitiesDataSource(
 ) : LocalCapabilitiesDataSource {
 
     override fun getCapabilitiesForAccountAsLiveData(accountName: String): LiveData<OCCapability?> =
-        Transformations.map(ocCapabilityDao.getCapabilitiesForAccountAsLiveData(accountName)) { ocCapabilityEntity ->
+        ocCapabilityDao.getCapabilitiesForAccountAsLiveData(accountName).map { ocCapabilityEntity ->
             ocCapabilityEntity?.toModel()
         }
 
-    override fun getCapabilityForAccount(accountName: String): OCCapability? =
+    override fun getCapabilitiesForAccount(accountName: String): OCCapability? =
         ocCapabilityDao.getCapabilitiesForAccount(accountName)?.toModel()
 
-    override fun insert(ocCapabilities: List<OCCapability>) {
+    override fun insertCapabilities(ocCapabilities: List<OCCapability>) {
         ocCapabilityDao.replace(
             ocCapabilities.map { ocCapability -> ocCapability.toEntity() }
         )
@@ -56,7 +58,7 @@ class OCLocalCapabilitiesDataSource(
             OCCapability(
                 id = id,
                 accountName = accountName,
-                versionMayor = versionMayor,
+                versionMajor = versionMajor,
                 versionMinor = versionMinor,
                 versionMicro = versionMicro,
                 versionString = versionString,
@@ -79,18 +81,21 @@ class OCLocalCapabilitiesDataSource(
                 filesSharingFederationOutgoing = CapabilityBooleanType.fromValue(filesSharingFederationOutgoing),
                 filesSharingFederationIncoming = CapabilityBooleanType.fromValue(filesSharingFederationIncoming),
                 filesSharingUserProfilePicture = CapabilityBooleanType.fromValue(filesSharingUserProfilePicture),
+                filesSharingSearchMinLength = filesSharingSearchMinLength,
                 filesBigFileChunking = CapabilityBooleanType.fromValue(filesBigFileChunking),
                 filesUndelete = CapabilityBooleanType.fromValue(filesUndelete),
                 filesVersioning = CapabilityBooleanType.fromValue(filesVersioning),
                 filesPrivateLinks = CapabilityBooleanType.fromValue(filesPrivateLinks),
-                filesOcisProviders = ocisProvider,
+                filesAppProviders = appProviders,
+                spaces = spaces,
+                passwordPolicy = passwordPolicy,
             )
 
         @VisibleForTesting
         fun OCCapability.toEntity(): OCCapabilityEntity =
             OCCapabilityEntity(
                 accountName = accountName,
-                versionMayor = versionMayor,
+                versionMajor = versionMajor,
                 versionMinor = versionMinor,
                 versionMicro = versionMicro,
                 versionString = versionString,
@@ -113,11 +118,14 @@ class OCLocalCapabilitiesDataSource(
                 filesSharingFederationOutgoing = filesSharingFederationOutgoing.value,
                 filesSharingFederationIncoming = filesSharingFederationIncoming.value,
                 filesSharingUserProfilePicture = filesSharingUserProfilePicture.value,
+                filesSharingSearchMinLength = filesSharingSearchMinLength,
                 filesBigFileChunking = filesBigFileChunking.value,
                 filesUndelete = filesUndelete.value,
                 filesVersioning = filesVersioning.value,
                 filesPrivateLinks = filesPrivateLinks.value,
-                ocisProvider = filesOcisProviders,
+                appProviders = filesAppProviders,
+                spaces = spaces,
+                passwordPolicy = passwordPolicy,
             )
     }
 }

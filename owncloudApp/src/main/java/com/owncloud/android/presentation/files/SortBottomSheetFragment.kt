@@ -68,8 +68,8 @@ class SortBottomSheetFragment : BottomSheetDialogFragment() {
         binding.sortByDate.setOnClickListener { onSortClick(SortType.SORT_TYPE_BY_DATE) }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
+        super.onDestroyView()
         _binding = null
     }
 

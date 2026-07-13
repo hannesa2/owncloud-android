@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author David Crespo Ríos
- * Copyright (C) 2022 ownCloud GmbH.
+ * @author Aitor Ballesteros Pavón
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -20,18 +22,32 @@
 package com.owncloud.android.presentation.settings.advanced
 
 import androidx.lifecycle.ViewModel
-import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider
+import com.owncloud.android.data.providers.SharedPreferencesProvider
+import com.owncloud.android.presentation.settings.advanced.SettingsAdvancedFragment.Companion.PREF_SHOW_DISABLED_SPACES
 import com.owncloud.android.presentation.settings.advanced.SettingsAdvancedFragment.Companion.PREF_SHOW_HIDDEN_FILES
+import com.owncloud.android.providers.WorkManagerProvider
+import com.owncloud.android.workers.RemoveLocallyFilesWithLastUsageOlderThanGivenTimeWorker.Companion.DELETE_FILES_OLDER_GIVEN_TIME_WORKER
 
 class SettingsAdvancedViewModel(
-    private val preferencesProvider: SharedPreferencesProvider
+    private val preferencesProvider: SharedPreferencesProvider,
+    private val workManagerProvider: WorkManagerProvider,
 ) : ViewModel() {
 
-    fun isHiddenFilesShown(): Boolean {
-        return preferencesProvider.getBoolean(PREF_SHOW_HIDDEN_FILES, false)
-    }
+    fun isHiddenFilesShown(): Boolean =
+        preferencesProvider.getBoolean(PREF_SHOW_HIDDEN_FILES, false)
 
     fun setShowHiddenFiles(hide: Boolean) {
         preferencesProvider.putBoolean(PREF_SHOW_HIDDEN_FILES, hide)
+    }
+
+    fun setShowDisabledSpaces(showDisabledSpaces: Boolean) {
+        preferencesProvider.putBoolean(PREF_SHOW_DISABLED_SPACES, showDisabledSpaces)
+    }
+
+    fun scheduleDeleteLocalFiles(newValue: String) {
+        workManagerProvider.cancelAllWorkByTag(DELETE_FILES_OLDER_GIVEN_TIME_WORKER)
+        if (newValue != RemoveLocalFiles.NEVER.name) {
+            workManagerProvider.enqueueRemoveLocallyFilesWithLastUsageOlderThanGivenTimeWorker()
+        }
     }
 }

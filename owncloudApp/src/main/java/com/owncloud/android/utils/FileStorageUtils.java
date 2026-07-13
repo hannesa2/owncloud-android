@@ -27,7 +27,7 @@ package com.owncloud.android.utils;
 import android.annotation.SuppressLint;
 import android.webkit.MimeTypeMap;
 
-import com.owncloud.android.data.storage.LocalStorageProvider;
+import com.owncloud.android.data.providers.LocalStorageProvider;
 import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 import timber.log.Timber;
@@ -58,8 +58,8 @@ public class FileStorageUtils {
     /**
      * Get absolute path to tmp folder inside datafolder in sd-card for given accountName.
      */
-    public static String getTemporalPath(String accountName) {
-        return getLocalStorageProvider().getTemporalPath(accountName);
+    public static String getTemporalPath(String accountName, String spaceId) {
+        return getLocalStorageProvider().getTemporalPath(accountName, spaceId);
     }
 
     /**

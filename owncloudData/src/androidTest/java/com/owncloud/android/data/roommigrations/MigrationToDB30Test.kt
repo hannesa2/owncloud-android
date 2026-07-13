@@ -24,15 +24,26 @@ import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.test.filters.SmallTest
-import com.owncloud.android.data.OwncloudDatabase
 import com.owncloud.android.data.ProviderMeta.ProviderTableMeta.CAPABILITIES_ACCOUNT_NAME
 import com.owncloud.android.data.ProviderMeta.ProviderTableMeta.CAPABILITIES_CORE_POLLINTERVAL
 import com.owncloud.android.data.ProviderMeta.ProviderTableMeta.CAPABILITIES_DAV_CHUNKING_VERSION
 import com.owncloud.android.data.ProviderMeta.ProviderTableMeta.CAPABILITIES_SHARING_PUBLIC_EXPIRE_DATE_DAYS
 import com.owncloud.android.data.ProviderMeta.ProviderTableMeta.CAPABILITIES_TABLE_NAME
-import com.owncloud.android.data.ProviderMeta.ProviderTableMeta.CAPABILITIES_VERSION_MAYOR
+import com.owncloud.android.data.ProviderMeta.ProviderTableMeta.LEGACY_CAPABILITIES_VERSION_MAYOR
 import com.owncloud.android.data.ProviderMeta.ProviderTableMeta.CAPABILITIES_VERSION_MICRO
 import com.owncloud.android.data.ProviderMeta.ProviderTableMeta.CAPABILITIES_VERSION_MINOR
+import com.owncloud.android.data.migrations.MIGRATION_27_28
+import com.owncloud.android.data.migrations.MIGRATION_28_29
+import com.owncloud.android.data.migrations.MIGRATION_29_30
+import com.owncloud.android.data.migrations.MIGRATION_30_31
+import com.owncloud.android.data.migrations.MIGRATION_31_32
+import com.owncloud.android.data.migrations.MIGRATION_32_33
+import com.owncloud.android.data.migrations.MIGRATION_33_34
+import com.owncloud.android.data.migrations.MIGRATION_34_35
+import com.owncloud.android.data.migrations.MIGRATION_35_36
+import com.owncloud.android.data.migrations.MIGRATION_37_38
+import com.owncloud.android.data.migrations.MIGRATION_41_42
+import com.owncloud.android.data.migrations.MIGRATION_42_43
 import com.owncloud.android.testutil.OC_CAPABILITY
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -50,7 +61,20 @@ class MigrationToDB30Test : MigrationTest() {
             currentVersion = DB_VERSION_30,
             insertData = { database -> insertDataToTest(database) },
             validateMigration = { database -> validateMigrationTo30(database) },
-            listOfMigrations = OwncloudDatabase.ALL_MIGRATIONS
+            listOfMigrations = arrayOf(
+                MIGRATION_27_28,
+                MIGRATION_28_29,
+                MIGRATION_29_30,
+                MIGRATION_30_31,
+                MIGRATION_31_32,
+                MIGRATION_32_33,
+                MIGRATION_33_34,
+                MIGRATION_34_35,
+                MIGRATION_35_36,
+                MIGRATION_37_38,
+                MIGRATION_41_42,
+                MIGRATION_42_43,
+            )
         )
     }
 
@@ -61,7 +85,20 @@ class MigrationToDB30Test : MigrationTest() {
             currentVersion = DB_VERSION_30,
             insertData = { database -> insertDataToTest(database) },
             validateMigration = { database -> validateMigrationTo30(database) },
-            listOfMigrations = OwncloudDatabase.ALL_MIGRATIONS
+            listOfMigrations = arrayOf(
+                MIGRATION_27_28,
+                MIGRATION_28_29,
+                MIGRATION_29_30,
+                MIGRATION_30_31,
+                MIGRATION_31_32,
+                MIGRATION_32_33,
+                MIGRATION_33_34,
+                MIGRATION_34_35,
+                MIGRATION_35_36,
+                MIGRATION_37_38,
+                MIGRATION_41_42,
+                MIGRATION_42_43,
+            )
         )
     }
 
@@ -72,7 +109,20 @@ class MigrationToDB30Test : MigrationTest() {
             currentVersion = DB_VERSION_30,
             insertData = { database -> insertDataToTest(database) },
             validateMigration = { database -> validateMigrationTo30(database) },
-            listOfMigrations = OwncloudDatabase.ALL_MIGRATIONS
+            listOfMigrations = arrayOf(
+                MIGRATION_27_28,
+                MIGRATION_28_29,
+                MIGRATION_29_30,
+                MIGRATION_30_31,
+                MIGRATION_31_32,
+                MIGRATION_32_33,
+                MIGRATION_33_34,
+                MIGRATION_34_35,
+                MIGRATION_35_36,
+                MIGRATION_37_38,
+                MIGRATION_41_42,
+                MIGRATION_42_43,
+            )
         )
     }
 
@@ -107,7 +157,7 @@ class MigrationToDB30Test : MigrationTest() {
     companion object {
         val cvWithDefaultValues = ContentValues().apply {
             put(CAPABILITIES_ACCOUNT_NAME, OC_CAPABILITY.accountName)
-            put(CAPABILITIES_VERSION_MAYOR, OC_CAPABILITY.versionMayor)
+            put(LEGACY_CAPABILITIES_VERSION_MAYOR, OC_CAPABILITY.versionMajor)
             put(CAPABILITIES_VERSION_MINOR, OC_CAPABILITY.versionMinor)
             put(CAPABILITIES_VERSION_MICRO, OC_CAPABILITY.versionMicro)
             put(CAPABILITIES_CORE_POLLINTERVAL, OC_CAPABILITY.corePollInterval)

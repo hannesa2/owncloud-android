@@ -1,0 +1,5 @@
+Change: Actions with SHA commits instead of versions 
+
+Commit SHA references have been added to GitHub Actions workflows to be compliant with new security policies
+
+https://github.com/owncloud/android/pull/4815

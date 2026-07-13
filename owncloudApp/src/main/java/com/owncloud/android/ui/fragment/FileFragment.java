@@ -4,7 +4,10 @@
  * @author David A. Velasco
  * @author Christian Schabesberger
  * @author David González Verdugo
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Aitor Ballesteros Pavón
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2026 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -22,8 +25,13 @@
 package com.owncloud.android.ui.fragment;
 
 import android.content.Context;
+import android.os.Build;
+import android.view.Menu;
+import android.view.MenuInflater;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import com.owncloud.android.R;
 import com.owncloud.android.domain.files.model.OCFile;
 import com.owncloud.android.ui.activity.ComponentsGetter;
 
@@ -143,5 +151,17 @@ public abstract class FileFragment extends Fragment {
         ///// TO UNIFY IN A SINGLE CALLBACK METHOD - EVENT NOTIFICATIONs  -> something happened
         // inside the fragment, MAYBE activity is interested --> unify in notification method
 
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.file_actions_menu, menu);
+
+        String roleAccessibilityDescription = getString(R.string.button_role_accessibility);
+        menu.findItem(R.id.action_open_file_with).setContentDescription(getString(R.string.actionbar_open_with) + " " + roleAccessibilityDescription);
+        menu.findItem(R.id.action_send_file).setContentDescription(getString(R.string.actionbar_send_file) + " " + roleAccessibilityDescription);
+        menu.findItem(R.id.action_set_available_offline).setContentDescription(getString(R.string.set_available_offline) + " " + roleAccessibilityDescription);
+        menu.findItem(R.id.action_unset_available_offline).setContentDescription(getString(R.string.set_available_offline) + " " + roleAccessibilityDescription);
     }
 }

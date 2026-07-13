@@ -1,0 +1,6 @@
+Enhancement: Add a public link over a space
+
+A new option to add public links over a space has been added. It will be only visible for users with proper permissions.
+
+https://github.com/owncloud/android/issues/4753
+https://github.com/owncloud/android/pull/4794

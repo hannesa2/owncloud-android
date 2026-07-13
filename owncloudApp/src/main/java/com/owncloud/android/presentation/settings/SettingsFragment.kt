@@ -2,8 +2,9 @@
  * ownCloud Android client application
  *
  * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
  *
- * Copyright (C) 2021 ownCloud GmbH.
+ * Copyright (C) 2026 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -25,6 +26,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceScreen
@@ -50,6 +52,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private var subsectionMore: Preference? = null
     private var prefPrivacyPolicy: Preference? = null
     private var subsectionWhatsNew: Preference? = null
+    private var subsectionNotifications: Preference? = null
     private var prefAboutApp: Preference? = null
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -61,6 +64,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         subsectionMore = findPreference(SUBSECTION_MORE)
         prefPrivacyPolicy = findPreference(PREFERENCE_PRIVACY_POLICY)
         subsectionWhatsNew = findPreference(SUBSECTION_WHATSNEW)
+        subsectionNotifications = findPreference(SUBSECTION_NOTIFICATIONS)
         prefAboutApp = findPreference(PREFERENCE_ABOUT_APP)
 
         subsectionPictureUploads?.isVisible = settingsViewModel.isThereAttachedAccount()
@@ -74,7 +78,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                 true
             }
         } else {
-            settingsScreen?.removePreferenceFromScreen(prefPrivacyPolicy)
+            prefPrivacyPolicy?.let { settingsScreen?.removePreferenceFromScreen(it) }
         }
 
         subsectionWhatsNew?.setOnPreferenceClickListener {
@@ -85,6 +89,14 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         subsectionWhatsNew?.setOnPreferenceClickListener {
             val intent = Intent(context, ReleaseNotesActivity::class.java)
+            startActivity(intent)
+            true
+        }
+
+        subsectionNotifications?.setOnPreferenceClickListener {
+            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName)
+            }
             startActivity(intent)
             true
         }
@@ -114,12 +126,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
         private const val SUBSECTION_PICTURE_UPLOADS = "picture_uploads_subsection"
         private const val SUBSECTION_VIDEO_UPLOADS = "video_uploads_subsection"
         private const val SUBSECTION_MORE = "more_subsection"
+        private const val SUBSECTION_NOTIFICATIONS = "notifications_subsection"
+        private const val SUBSECTION_WHATSNEW = "whatsNew"
 
         // Remove preference with nullability check
         fun PreferenceScreen?.removePreferenceFromScreen(preference: Preference?) {
             preference?.let { this?.removePreference(it) }
         }
-
-        private const val SUBSECTION_WHATSNEW = "whatsNew"
     }
 }

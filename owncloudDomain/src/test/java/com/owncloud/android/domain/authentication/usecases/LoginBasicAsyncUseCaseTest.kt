@@ -20,7 +20,7 @@ package com.owncloud.android.domain.authentication.usecases
 
 import com.owncloud.android.domain.authentication.AuthenticationRepository
 import com.owncloud.android.testutil.OC_ACCOUNT_NAME
-import com.owncloud.android.testutil.OC_SERVER_INFO
+import com.owncloud.android.testutil.OC_SECURE_SERVER_INFO_BASIC_AUTH
 import io.mockk.every
 import io.mockk.spyk
 import io.mockk.verify
@@ -33,7 +33,7 @@ class LoginBasicAsyncUseCaseTest {
     private val repository: AuthenticationRepository = spyk()
     private val useCase = LoginBasicAsyncUseCase(repository)
     private val useCaseParams = LoginBasicAsyncUseCase.Params(
-        serverInfo = OC_SERVER_INFO,
+        serverInfo = OC_SECURE_SERVER_INFO_BASIC_AUTH,
         username = "test",
         password = "test",
         updateAccountWithUsername = null
@@ -42,19 +42,19 @@ class LoginBasicAsyncUseCaseTest {
     @Test
     fun `login basic - ko - invalid params`() {
         var invalidLoginBasicUseCaseParams = useCaseParams.copy(serverInfo = null)
-        var loginBasicUseCaseResult = useCase.execute(invalidLoginBasicUseCaseParams)
+        var loginBasicUseCaseResult = useCase(invalidLoginBasicUseCaseParams)
 
         assertTrue(loginBasicUseCaseResult.isError)
         assertTrue(loginBasicUseCaseResult.getThrowableOrNull() is IllegalArgumentException)
 
         invalidLoginBasicUseCaseParams = useCaseParams.copy(username = "")
-        loginBasicUseCaseResult = useCase.execute(invalidLoginBasicUseCaseParams)
+        loginBasicUseCaseResult = useCase(invalidLoginBasicUseCaseParams)
 
         assertTrue(loginBasicUseCaseResult.isError)
         assertTrue(loginBasicUseCaseResult.getThrowableOrNull() is IllegalArgumentException)
 
         invalidLoginBasicUseCaseParams = useCaseParams.copy(password = "")
-        loginBasicUseCaseResult = useCase.execute(invalidLoginBasicUseCaseParams)
+        loginBasicUseCaseResult = useCase(invalidLoginBasicUseCaseParams)
 
         assertTrue(loginBasicUseCaseResult.isError)
         assertTrue(loginBasicUseCaseResult.getThrowableOrNull() is IllegalArgumentException)
@@ -66,7 +66,7 @@ class LoginBasicAsyncUseCaseTest {
     fun `login basic - ok`() {
         every { repository.loginBasic(any(), any(), any(), any()) } returns OC_ACCOUNT_NAME
 
-        val loginBasicUseCaseResult = useCase.execute(useCaseParams)
+        val loginBasicUseCaseResult = useCase(useCaseParams)
 
         assertTrue(loginBasicUseCaseResult.isSuccess)
         assertEquals(OC_ACCOUNT_NAME, loginBasicUseCaseResult.getDataOrNull())
@@ -78,7 +78,7 @@ class LoginBasicAsyncUseCaseTest {
     fun `login basic - ko - another exception`() {
         every { repository.loginBasic(any(), any(), any(), any()) } throws Exception()
 
-        val loginBasicUseCaseResult = useCase.execute(useCaseParams)
+        val loginBasicUseCaseResult = useCase(useCaseParams)
 
         assertTrue(loginBasicUseCaseResult.isError)
         assertTrue(loginBasicUseCaseResult.getThrowableOrNull() is Exception)

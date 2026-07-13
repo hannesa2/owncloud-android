@@ -3,7 +3,10 @@
  *
  * @author David González Verdugo
  * @author Abel García de Prada
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Aitor Ballesteros Pavón
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -22,65 +25,62 @@ package com.owncloud.android.presentation.common
 
 import android.accounts.Account
 import android.content.Context
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.owncloud.android.data.storage.LocalStorageProvider
+import com.owncloud.android.R
+import com.owncloud.android.data.providers.LocalStorageProvider
 import com.owncloud.android.domain.user.model.UserQuota
-import com.owncloud.android.domain.user.usecases.GetStoredQuotaUseCase
+import com.owncloud.android.domain.user.usecases.GetStoredQuotaAsStreamUseCase
 import com.owncloud.android.domain.user.usecases.GetUserQuotasUseCase
 import com.owncloud.android.domain.utils.Event
 import com.owncloud.android.extensions.ViewModelExt.runUseCaseWithResult
 import com.owncloud.android.presentation.authentication.AccountUtils
+import com.owncloud.android.providers.ContextProvider
 import com.owncloud.android.providers.CoroutinesDispatcherProvider
 import com.owncloud.android.usecases.accounts.RemoveAccountUseCase
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class DrawerViewModel(
-    private val getStoredQuotaUseCase: GetStoredQuotaUseCase,
+    private val getStoredQuotaAsStreamUseCase: GetStoredQuotaAsStreamUseCase,
     private val removeAccountUseCase: RemoveAccountUseCase,
     private val getUserQuotasUseCase: GetUserQuotasUseCase,
     private val localStorageProvider: LocalStorageProvider,
-    private val coroutinesDispatcherProvider: CoroutinesDispatcherProvider
+    private val coroutinesDispatcherProvider: CoroutinesDispatcherProvider,
+    private val contextProvider: ContextProvider,
 ) : ViewModel() {
 
-    private val _userQuota = MediatorLiveData<Event<UIResult<UserQuota?>>>()
-    val userQuota: LiveData<Event<UIResult<UserQuota?>>> = _userQuota
+    private val _userQuota = MutableStateFlow<Event<UIResult<Flow<UserQuota?>>>?>(null)
+    val userQuota: StateFlow<Event<UIResult<Flow<UserQuota?>>>?> = _userQuota
 
-    fun getStoredQuota(
-        accountName: String
-    ) = runUseCaseWithResult(
-        coroutineDispatcher = coroutinesDispatcherProvider.io,
-        showLoading = true,
-        liveData = _userQuota,
-        useCase = getStoredQuotaUseCase,
-        useCaseParams = GetStoredQuotaUseCase.Params(accountName = accountName)
-    )
-
-    fun getAccounts(context: Context): List<Account> {
-        return AccountUtils.getAccounts(context).asList()
+    fun getUserQuota(accountName: String) {
+        runUseCaseWithResult(
+            coroutineDispatcher = coroutinesDispatcherProvider.io,
+            requiresConnection = false,
+            showLoading = true,
+            flow = _userQuota,
+            useCase = getStoredQuotaAsStreamUseCase,
+            useCaseParams = GetStoredQuotaAsStreamUseCase.Params(accountName = accountName),
+        )
     }
 
-    fun getCurrentAccount(context: Context): Account? {
-        return AccountUtils.getCurrentOwnCloudAccount(context)
-    }
+    fun getAccounts(context: Context): List<Account> =
+        AccountUtils.getAccounts(context).asList()
 
-    fun getUsernameOfAccount(accountName: String): String {
-        return AccountUtils.getUsernameOfAccount(accountName)
-    }
+    fun getUsernameOfAccount(accountName: String): String =
+        AccountUtils.getUsernameOfAccount(accountName)
 
-    fun setCurrentAccount(context: Context, accountName: String): Boolean {
-        return AccountUtils.setCurrentOwnCloudAccount(context, accountName)
-    }
+    fun getFeedbackMail() = contextProvider.getString(R.string.mail_feedback)
 
     fun removeAccount(context: Context) {
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
             val loggedAccounts = AccountUtils.getAccounts(context)
             localStorageProvider.deleteUnusedUserDirs(loggedAccounts)
 
-            val userQuotas = getUserQuotasUseCase.execute(Unit)
+            val userQuotas = getUserQuotasUseCase(Unit)
             val loggedAccountsNames = loggedAccounts.map { it.name }
             val totalAccountsNames = userQuotas.map { it.accountName }
             val removedAccountsNames = mutableListOf<String>()
@@ -91,11 +91,12 @@ class DrawerViewModel(
             }
             removedAccountsNames.forEach { removedAccountName ->
                 Timber.d("$removedAccountName is being removed")
-                removeAccountUseCase.execute(
+                removeAccountUseCase(
                     RemoveAccountUseCase.Params(accountName = removedAccountName)
                 )
                 localStorageProvider.removeLocalStorageForAccount(removedAccountName)
             }
         }
     }
+
 }

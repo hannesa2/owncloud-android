@@ -56,7 +56,7 @@ class AvatarUtils : KoinComponent {
         fetchIfNotCached: Boolean = false,
         displayRadius: Float
     ) {
-        //TODO: Tech debt: Move this to a viewModel and use its viewModelScope instead
+        // Tech debt: Move this to a viewModel and use its viewModelScope instead
         CoroutineScope(Dispatchers.IO).launch {
             val drawable = avatarManager.getAvatarForAccount(
                 account = account,
@@ -64,8 +64,6 @@ class AvatarUtils : KoinComponent {
                 displayRadius = displayRadius
             )
             withContext(Dispatchers.Main) {
-                // Not just accessibility support, used to know what account is bound to each imageView
-                imageView.contentDescription = account.name
                 if (drawable != null) {
                     imageView.setImageDrawable(drawable)
                 } else {

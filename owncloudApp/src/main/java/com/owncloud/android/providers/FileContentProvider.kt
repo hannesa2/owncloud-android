@@ -8,9 +8,10 @@
  * @author Christian Schabesberger
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
  *
  * Copyright (C) 2011  Bartek Przybylski
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2025 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -55,14 +56,14 @@ import com.owncloud.android.data.capabilities.datasources.implementation.OCLocal
 import com.owncloud.android.data.capabilities.datasources.implementation.OCLocalCapabilitiesDataSource.Companion.toModel
 import com.owncloud.android.data.capabilities.db.OCCapabilityEntity
 import com.owncloud.android.data.files.db.OCFileEntity
-import com.owncloud.android.data.folderbackup.datasources.FolderBackupLocalDataSource
-import com.owncloud.android.data.folderbackup.datasources.implementation.OCFolderBackupLocalDataSource
+import com.owncloud.android.data.folderbackup.datasources.LocalFolderBackupDataSource
+import com.owncloud.android.data.folderbackup.datasources.implementation.OCLocalFolderBackupDataSource
 import com.owncloud.android.data.migrations.CameraUploadsMigrationToRoom
-import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider
-import com.owncloud.android.data.preferences.datasources.implementation.OCSharedPreferencesProvider
+import com.owncloud.android.data.providers.SharedPreferencesProvider
+import com.owncloud.android.data.providers.implementation.OCSharedPreferencesProvider
 import com.owncloud.android.data.transfers.db.OCTransferEntity
 import com.owncloud.android.db.ProviderMeta.ProviderTableMeta
-import com.owncloud.android.domain.camerauploads.model.UploadBehavior
+import com.owncloud.android.domain.automaticuploads.model.UploadBehavior
 import com.owncloud.android.domain.files.model.LIST_MIME_DIR
 import com.owncloud.android.domain.transfers.model.TransferStatus
 import com.owncloud.android.domain.transfers.model.UploadEnqueuedBy
@@ -160,25 +161,23 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
                                 "", whereArgs
                 )
             }
-            ROOT_DIRECTORY ->
-                count = db.delete(ProviderTableMeta.FILE_TABLE_NAME, where, whereArgs)
-            SHARES -> count = db.delete(ProviderTableMeta.OCSHARES_TABLE_NAME, where, whereArgs)
-            CAPABILITIES -> count = db.delete(ProviderTableMeta.CAPABILITIES_TABLE_NAME, where, whereArgs)
-            UPLOADS -> count = db.delete(ProviderTableMeta.UPLOADS_TABLE_NAME, where, whereArgs)
-            CAMERA_UPLOADS_SYNC -> count = db.delete(ProviderTableMeta.CAMERA_UPLOADS_SYNC_TABLE_NAME, where, whereArgs)
-            QUOTAS -> count = db.delete(ProviderTableMeta.USER_QUOTAS_TABLE_NAME, where, whereArgs)
-            else -> throw IllegalArgumentException("Unknown uri: $uri")
+            ROOT_DIRECTORY -> { count = db.delete(ProviderTableMeta.FILE_TABLE_NAME, where, whereArgs) }
+            SHARES -> { count = db.delete(ProviderTableMeta.OCSHARES_TABLE_NAME, where, whereArgs) }
+            CAPABILITIES -> { count = db.delete(ProviderTableMeta.CAPABILITIES_TABLE_NAME, where, whereArgs) }
+            UPLOADS -> { count = db.delete(ProviderTableMeta.UPLOADS_TABLE_NAME, where, whereArgs) }
+            CAMERA_UPLOADS_SYNC -> { count = db.delete(ProviderTableMeta.CAMERA_UPLOADS_SYNC_TABLE_NAME, where, whereArgs) }
+            QUOTAS -> { count = db.delete(ProviderTableMeta.USER_QUOTAS_TABLE_NAME, where, whereArgs) }
+            else -> { throw IllegalArgumentException("Unknown uri: $uri") }
         }
         return count
     }
 
-    override fun getType(uri: Uri): String {
-        return when (uriMatcher.match(uri)) {
+    override fun getType(uri: Uri): String =
+        when (uriMatcher.match(uri)) {
             ROOT_DIRECTORY -> ProviderTableMeta.CONTENT_TYPE
             SINGLE_FILE -> ProviderTableMeta.CONTENT_TYPE_ITEM
             else -> throw IllegalArgumentException("Unknown Uri id.$uri")
         }
-    }
 
     override fun insert(uri: Uri, values: ContentValues?): Uri? {
         val newUri: Uri?
@@ -194,7 +193,7 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
         return newUri
     }
 
-    private fun insert(db: SQLiteDatabase, uri: Uri, values: ContentValues?): Uri {
+    private fun insert(db: SQLiteDatabase, uri: Uri, values: ContentValues?): Uri =
         when (uriMatcher.match(uri)) {
             ROOT_DIRECTORY, SINGLE_FILE -> {
                 val remotePath = values?.getAsString(ProviderTableMeta.FILE_PATH)
@@ -212,7 +211,7 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
                 val doubleCheck = query(uri, projection, where, whereArgs, null)
                 // ugly patch; serious refactorization is needed to reduce work in
                 // FileDataStorageManager and bring it to FileContentProvider
-                return if (!doubleCheck.moveToFirst()) {
+                if (!doubleCheck.moveToFirst()) {
                     doubleCheck.close()
                     val fileId = db.insert(ProviderTableMeta.FILE_TABLE_NAME, null, values)
                     if (fileId <= 0) throw SQLException("ERROR $uri")
@@ -231,7 +230,7 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
                 val shareId = db.insert(ProviderTableMeta.OCSHARES_TABLE_NAME, null, values)
 
                 if (shareId <= 0) throw SQLException("ERROR $uri")
-                return ContentUris.withAppendedId(ProviderTableMeta.CONTENT_URI_SHARE, shareId)
+                ContentUris.withAppendedId(ProviderTableMeta.CONTENT_URI_SHARE, shareId)
 
             }
 
@@ -239,7 +238,7 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
                 val capabilityId = db.insert(ProviderTableMeta.CAPABILITIES_TABLE_NAME, null, values)
 
                 if (capabilityId <= 0) throw SQLException("ERROR $uri")
-                return ContentUris.withAppendedId(ProviderTableMeta.CONTENT_URI_CAPABILITIES, capabilityId)
+                ContentUris.withAppendedId(ProviderTableMeta.CONTENT_URI_CAPABILITIES, capabilityId)
             }
 
             UPLOADS -> {
@@ -247,7 +246,7 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
 
                 if (uploadId <= 0) throw SQLException("ERROR $uri")
                 trimSuccessfulUploads(db)
-                return ContentUris.withAppendedId(ProviderTableMeta.CONTENT_URI_UPLOADS, uploadId)
+                ContentUris.withAppendedId(ProviderTableMeta.CONTENT_URI_UPLOADS, uploadId)
             }
 
             CAMERA_UPLOADS_SYNC -> {
@@ -257,7 +256,7 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
                 )
                 if (cameraUploadId <= 0) throw SQLException("ERROR $uri")
 
-                return ContentUris.withAppendedId(ProviderTableMeta.CONTENT_URI_CAMERA_UPLOADS_SYNC, cameraUploadId)
+                ContentUris.withAppendedId(ProviderTableMeta.CONTENT_URI_CAMERA_UPLOADS_SYNC, cameraUploadId)
             }
             QUOTAS -> {
                 val quotaId = db.insert(
@@ -266,12 +265,12 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
                 )
 
                 if (quotaId <= 0) throw SQLException("ERROR $uri")
-                return ContentUris.withAppendedId(ProviderTableMeta.CONTENT_URI_QUOTAS, quotaId)
+                ContentUris.withAppendedId(ProviderTableMeta.CONTENT_URI_QUOTAS, quotaId)
             }
-            else -> throw IllegalArgumentException("Unknown uri id: $uri")
+            else -> {
+                throw IllegalArgumentException("Unknown uri id: $uri")
+            }
         }
-
-    }
 
     override fun onCreate(): Boolean {
         dbHelper = DataBaseHelper(context)
@@ -318,7 +317,9 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
         sqlQuery.tables = ProviderTableMeta.FILE_TABLE_NAME
 
         when (uriMatcher.match(uri)) {
-            ROOT_DIRECTORY -> sqlQuery.projectionMap = fileProjectionMap
+            ROOT_DIRECTORY -> {
+                sqlQuery.projectionMap = fileProjectionMap
+            }
             DIRECTORY -> {
                 val folderId = uri.pathSegments[1]
                 sqlQuery.appendWhere(
@@ -358,7 +359,7 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
                 if (uri.pathSegments.size > 1) {
                     sqlQuery.appendWhere(ProviderTableMeta._ID + "=" + uri.pathSegments[1])
                 }
-                sqlQuery.projectionMap = cameraUploadSyncProjectionMap
+                sqlQuery.projectionMap = automaticUploadSyncProjectionMap
             }
             QUOTAS -> {
                 sqlQuery.tables = ProviderTableMeta.USER_QUOTAS_TABLE_NAME
@@ -367,7 +368,9 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
                 }
                 sqlQuery.projectionMap = quotaProjectionMap
             }
-            else -> throw IllegalArgumentException("Unknown uri id: $uri")
+            else -> {
+                throw IllegalArgumentException("Unknown uri id: $uri")
+            }
         }
 
         val order: String? = if (TextUtils.isEmpty(sortOrder)) {
@@ -415,20 +418,30 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
         if (selection != null && selectionArgs == null) {
             throw IllegalArgumentException("Selection not allowed, use parameterized queries")
         }
-        when (uriMatcher.match(uri)) {
-            DIRECTORY -> return 0 //updateFolderSize(db, selectionArgs[0]);
-            SHARES -> return db.update(ProviderTableMeta.OCSHARES_TABLE_NAME, values, selection, selectionArgs)
-            CAPABILITIES -> return db.update(ProviderTableMeta.CAPABILITIES_TABLE_NAME, values, selection, selectionArgs)
+        return when (uriMatcher.match(uri)) {
+            DIRECTORY -> {
+                0 //updateFolderSize(db, selectionArgs[0]);
+            }
+            SHARES -> {
+                db.update(ProviderTableMeta.OCSHARES_TABLE_NAME, values, selection, selectionArgs)
+            }
+            CAPABILITIES -> {
+                db.update(ProviderTableMeta.CAPABILITIES_TABLE_NAME, values, selection, selectionArgs)
+            }
             UPLOADS -> {
                 val ret = db.update(ProviderTableMeta.UPLOADS_TABLE_NAME, values, selection, selectionArgs)
                 trimSuccessfulUploads(db)
-                return ret
+                ret
             }
-            CAMERA_UPLOADS_SYNC -> return db.update(ProviderTableMeta.CAMERA_UPLOADS_SYNC_TABLE_NAME, values, selection, selectionArgs)
-            QUOTAS -> return db.update(ProviderTableMeta.USER_QUOTAS_TABLE_NAME, values, selection, selectionArgs)
-            else -> return db.update(
-                ProviderTableMeta.FILE_TABLE_NAME, values, selection, selectionArgs
-            )
+            CAMERA_UPLOADS_SYNC -> {
+                db.update(ProviderTableMeta.CAMERA_UPLOADS_SYNC_TABLE_NAME, values, selection, selectionArgs)
+            }
+            QUOTAS -> {
+                db.update(ProviderTableMeta.USER_QUOTAS_TABLE_NAME, values, selection, selectionArgs)
+            }
+            else -> {
+                db.update(ProviderTableMeta.FILE_TABLE_NAME, values, selection, selectionArgs)
+            }
         }
     }
 
@@ -482,6 +495,7 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
             createCameraUploadsSyncTable(db)
         }
 
+        @Suppress("LongMethod")
         override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
             Timber.i("SQL : Entering in onUpgrade")
             var upgraded = false
@@ -913,7 +927,7 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
 
                     // Insert capability to the new capabilities table in new database
                     executors.diskIO().execute {
-                        ocLocalCapabilitiesDataSource.insert(
+                        ocLocalCapabilitiesDataSource.insertCapabilities(
                             listOf(OCCapabilityEntity.fromCursor(cursor)).map {
                                 it.toModel()
                             }
@@ -973,15 +987,15 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
                     val pictureUploadsConfiguration = migrationToRoom.getPictureUploadsConfigurationPreferences(pictureUploadsTimestamp)
                     val videoUploadsConfiguration = migrationToRoom.getVideoUploadsConfigurationPreferences(videoUploadsTimestamp)
 
-                    val backupLocalDataSource: FolderBackupLocalDataSource =
-                        OCFolderBackupLocalDataSource(OwncloudDatabase.getDatabase(context!!).folderBackUpDao())
+                    val backupLocalDataSource: LocalFolderBackupDataSource =
+                        OCLocalFolderBackupDataSource(OwncloudDatabase.getDatabase(context!!).folderBackUpDao())
                     // Insert camera uploads configuration in new database
                     executors.diskIO().execute {
                         pictureUploadsConfiguration?.let { backupLocalDataSource.saveFolderBackupConfiguration(it) }
                         videoUploadsConfiguration?.let { backupLocalDataSource.saveFolderBackupConfiguration(it) }
                         if (pictureUploadsConfiguration != null || videoUploadsConfiguration != null) {
                             val workManagerProvider = WorkManagerProvider(context!!)
-                            workManagerProvider.enqueueCameraUploadsWorker()
+                            workManagerProvider.enqueueAutomaticUploadsWorker()
                         }
                     }
                     cursor.close()
@@ -1052,19 +1066,20 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
                             for (upload in uploads) {
                                 ocTransferDao.insertOrReplace(upload)
                                 if (upload.status == TransferStatus.TRANSFER_QUEUED.value &&
-                                    upload.createdBy != UploadEnqueuedBy.ENQUEUED_AS_CAMERA_UPLOAD_PICTURE.ordinal &&
-                                    upload.createdBy != UploadEnqueuedBy.ENQUEUED_AS_CAMERA_UPLOAD_VIDEO.ordinal
+                                    upload.createdBy != UploadEnqueuedBy.ENQUEUED_AS_AUTOMATIC_UPLOAD_PICTURE.ordinal &&
+                                    upload.createdBy != UploadEnqueuedBy.ENQUEUED_AS_AUTOMATIC_UPLOAD_VIDEO.ordinal
                                 ) {
                                     val localFile = File(upload.localPath)
                                     val uploadFileFromSystemUseCase = UploadFileFromSystemUseCase(WorkManager.getInstance(context!!))
-                                    uploadFileFromSystemUseCase.execute(
+                                    uploadFileFromSystemUseCase(
                                         UploadFileFromSystemUseCase.Params(
                                             accountName = upload.accountName,
                                             localPath = upload.localPath,
                                             lastModifiedInSeconds = localFile.lastModified().div(1_000).toString(),
                                             behavior = UploadBehavior.MOVE.toString(),
                                             uploadPath = upload.remotePath,
-                                            uploadIdInStorageManager = upload.id
+                                            uploadIdInStorageManager = upload.id,
+                                            createdBy = UploadEnqueuedBy.ENQUEUED_BY_USER
                                         )
                                     )
                                 }
@@ -1308,14 +1323,12 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
     }
 
     @Throws(FileNotFoundException::class)
-    override fun openFile(uri: Uri, mode: String, signal: CancellationSignal?): ParcelFileDescriptor? {
-        return super.openFile(uri, mode, signal)
-    }
+    override fun openFile(uri: Uri, mode: String, signal: CancellationSignal?): ParcelFileDescriptor? =
+        super.openFile(uri, mode, signal)
 
     @Throws(FileNotFoundException::class)
-    override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor? {
-        return super.openFile(uri, mode)
-    }
+    override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor? =
+        super.openFile(uri, mode)
 
     /**
      * Grants that total count of successful uploads stored is not greater than MAX_SUCCESSFUL_UPLOADS.
@@ -1499,13 +1512,13 @@ class FileContentProvider(val executors: Executors = Executors()) : ContentProvi
             uploadProjectionMap[ProviderTableMeta.UPLOADS_TRANSFER_ID] = ProviderTableMeta.UPLOADS_TRANSFER_ID
         }
 
-        private val cameraUploadSyncProjectionMap = HashMap<String, String>()
+        private val automaticUploadSyncProjectionMap = HashMap<String, String>()
 
         init {
-            cameraUploadSyncProjectionMap[ProviderTableMeta._ID] = ProviderTableMeta._ID
-            cameraUploadSyncProjectionMap[ProviderTableMeta.PICTURES_LAST_SYNC_TIMESTAMP] =
+            automaticUploadSyncProjectionMap[ProviderTableMeta._ID] = ProviderTableMeta._ID
+            automaticUploadSyncProjectionMap[ProviderTableMeta.PICTURES_LAST_SYNC_TIMESTAMP] =
                 ProviderTableMeta.PICTURES_LAST_SYNC_TIMESTAMP
-            cameraUploadSyncProjectionMap[ProviderTableMeta.VIDEOS_LAST_SYNC_TIMESTAMP] =
+            automaticUploadSyncProjectionMap[ProviderTableMeta.VIDEOS_LAST_SYNC_TIMESTAMP] =
                 ProviderTableMeta.VIDEOS_LAST_SYNC_TIMESTAMP
         }
 

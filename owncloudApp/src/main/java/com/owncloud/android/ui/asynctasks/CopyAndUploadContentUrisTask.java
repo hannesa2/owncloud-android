@@ -83,14 +83,16 @@ public class CopyAndUploadContentUrisTask extends AsyncTask<Object, Void, Result
             Account account,
             Uri[] sourceUris,
             String uploadPath,
-            ContentResolver contentResolver
+            ContentResolver contentResolver,
+            String spaceId
     ) {
 
         return new Object[]{
                 account,
                 sourceUris,
                 uploadPath,
-                contentResolver
+                contentResolver,
+                spaceId
         };
     }
 
@@ -118,7 +120,7 @@ public class CopyAndUploadContentUrisTask extends AsyncTask<Object, Void, Result
 
     /**
      * @param params    Params to execute the task; see
-     *                  {@link #makeParamsToExecute(Account, Uri[], String, ContentResolver)}
+     *                  {@link #makeParamsToExecute(Account, Uri[], String, ContentResolver, String)}
      *                  for further details.
      */
     @Override
@@ -126,8 +128,6 @@ public class CopyAndUploadContentUrisTask extends AsyncTask<Object, Void, Result
 
         ResultCode result = ResultCode.UNKNOWN_ERROR;
 
-        InputStream inputStream = null;
-        FileOutputStream outputStream = null;
         String fullTempPath = null;
         Uri currentUri = null;
 
@@ -136,6 +136,7 @@ public class CopyAndUploadContentUrisTask extends AsyncTask<Object, Void, Result
             Uri[] uris = (Uri[]) params[1];
             String uploadPath = (String) params[2];
             ContentResolver leakedContentResolver = (ContentResolver) params[3];
+            String spaceId = (String) params[4];
 
             String currentRemotePath;
             ArrayList<String> filesToUpload = new ArrayList<>();
@@ -144,20 +145,21 @@ public class CopyAndUploadContentUrisTask extends AsyncTask<Object, Void, Result
                 currentUri = uris[i];
                 currentRemotePath = uploadPath + UriUtils.getDisplayNameForUri(currentUri, mAppContext);
 
-                fullTempPath = FileStorageUtils.getTemporalPath(account.name) + currentRemotePath;
-                inputStream = leakedContentResolver.openInputStream(currentUri);
+                fullTempPath = FileStorageUtils.getTemporalPath(account.name, spaceId) + currentRemotePath;
                 File cacheFile = new File(fullTempPath);
                 File tempDir = cacheFile.getParentFile();
                 if (!tempDir.exists()) {
                     tempDir.mkdirs();
                 }
                 cacheFile.createNewFile();
-                outputStream = new FileOutputStream(fullTempPath);
-                byte[] buffer = new byte[4096];
 
-                int count;
-                while ((count = inputStream.read(buffer)) > 0) {
-                    outputStream.write(buffer, 0, count);
+                try (InputStream inputStream = leakedContentResolver.openInputStream(currentUri);
+                     FileOutputStream outputStream = new FileOutputStream(fullTempPath)) {
+                    byte[] buffer = new byte[4096];
+                    int count;
+                    while ((count = inputStream.read(buffer)) > 0) {
+                        outputStream.write(buffer, 0, count);
+                    }
                 }
 
                 filesToUpload.add(fullTempPath);
@@ -166,9 +168,11 @@ public class CopyAndUploadContentUrisTask extends AsyncTask<Object, Void, Result
                 UploadFilesFromSystemUseCase.Params useCaseParams = new UploadFilesFromSystemUseCase.Params(
                         account.name,
                         filesToUpload,
-                        uploadPath
+                        uploadPath,
+                        spaceId,
+                        false
                 );
-                uploadFilesFromSystemUseCase.execute(useCaseParams);
+                uploadFilesFromSystemUseCase.invoke(useCaseParams);
                 fullTempPath = null;
                 filesToUpload.clear();
             }
@@ -203,22 +207,6 @@ public class CopyAndUploadContentUrisTask extends AsyncTask<Object, Void, Result
                 }
             }
 
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (Exception e) {
-                    Timber.w("Ignoring exception of inputStream closure");
-                }
-            }
-
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (Exception e) {
-                    Timber.w("Ignoring exception of outStream closure");
-                }
-            }
         }
 
         return result;

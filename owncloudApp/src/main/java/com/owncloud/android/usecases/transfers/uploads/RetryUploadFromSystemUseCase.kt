@@ -3,8 +3,10 @@
  *
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
+ * @author Aitor Ballesteros Pavón
+ * @author Jorge Aguado Recio
  *
- * Copyright (C) 2021 ownCloud GmbH.
+ * Copyright (C) 2025 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -51,14 +53,16 @@ class RetryUploadFromSystemUseCase(
         if (workInfos.isEmpty() || workInfos.firstOrNull()?.state == WorkInfo.State.FAILED) {
             transferRepository.updateTransferStatusToEnqueuedById(params.uploadIdInStorageManager)
 
-            uploadFileFromSystemUseCase.execute(
+            uploadFileFromSystemUseCase(
                 UploadFileFromSystemUseCase.Params(
                     accountName = uploadToRetry.accountName,
                     localPath = uploadToRetry.localPath,
                     lastModifiedInSeconds = (uploadToRetry.transferEndTimestamp?.div(1000)).toString(),
                     behavior = uploadToRetry.localBehaviour.name,
                     uploadPath = uploadToRetry.remotePath,
-                    uploadIdInStorageManager = params.uploadIdInStorageManager
+                    sourcePath = uploadToRetry.sourcePath,
+                    uploadIdInStorageManager = params.uploadIdInStorageManager,
+                    createdBy = uploadToRetry.createdBy
                 )
             )
         } else {

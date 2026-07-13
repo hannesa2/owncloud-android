@@ -2,7 +2,10 @@
  * ownCloud Android client application
  *
  * @author David González Verdugo
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2026 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -22,12 +25,18 @@ package com.owncloud.android.extensions
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
+import android.view.Menu
+import android.view.MenuItem.SHOW_AS_ACTION_NEVER
+import android.view.View
 import android.view.inputmethod.InputMethodManager
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.snackbar.Snackbar
+import com.owncloud.android.R
+import com.owncloud.android.domain.appregistry.model.AppRegistryProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -39,10 +48,26 @@ fun Fragment.showErrorInSnackbar(genericErrorMessageId: Int, throwable: Throwabl
 
 fun Fragment.showMessageInSnackbar(
     message: CharSequence,
+    duration: Int = Snackbar.LENGTH_LONG,
+) {
+    val requiredView = view ?: return
+    val rootView = view?.rootView ?: return
+    val bottomNavView = rootView.findViewById<View?>(R.id.bottom_nav_view)
+    val snackbar = Snackbar.make(requiredView, message, duration)
+    if (bottomNavView?.isVisible == true) { snackbar.setAnchorView(bottomNavView) }
+    snackbar.show()
+}
+
+fun Fragment.showSnackbarWithAction(
+    message: CharSequence,
+    actionText: CharSequence,
+    action: () -> Unit,
     duration: Int = Snackbar.LENGTH_LONG
 ) {
     val requiredView = view ?: return
-    Snackbar.make(requiredView, message, duration).show()
+    Snackbar.make(requiredView, message, duration)
+        .setAction(actionText) { action() }
+        .show()
 }
 
 fun Fragment.showAlertDialog(
@@ -84,4 +109,23 @@ fun <T> Fragment.collectLatestLifecycleFlow(
             flow.collectLatest(collect)
         }
     }
+}
+
+fun Fragment.addOpenInWebMenuOptions(
+    menu: Menu,
+    openInWebProviders: Map<String, Int> = emptyMap(),
+    appRegistryProviders: List<AppRegistryProvider>? = emptyList(),
+): Map<String, Int> {
+    val newOpenInWebProviders = emptyMap<String, Int>().toMutableMap()
+    // Remove "open in web" dynamic menu items and add them again to avoid duplications
+    openInWebProviders.forEach { (_, menuItemId) ->
+        menu.removeItem(menuItemId)
+    }
+    appRegistryProviders?.forEachIndexed { index, appRegistryProvider ->
+        menu.add(Menu.NONE, index, 0, getString(R.string.ic_action_open_with_web, appRegistryProvider.name)).also {
+            it.setShowAsAction(SHOW_AS_ACTION_NEVER)
+            newOpenInWebProviders[appRegistryProvider.name] = it.itemId
+        }
+    }
+    return newOpenInWebProviders
 }

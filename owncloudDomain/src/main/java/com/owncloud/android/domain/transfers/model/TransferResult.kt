@@ -2,8 +2,9 @@
  * ownCloud Android client application
  *
  * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2025 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -24,10 +25,13 @@ import com.owncloud.android.domain.exceptions.ConflictException
 import com.owncloud.android.domain.exceptions.FileNotFoundException
 import com.owncloud.android.domain.exceptions.ForbiddenException
 import com.owncloud.android.domain.exceptions.LocalFileNotFoundException
+import com.owncloud.android.domain.exceptions.NetworkErrorException
 import com.owncloud.android.domain.exceptions.NoConnectionWithServerException
+import com.owncloud.android.domain.exceptions.PayloadTooLongException
 import com.owncloud.android.domain.exceptions.QuotaExceededException
 import com.owncloud.android.domain.exceptions.SSLRecoverablePeerUnverifiedException
 import com.owncloud.android.domain.exceptions.ServiceUnavailableException
+import com.owncloud.android.domain.exceptions.SpecificForbiddenException
 import com.owncloud.android.domain.exceptions.SpecificServiceUnavailableException
 import com.owncloud.android.domain.exceptions.SpecificUnsupportedMediaTypeException
 import com.owncloud.android.domain.exceptions.UnauthorizedException
@@ -50,7 +54,8 @@ enum class TransferResult constructor(val value: Int) {
     SSL_RECOVERABLE_PEER_UNVERIFIED(value = 13),
     SPECIFIC_FORBIDDEN(value = 14),
     SPECIFIC_SERVICE_UNAVAILABLE(value = 15),
-    SPECIFIC_UNSUPPORTED_MEDIA_TYPE(value = 16);
+    SPECIFIC_UNSUPPORTED_MEDIA_TYPE(value = 16),
+    FILE_TOO_LARGE(value = 17);
 
     companion object {
         fun fromValue(value: Int): TransferResult =
@@ -72,6 +77,7 @@ enum class TransferResult constructor(val value: Int) {
                 14 -> SPECIFIC_FORBIDDEN
                 15 -> SPECIFIC_SERVICE_UNAVAILABLE
                 16 -> SPECIFIC_UNSUPPORTED_MEDIA_TYPE
+                17 -> FILE_TOO_LARGE
                 else -> UNKNOWN
             }
 
@@ -81,15 +87,18 @@ enum class TransferResult constructor(val value: Int) {
             return when (throwable) {
                 is LocalFileNotFoundException -> FOLDER_ERROR
                 is NoConnectionWithServerException -> NETWORK_CONNECTION
+                is NetworkErrorException -> NETWORK_CONNECTION
                 is UnauthorizedException -> CREDENTIAL_ERROR
                 is FileNotFoundException -> FILE_NOT_FOUND
                 is ConflictException -> CONFLICT_ERROR
                 is ForbiddenException -> PRIVILEGES_ERROR
+                is SpecificForbiddenException -> SPECIFIC_FORBIDDEN
                 is ServiceUnavailableException -> SERVICE_UNAVAILABLE
                 is SpecificServiceUnavailableException -> SPECIFIC_SERVICE_UNAVAILABLE
                 is QuotaExceededException -> QUOTA_EXCEEDED
                 is SpecificUnsupportedMediaTypeException -> SPECIFIC_UNSUPPORTED_MEDIA_TYPE
                 is SSLRecoverablePeerUnverifiedException -> SSL_RECOVERABLE_PEER_UNVERIFIED
+                is PayloadTooLongException -> FILE_TOO_LARGE
                 else -> UNKNOWN
             }
         }

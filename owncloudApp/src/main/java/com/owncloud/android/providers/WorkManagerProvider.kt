@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author Abel García de Prada
- * Copyright (C) 2021 ownCloud GmbH.
+ * @author Aitor Ballesteros Pavón
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -24,29 +26,33 @@ import androidx.lifecycle.LiveData
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.owncloud.android.extensions.getRunningWorkInfosLiveData
+import com.owncloud.android.workers.AccountDiscoveryWorker
 import com.owncloud.android.workers.AvailableOfflinePeriodicWorker
 import com.owncloud.android.workers.AvailableOfflinePeriodicWorker.Companion.AVAILABLE_OFFLINE_PERIODIC_WORKER
-import com.owncloud.android.workers.CameraUploadsWorker
+import com.owncloud.android.workers.AutomaticUploadsWorker
 import com.owncloud.android.workers.OldLogsCollectorWorker
+import com.owncloud.android.workers.RemoveLocallyFilesWithLastUsageOlderThanGivenTimeWorker
 import com.owncloud.android.workers.UploadFileFromContentUriWorker
 import com.owncloud.android.workers.UploadFileFromFileSystemWorker
 
 class WorkManagerProvider(
     val context: Context
 ) {
-    fun enqueueCameraUploadsWorker() {
-        val cameraUploadsWorker = PeriodicWorkRequestBuilder<CameraUploadsWorker>(
-            repeatInterval = CameraUploadsWorker.repeatInterval,
-            repeatIntervalTimeUnit = CameraUploadsWorker.repeatIntervalTimeUnit
-        ).addTag(CameraUploadsWorker.CAMERA_UPLOADS_WORKER)
+    fun enqueueAutomaticUploadsWorker() {
+        val automaticUploadsWorker = PeriodicWorkRequestBuilder<AutomaticUploadsWorker>(
+            repeatInterval = AutomaticUploadsWorker.repeatInterval,
+            repeatIntervalTimeUnit = AutomaticUploadsWorker.repeatIntervalTimeUnit
+        ).addTag(AutomaticUploadsWorker.AUTOMATIC_UPLOADS_WORKER)
             .build()
 
         WorkManager.getInstance(context)
-            .enqueueUniquePeriodicWork(CameraUploadsWorker.CAMERA_UPLOADS_WORKER, ExistingPeriodicWorkPolicy.KEEP, cameraUploadsWorker)
+            .enqueueUniquePeriodicWork(AutomaticUploadsWorker.AUTOMATIC_UPLOADS_WORKER, ExistingPeriodicWorkPolicy.KEEP, automaticUploadsWorker)
     }
 
     fun enqueueOldLogsCollectorWorker() {
@@ -82,12 +88,45 @@ class WorkManagerProvider(
             .enqueueUniquePeriodicWork(AVAILABLE_OFFLINE_PERIODIC_WORKER, ExistingPeriodicWorkPolicy.KEEP, availableOfflinePeriodicWorker)
     }
 
-    fun getRunningUploadsWorkInfosLiveData(): LiveData<List<WorkInfo>> {
-        return WorkManager.getInstance(context).getRunningWorkInfosLiveData(
+    fun enqueueAccountDiscovery(accountName: String) {
+        val constraintsRequired = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+
+        val inputData = workDataOf(
+            AccountDiscoveryWorker.KEY_PARAM_DISCOVERY_ACCOUNT to accountName,
+        )
+
+        val accountDiscoveryWorker = OneTimeWorkRequestBuilder<AccountDiscoveryWorker>()
+            .setInputData(inputData)
+            .addTag(accountName)
+            .setConstraints(constraintsRequired)
+            .build()
+
+        WorkManager.getInstance(context).enqueue(accountDiscoveryWorker)
+    }
+
+    fun enqueueRemoveLocallyFilesWithLastUsageOlderThanGivenTimeWorker() {
+        val constraintsRequired = Constraints.Builder().setRequiredNetworkType(NetworkType.NOT_REQUIRED).build()
+
+        val removeLocallyFilesWithLastUsageOlderThanGivenTimeWorker =
+            PeriodicWorkRequestBuilder<RemoveLocallyFilesWithLastUsageOlderThanGivenTimeWorker>(
+                repeatInterval = RemoveLocallyFilesWithLastUsageOlderThanGivenTimeWorker.repeatInterval,
+                repeatIntervalTimeUnit = RemoveLocallyFilesWithLastUsageOlderThanGivenTimeWorker.repeatIntervalTimeUnit
+            )
+                .addTag(RemoveLocallyFilesWithLastUsageOlderThanGivenTimeWorker.DELETE_FILES_OLDER_GIVEN_TIME_WORKER)
+                .setConstraints(constraintsRequired)
+                .build()
+
+        WorkManager.getInstance(context).enqueue(removeLocallyFilesWithLastUsageOlderThanGivenTimeWorker)
+    }
+
+    fun getRunningUploadsWorkInfosLiveData(): LiveData<List<WorkInfo>> =
+        WorkManager.getInstance(context).getRunningWorkInfosLiveData(
             listOf(
                 UploadFileFromContentUriWorker::class.java.name,
                 UploadFileFromFileSystemWorker::class.java.name
             )
         )
-    }
+
+    fun cancelAllWorkByTag(tag: String) = WorkManager.getInstance(context).cancelAllWorkByTag(tag)
+
 }
