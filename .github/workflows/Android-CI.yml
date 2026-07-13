@@ -20,16 +20,16 @@ jobs:
           fetch-depth: 0 # 0 indicates all history
       - run: git fetch --all || echo "==> Accept any result"
       - name: set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5.5.0
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: ${{ matrix.java_version }}
       - name: Install Android SDK
-        uses: hannesa2/action-android/install-sdk@0.1.16.7
+        uses: hannesa2/action-android/install-sdk@0.1.16.9
       - name: Build with Gradle
         run: ./gradlew assembleDebug
 #      - name: Run instrumentation tests
-#        uses: hannesa2/action-android/emulator-run-cmd@0.1.16.7
+#        uses: hannesa2/action-android/emulator-run-cmd@0.1.16.9
 #        with:
 #          cmd: ./gradlew cAT -Pandroid.testInstrumentationRunnerArguments.notAnnotation=com.owncloud.android.testutil.annotation.FailsOnGithubAction --continue
 #          api: 28
@@ -61,13 +61,13 @@ jobs:
           submodules: true
           fetch-depth: 0
       - name: Install JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5.5.0
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: ${{ matrix.java_version }}
       - uses: gradle/wrapper-validation-action@v3
       - name: Install Android SDK
-        uses: hannesa2/action-android/install-sdk@0.1.16.7
+        uses: hannesa2/action-android/install-sdk@0.1.16.9
       - name: Lint
         run: ./gradlew lint
       - name: Archive Lint report
