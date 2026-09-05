@@ -243,7 +243,7 @@ androidComponents {
 
 static def getGitCommitCount() {
     def process = "git rev-list HEAD --count".execute()
-    return process.text.toInteger() + 21300106
+    return process.text.toInteger() + 21300106 + 43
 }
 
 static def getTag() {
