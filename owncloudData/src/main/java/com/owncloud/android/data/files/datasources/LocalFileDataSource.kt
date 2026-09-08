@@ -4,8 +4,9 @@
  * @author Abel García de Prada
  * @author Christian Schabesberger
  * @author Juan Carlos Garrote Gascón
+ * @author Aitor Ballesteros Pavón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -29,10 +30,9 @@ import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
 interface LocalFileDataSource {
-    fun copyFile(sourceFile: OCFile, targetFolder: OCFile, finalRemotePath: String, remoteId: String)
     fun getFileById(fileId: Long): OCFile?
     fun getFileByIdAsFlow(fileId: Long): Flow<OCFile?>
-    fun getFileByRemotePath(remotePath: String, owner: String): OCFile?
+    fun getFileByRemotePath(remotePath: String, owner: String, spaceId: String?): OCFile?
     fun getFileByRemoteId(remoteId: String): OCFile?
     fun getFolderContent(folderId: Long): List<OCFile>
     fun getSearchFolderContent(folderId: Long, search: String): List<OCFile>
@@ -44,8 +44,12 @@ interface LocalFileDataSource {
     fun getFilesWithSyncInfoAvailableOfflineFromAccountAsFlow(owner: String): Flow<List<OCFileWithSyncInfo>>
     fun getFilesAvailableOfflineFromAccount(owner: String): List<OCFile>
     fun getFilesAvailableOfflineFromEveryAccount(): List<OCFile>
+    fun getDownloadedFilesForAccount(owner: String): List<OCFile>
+    fun getFileWithSyncInfoByIdAsFlow(id: Long): Flow<OCFileWithSyncInfo?>
+    fun getFilesWithLastUsageOlderThanGivenTime(milliseconds: Long): List<OCFile>
     fun moveFile(sourceFile: OCFile, targetFolder: OCFile, finalRemotePath: String, finalStoragePath: String)
-    fun saveFilesInFolderAndReturnThem(listOfFiles: List<OCFile>, folder: OCFile): List<OCFile>
+    fun copyFile(sourceFile: OCFile, targetFolder: OCFile, finalRemotePath: String, remoteId: String, replace: Boolean?)
+    fun saveFilesInFolderAndReturnTheFilesThatChanged(listOfFiles: List<OCFile>, folder: OCFile): List<OCFile>
     fun saveFile(file: OCFile)
     fun saveConflict(fileId: Long, eTagInConflict: String)
     fun cleanConflict(fileId: Long)
@@ -59,4 +63,5 @@ interface LocalFileDataSource {
     fun saveUploadWorkerUuid(fileId: Long, workerUuid: UUID)
     fun saveDownloadWorkerUuid(fileId: Long, workerUuid: UUID)
     fun cleanWorkersUuid(fileId: Long)
+    fun updateFileWithLastUsage(fileId: Long, lastUsage: Long?)
 }

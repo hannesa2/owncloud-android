@@ -2,8 +2,9 @@
  * ownCloud Android client application
  *
  * @author Juan Carlos Garrote Gascón
+ * @author Aitor Ballesteros Pavón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -20,23 +21,23 @@
 
 package com.owncloud.android.data.transfers.datasources.implementation
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
+import androidx.annotation.VisibleForTesting
 import com.owncloud.android.data.transfers.datasources.LocalTransferDataSource
 import com.owncloud.android.data.transfers.db.OCTransferEntity
 import com.owncloud.android.data.transfers.db.TransferDao
-import com.owncloud.android.domain.camerauploads.model.UploadBehavior
+import com.owncloud.android.domain.automaticuploads.model.UploadBehavior
 import com.owncloud.android.domain.transfers.model.OCTransfer
 import com.owncloud.android.domain.transfers.model.TransferResult
 import com.owncloud.android.domain.transfers.model.TransferStatus
 import com.owncloud.android.domain.transfers.model.UploadEnqueuedBy
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class OCLocalTransferDataSource(
     private val transferDao: TransferDao
 ) : LocalTransferDataSource {
-    override fun saveTransfer(transfer: OCTransfer): Long {
-        return transferDao.insertOrReplace(transfer.toEntity())
-    }
+    override fun saveTransfer(transfer: OCTransfer): Long =
+        transferDao.insertOrReplace(transfer.toEntity())
 
     override fun updateTransfer(transfer: OCTransfer) {
         transferDao.insertOrReplace(transfer.toEntity())
@@ -63,6 +64,10 @@ class OCLocalTransferDataSource(
         transferDao.updateTransferLocalPath(id, localPath)
     }
 
+    override fun updateTransferSourcePath(id: Long, sourcePath: String) {
+        transferDao.updateTransferSourcePath(id, sourcePath)
+    }
+
     override fun updateTransferStorageDirectoryInLocalPath(
         id: Long,
         oldDirectory: String,
@@ -79,18 +84,16 @@ class OCLocalTransferDataSource(
         transferDao.deleteTransfersWithAccountName(accountName)
     }
 
-    override fun getTransferById(id: Long): OCTransfer? {
-        return transferDao.getTransferWithId(id)?.toModel()
-    }
+    override fun getTransferById(id: Long): OCTransfer? =
+        transferDao.getTransferWithId(id)?.toModel()
 
-    override fun getAllTransfers(): List<OCTransfer> {
-        return transferDao.getAllTransfers().map { transferEntity ->
+    override fun getAllTransfers(): List<OCTransfer> =
+        transferDao.getAllTransfers().map { transferEntity ->
             transferEntity.toModel()
         }
-    }
 
-    override fun getAllTransfersAsLiveData(): LiveData<List<OCTransfer>> {
-        return Transformations.map(transferDao.getAllTransfersAsLiveData()) { transferEntitiesList ->
+    override fun getAllTransfersAsStream(): Flow<List<OCTransfer>> =
+        transferDao.getAllTransfersAsStream().map { transferEntitiesList ->
             val transfers = transferEntitiesList.map { transferEntity ->
                 transferEntity.toModel()
             }
@@ -111,29 +114,24 @@ class OCLocalTransferDataSource(
             }
             newTransfersList
         }
-    }
 
-    override fun getLastTransferFor(remotePath: String, accountName: String): OCTransfer? {
-        return transferDao.getLastTransferWithRemotePathAndAccountName(remotePath, accountName)?.toModel()
-    }
+    override fun getLastTransferFor(remotePath: String, accountName: String): OCTransfer? =
+        transferDao.getLastTransferWithRemotePathAndAccountName(remotePath, accountName)?.toModel()
 
-    override fun getCurrentAndPendingTransfers(): List<OCTransfer> {
-        return transferDao.getTransfersWithStatus(
+    override fun getCurrentAndPendingTransfers(): List<OCTransfer> =
+        transferDao.getTransfersWithStatus(
             listOf(TransferStatus.TRANSFER_IN_PROGRESS.value, TransferStatus.TRANSFER_QUEUED.value)
         ).map { it.toModel() }
-    }
 
-    override fun getFailedTransfers(): List<OCTransfer> {
-        return transferDao.getTransfersWithStatus(
+    override fun getFailedTransfers(): List<OCTransfer> =
+        transferDao.getTransfersWithStatus(
             listOf(TransferStatus.TRANSFER_FAILED.value)
         ).map { it.toModel() }
-    }
 
-    override fun getFinishedTransfers(): List<OCTransfer> {
-        return transferDao.getTransfersWithStatus(
+    override fun getFinishedTransfers(): List<OCTransfer> =
+        transferDao.getTransfersWithStatus(
             listOf(TransferStatus.TRANSFER_SUCCEEDED.value)
         ).map { it.toModel() }
-    }
 
     override fun clearFailedTransfers() {
         transferDao.deleteTransfersWithStatus(TransferStatus.TRANSFER_FAILED.value)
@@ -143,33 +141,42 @@ class OCLocalTransferDataSource(
         transferDao.deleteTransfersWithStatus(TransferStatus.TRANSFER_SUCCEEDED.value)
     }
 
-    private fun OCTransferEntity.toModel() = OCTransfer(
-        id = id,
-        localPath = localPath,
-        remotePath = remotePath,
-        accountName = accountName,
-        fileSize = fileSize,
-        status = TransferStatus.fromValue(status),
-        localBehaviour = if (localBehaviour > 1) UploadBehavior.MOVE else UploadBehavior.values()[localBehaviour],
-        forceOverwrite = forceOverwrite,
-        transferEndTimestamp = transferEndTimestamp,
-        lastResult = lastResult?.let { TransferResult.fromValue(it) },
-        createdBy = UploadEnqueuedBy.values()[createdBy],
-        transferId = transferId
-    )
 
-    private fun OCTransfer.toEntity() = OCTransferEntity(
-        localPath = localPath,
-        remotePath = remotePath,
-        accountName = accountName,
-        fileSize = fileSize,
-        status = status.value,
-        localBehaviour = localBehaviour.ordinal,
-        forceOverwrite = forceOverwrite,
-        transferEndTimestamp = transferEndTimestamp,
-        lastResult = lastResult?.value,
-        createdBy = createdBy.ordinal,
-        transferId = transferId
-    ).apply { this@toEntity.id?.let { this.id = it } }
 
+    companion object {
+
+        @VisibleForTesting
+        fun OCTransferEntity.toModel() = OCTransfer(
+            id = id,
+            localPath = localPath,
+            remotePath = remotePath,
+            accountName = accountName,
+            fileSize = fileSize,
+            status = TransferStatus.fromValue(status),
+            localBehaviour = if (localBehaviour > 1) UploadBehavior.MOVE else UploadBehavior.values()[localBehaviour],
+            forceOverwrite = forceOverwrite,
+            transferEndTimestamp = transferEndTimestamp,
+            lastResult = lastResult?.let { TransferResult.fromValue(it) },
+            createdBy = UploadEnqueuedBy.values()[createdBy],
+            transferId = transferId,
+            spaceId = spaceId,
+            sourcePath = sourcePath,
+        )
+        @VisibleForTesting
+        fun OCTransfer.toEntity() = OCTransferEntity(
+            localPath = localPath,
+            remotePath = remotePath,
+            accountName = accountName,
+            fileSize = fileSize,
+            status = status.value,
+            localBehaviour = localBehaviour.ordinal,
+            forceOverwrite = forceOverwrite,
+            transferEndTimestamp = transferEndTimestamp,
+            lastResult = lastResult?.value,
+            createdBy = createdBy.ordinal,
+            transferId = transferId,
+            spaceId = spaceId,
+            sourcePath = sourcePath,
+        ).apply { this@toEntity.id?.let { this.id = it } }
+    }
 }

@@ -1,0 +1,63 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'kotlin-parcelize'
+
+dependencies {
+    api('com.squareup.okhttp3:okhttp') {
+        version {
+            strictly '4.10.0'
+        }
+        because 'dav4android oc_support_2.1.5 requires okhttp3.internal.Util at runtime'
+    }
+    implementation libs.kotlin.stdlib
+    api 'com.github.owncloud:dav4android:oc_support_2.1.5'
+
+    // Androidx
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.lifecycle.livedata.ktx
+    implementation libs.androidx.annotation
+
+    // Moshi
+    implementation(libs.moshi.kotlin) {
+        exclude module: "kotlin-reflect"
+    }
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    ksp libs.moshi.kotlin.codegen
+
+    // Timber
+    implementation libs.timber
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.10'
+    debugImplementation 'com.facebook.stetho:stetho-okhttp3:1.6.0'
+
+    // Detekt
+    detektPlugins libs.detekt.formatting
+    detektPlugins libs.detekt.libraries
+}
+
+android {
+    compileSdk sdkCompileVersion
+
+    defaultConfig {
+        minSdk sdkMinVersion
+        targetSdk sdkTargetVersion
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        ignoreWarnings true
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
+    namespace 'com.owncloud.android.lib'
+}

@@ -1,7 +1,10 @@
 /**
  * ownCloud Android client application
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * @author Aitor Ballesteros Pavón
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2026 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -16,16 +19,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 package com.owncloud.android.testutil
 
+import com.owncloud.android.domain.capabilities.model.AppProviders
 import com.owncloud.android.domain.capabilities.model.CapabilityBooleanType
 import com.owncloud.android.domain.capabilities.model.OCCapability
+import com.owncloud.android.domain.capabilities.model.Spaces
 
 val OC_CAPABILITY =
     OCCapability(
         accountName = OC_ACCOUNT_NAME,
-        versionMayor = 2,
+        versionMajor = 2,
         versionMinor = 1,
         versionMicro = 0,
         versionString = "1.0.0",
@@ -48,9 +52,32 @@ val OC_CAPABILITY =
         filesSharingFederationOutgoing = CapabilityBooleanType.FALSE,
         filesSharingFederationIncoming = CapabilityBooleanType.FALSE,
         filesSharingUserProfilePicture = CapabilityBooleanType.FALSE,
+        filesSharingSearchMinLength = 3,
         filesBigFileChunking = CapabilityBooleanType.FALSE,
         filesUndelete = CapabilityBooleanType.FALSE,
         filesVersioning = CapabilityBooleanType.FALSE,
         filesPrivateLinks = CapabilityBooleanType.TRUE,
-        filesOcisProviders = null,
+        filesAppProviders = null,
+        spaces = null,
+        passwordPolicy = null,
     )
+
+val OC_CAPABILITY_WITH_FILES_APP_PROVIDERS = OC_CAPABILITY.copy(
+    filesAppProviders = AppProviders(
+        enabled = true,
+        version = "1.1.1",
+        appsUrl = "/app-url",
+        openUrl = "/open-url",
+        openWebUrl = "/open-with-web",
+        newUrl = "/new-url",
+    )
+)
+
+val OC_CAPABILITY_WITH_MULTIPERSONAL_ENABLED = OC_CAPABILITY.copy(
+    spaces = Spaces(
+        enabled = true,
+        projects = true,
+        shareJail = null,
+        hasMultiplePersonalSpaces = true
+    )
+)

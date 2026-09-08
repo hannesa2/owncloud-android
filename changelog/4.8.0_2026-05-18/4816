@@ -1,0 +1,6 @@
+Enhancement: Remove space link
+
+A new option to remove space public links from a space has been added. It will be only visible for users with proper permissions.
+
+https://github.com/owncloud/android/issues/4757
+https://github.com/owncloud/android/pull/4816

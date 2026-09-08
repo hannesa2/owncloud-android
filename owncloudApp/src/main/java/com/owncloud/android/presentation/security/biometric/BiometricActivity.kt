@@ -3,17 +3,19 @@
  *
  * @author David González Verdugo
  * @author Juan Carlos Garrote Gascón
- * Copyright (C) 2021 ownCloud GmbH.
- * <p>
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2025 ownCloud GmbH.
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
  * as published by the Free Software Foundation.
- * <p>
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -21,10 +23,8 @@
 package com.owncloud.android.presentation.security.biometric
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
@@ -56,7 +56,6 @@ class BiometricActivity : AppCompatActivity() {
      *
      * @param savedInstanceState Previously saved state - irrelevant in this case
      */
-    @RequiresApi(api = Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -68,7 +67,7 @@ class BiometricActivity : AppCompatActivity() {
         if (biometricManager.canAuthenticate(BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS) {
             showBiometricPrompt()
         } else {
-            authError()
+            authError(biometricHasFailed = true)
         }
     }
 
@@ -84,21 +83,25 @@ class BiometricActivity : AppCompatActivity() {
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
                     Timber.e("onAuthenticationError ($errorCode): $errString")
-                    authError()
+                    authError(biometricHasFailed = errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON)
                 }
 
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
-                    if (biometricViewModel.shouldAskForNewPassCode()) {
-                        biometricViewModel.removePassCode()
-                        val intent = Intent(baseContext, PassCodeActivity::class.java)
-                        intent.action = PassCodeActivity.ACTION_CREATE
-                        intent.putExtra(PassCodeActivity.EXTRAS_MIGRATION, true)
-                        startActivity(intent)
+                    if (result.cryptoObject?.cipher != cryptoObject.cipher) {
+                        authError(biometricHasFailed = true)
+                    } else {
+                        if (biometricViewModel.shouldAskForNewPassCode()) {
+                            biometricViewModel.removePassCode()
+                            val intent = Intent(baseContext, PassCodeActivity::class.java)
+                            intent.action = PassCodeActivity.ACTION_CREATE
+                            intent.putExtra(PassCodeActivity.EXTRAS_MIGRATION, true)
+                            startActivity(intent)
+                        }
+                        biometricViewModel.setLastUnlockTimestamp()
+                        OwnCloudBiometricManager.onActivityStopped(this@BiometricActivity)
+                        finish()
                     }
-                    biometricViewModel.setLastUnlockTimestamp()
-                    OwnCloudBiometricManager.onActivityStopped(this@BiometricActivity)
-                    finish()
                 }
 
                 override fun onAuthenticationFailed() {
@@ -108,14 +111,19 @@ class BiometricActivity : AppCompatActivity() {
             })
 
         // Displays the "log in" prompt.
-        biometricPrompt.authenticate(promptInfo, cryptoObject)
+        try {
+            biometricPrompt.authenticate(promptInfo, cryptoObject)
+        } catch (e: Exception) {
+            Timber.e(e, "cryptoObject property has not been initialized correctly")
+            authError(biometricHasFailed = true)
+        }
     }
 
-    private fun authError() {
+    private fun authError(biometricHasFailed: Boolean) {
         if (PassCodeManager.isPassCodeEnabled()) {
-            PassCodeManager.onBiometricCancelled(this)
+            PassCodeManager.onBiometricCancelled(this, biometricHasFailed)
         } else if (PatternManager.isPatternEnabled()) {
-            PatternManager.onBiometricCancelled(this)
+            PatternManager.onBiometricCancelled(this, biometricHasFailed)
         }
 
         finish()

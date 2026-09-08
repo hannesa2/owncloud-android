@@ -2,7 +2,10 @@
  * ownCloud Android client application
  *
  * @author David González Verdugo
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2026 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -19,8 +22,11 @@
 
 package com.owncloud.android.data.capabilities.datasources.mapper
 
+import com.owncloud.android.domain.capabilities.model.AppProviders
 import com.owncloud.android.domain.capabilities.model.CapabilityBooleanType
 import com.owncloud.android.domain.capabilities.model.OCCapability
+import com.owncloud.android.domain.capabilities.model.PasswordPolicy
+import com.owncloud.android.domain.capabilities.model.Spaces
 import com.owncloud.android.domain.mappers.RemoteMapper
 import com.owncloud.android.lib.resources.status.RemoteCapability
 import com.owncloud.android.lib.resources.status.RemoteCapability.CapabilityBooleanType as RemoteCapabilityBooleanType
@@ -30,7 +36,7 @@ class RemoteCapabilityMapper : RemoteMapper<OCCapability, RemoteCapability> {
         remote?.let {
             OCCapability(
                 accountName = remote.accountName,
-                versionMayor = remote.versionMayor,
+                versionMajor = remote.versionMajor,
                 versionMinor = remote.versionMinor,
                 versionMicro = remote.versionMicro,
                 versionString = remote.versionString,
@@ -62,11 +68,14 @@ class RemoteCapabilityMapper : RemoteMapper<OCCapability, RemoteCapability> {
                 filesSharingFederationIncoming =
                 CapabilityBooleanType.fromValue(remote.filesSharingFederationIncoming.value),
                 filesSharingUserProfilePicture = CapabilityBooleanType.fromValue(remote.filesSharingUserProfilePicture.value),
+                filesSharingSearchMinLength = remote.filesSharingSearchMinLength,
                 filesBigFileChunking = CapabilityBooleanType.fromValue(remote.filesBigFileChunking.value),
                 filesUndelete = CapabilityBooleanType.fromValue(remote.filesUndelete.value),
                 filesVersioning = CapabilityBooleanType.fromValue(remote.filesVersioning.value),
                 filesPrivateLinks = CapabilityBooleanType.fromValue(remote.filesPrivateLinks.value),
-                filesOcisProviders = remote.filesAppProviders?.firstOrNull()?.toOCISProvider()
+                filesAppProviders = remote.filesAppProviders?.firstOrNull()?.toAppProviders(),
+                spaces = remote.spaces?.toSpaces(),
+                passwordPolicy = remote.passwordPolicy?.toPasswordPolicy()
             )
         }
 
@@ -74,7 +83,7 @@ class RemoteCapabilityMapper : RemoteMapper<OCCapability, RemoteCapability> {
         model?.let {
             RemoteCapability(
                 accountName = model.accountName!!,
-                versionMayor = model.versionMayor,
+                versionMajor = model.versionMajor,
                 versionMinor = model.versionMinor,
                 versionMicro = model.versionMicro,
                 versionString = model.versionString!!,
@@ -106,15 +115,23 @@ class RemoteCapabilityMapper : RemoteMapper<OCCapability, RemoteCapability> {
                 filesSharingFederationIncoming =
                 RemoteCapabilityBooleanType.fromValue(model.filesSharingFederationIncoming.value)!!,
                 filesSharingUserProfilePicture = RemoteCapabilityBooleanType.fromValue(model.filesSharingUserProfilePicture.value)!!,
+                filesSharingSearchMinLength = model.filesSharingSearchMinLength,
                 filesBigFileChunking = RemoteCapabilityBooleanType.fromValue(model.filesBigFileChunking.value)!!,
                 filesUndelete = RemoteCapabilityBooleanType.fromValue(model.filesUndelete.value)!!,
                 filesVersioning = RemoteCapabilityBooleanType.fromValue(model.filesVersioning.value)!!,
                 filesPrivateLinks = RemoteCapabilityBooleanType.fromValue(model.filesPrivateLinks.value)!!,
-                filesAppProviders = null
+                filesAppProviders = null,
+                spaces = null,
+                passwordPolicy = null,
             )
         }
 
-    private fun RemoteCapability.RemoteOCISProvider.toOCISProvider() =
-        OCCapability.OcisProvider(enabled, version, appsUrl, openUrl, openWebUrl, newUrl)
+    private fun RemoteCapability.RemoteAppProviders.toAppProviders() =
+        AppProviders(enabled, version, appsUrl, openUrl, openWebUrl, newUrl)
 
+    private fun RemoteCapability.RemoteSpaces.toSpaces() =
+        Spaces(enabled, projects, shareJail, hasMultiplePersonalSpaces)
+
+    private fun RemoteCapability.RemotePasswordPolicy.toPasswordPolicy() =
+        PasswordPolicy(maxCharacters, minCharacters, minDigits, minLowercaseCharacters, minSpecialCharacters, minUppercaseCharacters)
 }

@@ -1,0 +1,7 @@
+Enhancement: Resource leaks in fragment view bindings
+
+View binding references have been cleared in onDestroyView() across fragments to 
+prevent memory leaks when fragment instances outlive their views.
+
+https://github.com/owncloud/android/issues/4813
+https://github.com/owncloud/android/pull/4814

@@ -6,7 +6,9 @@
  * @author David González Verdugo
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
- * Copyright (C) 2021 ownCloud GmbH.
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2026 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -26,37 +28,40 @@ package com.owncloud.android.presentation.security.pattern
 import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
-import android.view.KeyEvent
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import com.andrognito.patternlockview.PatternLockView.Dot
 import com.andrognito.patternlockview.listener.PatternLockViewListener
 import com.andrognito.patternlockview.utils.PatternLockUtils
 import com.owncloud.android.BuildConfig
 import com.owncloud.android.R
-import com.owncloud.android.data.preferences.datasources.implementation.OCSharedPreferencesProvider
-import com.owncloud.android.databinding.ActivityPatternLockBinding
+import com.owncloud.android.data.providers.implementation.OCSharedPreferencesProvider
+import com.owncloud.android.databinding.PatternLockActivityBinding
+import com.owncloud.android.extensions.adaptInfiniteEdges
 import com.owncloud.android.extensions.showBiometricDialog
-import com.owncloud.android.presentation.documentsprovider.DocumentsProviderUtils.Companion.notifyDocumentsProviderRoots
+import com.owncloud.android.extensions.showMessageInSnackbar
+import com.owncloud.android.presentation.documentsprovider.DocumentsProviderUtils.notifyDocumentsProviderRoots
 import com.owncloud.android.presentation.security.PREFERENCE_LAST_UNLOCK_TIMESTAMP
 import com.owncloud.android.presentation.security.biometric.BiometricStatus
 import com.owncloud.android.presentation.security.biometric.BiometricViewModel
 import com.owncloud.android.presentation.security.biometric.EnableBiometrics
 import com.owncloud.android.presentation.settings.security.SettingsSecurityFragment.Companion.EXTRAS_LOCK_ENFORCED
+import com.owncloud.android.ui.activity.ToolbarActivity
 import com.owncloud.android.utils.PreferenceUtils
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 
-class PatternActivity : AppCompatActivity(), EnableBiometrics {
+class PatternActivity : ToolbarActivity(), EnableBiometrics {
 
     // ViewModel
     private val patternViewModel by viewModel<PatternViewModel>()
     private val biometricViewModel by viewModel<BiometricViewModel>()
 
-    private var _binding: ActivityPatternLockBinding? = null
+    private var _binding: PatternLockActivityBinding? = null
     val binding get() = _binding!!
 
     private var confirmingPattern = false
@@ -65,6 +70,16 @@ class PatternActivity : AppCompatActivity(), EnableBiometrics {
 
     val resultIntent = Intent()
 
+    private val onBackPressedCallback = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            if (ACTION_REQUEST_WITH_RESULT == intent.action && intent.extras?.getBoolean(EXTRAS_LOCK_ENFORCED) != true ||
+                ACTION_CHECK_WITH_RESULT == intent.action) {
+                PatternManager.onActivityStopped(this@PatternActivity)
+                finish()
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -72,11 +87,22 @@ class PatternActivity : AppCompatActivity(), EnableBiometrics {
             window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         }
 
-        _binding = ActivityPatternLockBinding.inflate(layoutInflater)
+        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
+
+        _binding = PatternLockActivityBinding.inflate(layoutInflater)
 
         setContentView(binding.root)
 
+        if (intent.getBooleanExtra(BIOMETRIC_HAS_FAILED, false)) {
+            showMessageInSnackbar(message = getString(R.string.biometric_not_available))
+        }
+
         binding.patternLockView.clearPattern()
+
+        adaptInfiniteEdges(binding.activityPatternLockLayout)
+
+        setupStandardToolbar(title = null, displayHomeAsUpEnabled = true, homeButtonEnabled = true, displayShowTitleEnabled = true)
+        supportActionBar?.setHomeActionContentDescription(R.string.common_back)
 
         // Allow or disallow touches with other visible windows
         binding.activityPatternLockLayout.filterTouchesWhenObscured =
@@ -95,8 +121,8 @@ class PatternActivity : AppCompatActivity(), EnableBiometrics {
                  * This block is executed when the user opens the app after setting the pattern lock
                  * this block takes the pattern input by the user and checks it with the pattern initially set by the user.
                  */
-                binding.headerPattern.text = getString(R.string.pattern_enter_pattern)
-                binding.explanationPattern.visibility = View.INVISIBLE
+                binding.patternHeader.text = getString(R.string.pattern_enter_pattern)
+                binding.patternExplanation.visibility = View.INVISIBLE
                 supportActionBar?.setDisplayHomeAsUpEnabled(false)
             }
             ACTION_REQUEST_WITH_RESULT -> {
@@ -111,13 +137,13 @@ class PatternActivity : AppCompatActivity(), EnableBiometrics {
                     patternExpShouldVisible = savedInstanceState.getBoolean(PATTERN_EXP_VIEW_STATE)
                 }
                 if (confirmingPattern) {
-                    binding.headerPattern.text = headerPatternViewText
+                    binding.patternHeader.text = headerPatternViewText
                     if (!patternExpShouldVisible) {
-                        binding.explanationPattern.visibility = View.INVISIBLE
+                        binding.patternExplanation.visibility = View.INVISIBLE
                     }
                 } else {
-                    binding.headerPattern.text = getString(R.string.pattern_configure_pattern)
-                    binding.explanationPattern.visibility = View.VISIBLE
+                    binding.patternHeader.text = getString(R.string.pattern_configure_pattern)
+                    binding.patternExplanation.visibility = View.VISIBLE
                     if (intent.extras?.getBoolean(EXTRAS_LOCK_ENFORCED) == true) {
                         supportActionBar?.setDisplayHomeAsUpEnabled(false)
                     } else {
@@ -129,9 +155,9 @@ class PatternActivity : AppCompatActivity(), EnableBiometrics {
                 /**
                  * This block is executed when the user is removing the pattern lock (i.e disabling the pattern lock)
                  */
-                binding.headerPattern.text = getString(R.string.pattern_remove_pattern)
-                binding.explanationPattern.text = getString(R.string.pattern_no_longer_required)
-                binding.explanationPattern.visibility = View.VISIBLE
+                binding.patternHeader.text = getString(R.string.pattern_remove_pattern)
+                binding.patternExplanation.text = getString(R.string.pattern_no_longer_required)
+                binding.patternExplanation.visibility = View.VISIBLE
                 supportActionBar?.setDisplayHomeAsUpEnabled(true)
             }
             else -> {
@@ -143,14 +169,11 @@ class PatternActivity : AppCompatActivity(), EnableBiometrics {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        onBackPressed()
+        onBackPressedDispatcher.onBackPressed()
         return true
     }
 
-    override fun onBackPressed() {
-        PatternManager.onActivityStopped(this)
-        super.onBackPressed()
-    }
+    override fun onCreateOptionsMenu(menu: Menu): Boolean = false
 
     /**
      * Binds the appropriate listener to the pattern view.
@@ -216,7 +239,7 @@ class PatternActivity : AppCompatActivity(), EnableBiometrics {
 
     private fun handleActionCheck() {
         if (patternViewModel.checkPatternIsValid(patternValue)) {
-            binding.errorPattern.visibility = View.INVISIBLE
+            binding.patternError.visibility = View.INVISIBLE
             val preferencesProvider = OCSharedPreferencesProvider(applicationContext)
             preferencesProvider.putLong(PREFERENCE_LAST_UNLOCK_TIMESTAMP, SystemClock.elapsedRealtime())
             PatternManager.onActivityStopped(this)
@@ -234,7 +257,7 @@ class PatternActivity : AppCompatActivity(), EnableBiometrics {
             patternViewModel.removePattern()
             val result = Intent()
             setResult(RESULT_OK, result)
-            binding.errorPattern.visibility = View.INVISIBLE
+            binding.patternError.visibility = View.INVISIBLE
             notifyDocumentsProviderRoots(applicationContext)
             finish()
         } else {
@@ -247,7 +270,7 @@ class PatternActivity : AppCompatActivity(), EnableBiometrics {
 
     private fun handleActionRequestWithResult() {
         if (!confirmingPattern) {
-            binding.errorPattern.visibility = View.INVISIBLE
+            binding.patternError.visibility = View.INVISIBLE
             requestPatternConfirmation()
         } else if (confirmPattern()) {
             savePatternAndExit()
@@ -264,10 +287,10 @@ class PatternActivity : AppCompatActivity(), EnableBiometrics {
         explanationVisibility: Int
     ) {
         patternValue = null
-        binding.errorPattern.setText(errorMessage)
-        binding.errorPattern.visibility = View.VISIBLE
-        binding.headerPattern.setText(headerMessage)
-        binding.explanationPattern.visibility = explanationVisibility
+        binding.patternError.setText(errorMessage)
+        binding.patternError.visibility = View.VISIBLE
+        binding.patternHeader.setText(headerMessage)
+        binding.patternExplanation.visibility = explanationVisibility
     }
 
     /**
@@ -275,8 +298,8 @@ class PatternActivity : AppCompatActivity(), EnableBiometrics {
      */
     private fun requestPatternConfirmation() {
         binding.patternLockView.clearPattern()
-        binding.headerPattern.setText(R.string.pattern_reenter_pattern)
-        binding.explanationPattern.visibility = View.INVISIBLE
+        binding.patternHeader.setText(R.string.pattern_reenter_pattern)
+        binding.patternExplanation.visibility = View.INVISIBLE
         confirmingPattern = true
     }
 
@@ -302,30 +325,9 @@ class PatternActivity : AppCompatActivity(), EnableBiometrics {
         outState.apply {
             putBoolean(KEY_CONFIRMING_PATTERN, confirmingPattern)
             putString(KEY_PATTERN_STRING, patternValue)
-            putString(PATTERN_HEADER_VIEW_TEXT, binding.headerPattern.text.toString())
-            putBoolean(PATTERN_EXP_VIEW_STATE, binding.explanationPattern.isVisible)
+            putString(PATTERN_HEADER_VIEW_TEXT, binding.patternHeader.text.toString())
+            putBoolean(PATTERN_EXP_VIEW_STATE, binding.patternExplanation.isVisible)
         }
-    }
-
-    /**
-     * Overrides click on the BACK arrow to correctly cancel ACTION_ENABLE or ACTION_DISABLE, while
-     * preventing than ACTION_CHECK may be worked around.
-     *
-     * @param keyCode       Key code of the key that triggered the down event.
-     * @param event         Event triggered.
-     * @return              'True' when the key event was processed by this method.
-     */
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK && event.repeatCount == 0) {
-            if (ACTION_REQUEST_WITH_RESULT == intent.action &&
-                intent.extras?.getBoolean(EXTRAS_LOCK_ENFORCED) != true ||
-                ACTION_CHECK_WITH_RESULT == intent.action
-            ) {
-                finish()
-            } // else, do nothing, but report that the key was consumed to stay alive
-            return true
-        }
-        return super.onKeyDown(keyCode, event)
     }
 
     override fun onOptionSelected(optionSelected: BiometricStatus) {
@@ -354,5 +356,6 @@ class PatternActivity : AppCompatActivity(), EnableBiometrics {
         private const val KEY_PATTERN_STRING = "PATTERN_STRING"
         private const val PATTERN_HEADER_VIEW_TEXT = "PATTERN_HEADER_VIEW_TEXT"
         private const val PATTERN_EXP_VIEW_STATE = "PATTERN_EXP_VIEW_STATE"
+        const val BIOMETRIC_HAS_FAILED = "BIOMETRIC_HAS_FAILED"
     }
 }

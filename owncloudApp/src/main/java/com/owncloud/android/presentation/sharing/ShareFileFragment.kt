@@ -6,7 +6,9 @@
  * @author Juan Carlos González Cabrero
  * @author David González Verdugo
  * @author Christian Schabesberger
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Juan Carlos Garrote Gascón
+ *
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -248,14 +250,14 @@ class ShareFileFragment : Fragment(), ShareUserListAdapter.ShareUserAdapterListe
         if (file!!.isFolder) {
             binding.shareFileSize.isVisible = false
         } else {
-            binding.shareFileSize.text = DisplayUtils.bytesToHumanReadable(file!!.length, activity)
+            binding.shareFileSize.text = DisplayUtils.bytesToHumanReadable(file!!.length, activity, true)
         }
 
         // Private link button
         showOrHidePrivateLink()
 
         // Hide share features sections that are not enabled
-        hideSectionsDisabledInBuildTime(view)
+        hideSectionsDisabledInBuildTime()
 
         binding.addUserButton.setOnClickListener {
             // Show Search Fragment
@@ -272,9 +274,7 @@ class ShareFileFragment : Fragment(), ShareUserListAdapter.ShareUserAdapterListe
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         Timber.d("onActivityCreated")
-
-        activity?.setTitle(R.string.share_dialog_title)
-
+        requireActivity().setTitle(R.string.share_dialog_title)
         observeCapabilities() // Get capabilities to update some UI elements depending on them
         observeShares()
     }
@@ -284,6 +284,7 @@ class ShareFileFragment : Fragment(), ShareUserListAdapter.ShareUserAdapterListe
         try {
             listener = context as ShareFragmentListener?
         } catch (e: ClassCastException) {
+            Timber.e(e, "The activity attached doesn't implement OnShareFragmentInteractionListener")
             throw ClassCastException(activity.toString() + " must implement OnShareFragmentInteractionListener")
         }
     }
@@ -537,7 +538,7 @@ class ShareFileFragment : Fragment(), ShareUserListAdapter.ShareUserAdapterListe
      * Hide share features sections that are not enabled
      *
      */
-    private fun hideSectionsDisabledInBuildTime(view: View) {
+    private fun hideSectionsDisabledInBuildTime() {
         val shareViaLinkAllowed = requireActivity().resources.getBoolean(R.bool.share_via_link_feature)
         val shareWithUsersAllowed = requireActivity().resources.getBoolean(R.bool.share_with_users_feature)
         val shareWarningAllowed = requireActivity().resources.getBoolean(R.bool.warning_sharing_public_link)

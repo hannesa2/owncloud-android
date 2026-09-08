@@ -27,9 +27,7 @@ import androidx.annotation.IntegerRes
 import androidx.annotation.StringRes
 import androidx.enterprise.feedback.KeyedAppState
 import androidx.enterprise.feedback.KeyedAppStatesReporter
-import com.owncloud.android.BuildConfig
-import com.owncloud.android.MainApp.Companion.MDM_FLAVOR
-import com.owncloud.android.data.preferences.datasources.implementation.OCSharedPreferencesProvider
+import com.owncloud.android.data.providers.implementation.OCSharedPreferencesProvider
 import com.owncloud.android.utils.MDMConfigurations
 import timber.log.Timber
 
@@ -112,7 +110,9 @@ class MdmProvider(
 
         return if (isMdmFlavor()) {
             preferencesProvider.getString(key = mdmKey, defaultValue = setupValue) ?: throw IllegalStateException("Key $stringKey is not supported")
-        } else setupValue
+        } else {
+            setupValue
+        }
     }
 
     fun getBrandingBoolean(
@@ -152,5 +152,5 @@ class MdmProvider(
         reporter.setStates(states, null)
     }
 
-    private fun isMdmFlavor() = BuildConfig.FLAVOR == MDM_FLAVOR
+    internal fun isMdmFlavor() = false
 }

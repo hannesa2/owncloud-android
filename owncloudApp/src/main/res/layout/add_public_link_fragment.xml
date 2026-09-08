@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ownCloud Android client application
+
+  Copyright (C) 2026 ownCloud GmbH.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License version 2,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/create_public_link_button">
+
+        <LinearLayout
+            android:id="@+id/create_public_link_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="@dimen/standard_padding">
+
+            <TextView
+                android:id="@+id/public_link_name_title"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/standard_half_padding"
+                android:paddingEnd="@dimen/standard_half_padding"
+                android:background="@color/actionbar_start_color"
+                android:text="@string/global_name"
+                android:textAllCaps="true"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:accessibilityHeading="true"/>
+
+            <EditText
+                android:id="@+id/public_link_name_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/standard_half_margin"
+                android:hint="@string/share_via_link_name_label"
+                android:inputType="text"
+                android:maxLines="1"
+                android:maxLength="255"
+                android:selectAllOnFocus="true"/>
+
+            <TextView
+                android:id="@+id/permissions_title"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/standard_half_padding"
+                android:paddingEnd="@dimen/standard_half_padding"
+                android:background="@color/actionbar_start_color"
+                android:text="@string/members_permissions"
+                android:textAllCaps="true"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:accessibilityHeading="true"/>
+
+            <include
+                android:id="@+id/public_link_permissions"
+                layout="@layout/public_link_permissions"/>
+
+            <LinearLayout
+                android:id="@+id/options_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:id="@+id/options_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:gravity="center_vertical"
+                    android:paddingStart="@dimen/standard_half_padding"
+                    android:paddingEnd="@dimen/standard_half_padding"
+                    android:background="@color/actionbar_start_color"
+                    android:text="@string/members_options"
+                    android:textAllCaps="true"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"
+                    android:accessibilityHeading="true"/>
+
+                <include
+                    android:id="@+id/password_layout"
+                    layout="@layout/password_layout"/>
+
+                <include
+                    android:id="@+id/expiration_date_layout"
+                    layout="@layout/expiration_date_layout"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/create_public_link_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/standard_quarter_margin"
+        android:contentDescription="@string/content_description_create_public_link_button"
+        android:text="@string/share_privilege_can_edit_create"
+        android:textSize="15sp"
+        android:enabled="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        style="@style/Button.Primary"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

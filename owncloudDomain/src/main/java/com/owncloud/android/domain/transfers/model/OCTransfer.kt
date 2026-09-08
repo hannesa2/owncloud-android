@@ -2,8 +2,9 @@
  * ownCloud Android client application
  *
  * @author Juan Carlos Garrote Gascón
+ * @author Aitor Ballesteros Pavón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -21,7 +22,7 @@
 package com.owncloud.android.domain.transfers.model
 
 import android.os.Parcelable
-import com.owncloud.android.domain.camerauploads.model.UploadBehavior
+import com.owncloud.android.domain.automaticuploads.model.UploadBehavior
 import kotlinx.parcelize.Parcelize
 import java.io.File
 
@@ -38,7 +39,9 @@ data class OCTransfer(
     val transferEndTimestamp: Long? = null,
     val lastResult: TransferResult? = null,
     val createdBy: UploadEnqueuedBy,
-    val transferId: String? = null
+    val transferId: String? = null,
+    val spaceId: String? = null,
+    val sourcePath: String? = null,
 ) : Parcelable {
     init {
         if (!remotePath.startsWith(File.separator)) throw IllegalArgumentException("Remote path must be an absolute path in the local file system")

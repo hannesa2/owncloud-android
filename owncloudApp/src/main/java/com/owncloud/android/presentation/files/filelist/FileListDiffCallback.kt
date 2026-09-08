@@ -4,7 +4,7 @@
  * @author Fernando Sanz Velasco
  * @author Juan Carlos Garrote Gascón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2023 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -17,7 +17,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 
 package com.owncloud.android.presentation.files.filelist
@@ -42,23 +41,18 @@ class FileListDiffCallback(
         val oldItem = oldList[oldItemPosition]
         val newItem = newList[newItemPosition]
 
-        if (oldItem is Unit && newItem is Unit) {
-            return true
+        return if (oldItem is Unit && newItem is Unit) {
+            true
+        } else if (oldItem is Boolean && newItem is Boolean) {
+            true
+        } else if (oldItem is OCFileWithSyncInfo && newItem is OCFileWithSyncInfo) {
+            oldItem.file.id == newItem.file.id
+        } else if (oldItem is OCFooterFile && newItem is OCFooterFile) {
+            oldItem.text == newItem.text
+        }  else {
+            false
         }
 
-        if (oldItem is Boolean && newItem is Boolean) {
-            return true
-        }
-
-        if (oldItem is OCFileWithSyncInfo && newItem is OCFileWithSyncInfo) {
-            return oldItem.file.id == newItem.file.id
-        }
-
-        if (oldItem is OCFooterFile && newItem is OCFooterFile) {
-            return oldItem.text == newItem.text
-        }
-
-        return false
     }
 
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =

@@ -4,8 +4,10 @@
  * @author Bartek Przybylski
  * @author David A. Velasco
  * @author David González Verdugo
+ * @author Aitor Ballesteros Pavón
+ *
  * Copyright (C) 2011  Bartek Przybylski
- * Copyright (C) 2020 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -41,7 +43,7 @@ import com.owncloud.android.domain.UseCaseResult;
 import com.owncloud.android.domain.capabilities.usecases.RefreshCapabilitiesFromServerAsyncUseCase;
 import com.owncloud.android.domain.exceptions.UnauthorizedException;
 import com.owncloud.android.domain.files.model.OCFile;
-import com.owncloud.android.domain.files.usecases.GetFileByRemotePathUseCase;
+import com.owncloud.android.domain.files.usecases.GetPersonalRootFolderForAccountUseCase;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.usecases.synchronization.SynchronizeFolderUseCase;
 import com.owncloud.android.utils.NotificationUtils;
@@ -150,13 +152,13 @@ public class FileSyncAdapter extends AbstractOwnCloudSyncAdapter {
         try {
             updateCapabilities();
             if (!mCancellation) {
-                @NotNull Lazy<GetFileByRemotePathUseCase> getFileByRemotePathUseCaseLazy =
-                        inject(GetFileByRemotePathUseCase.class);
-                GetFileByRemotePathUseCase.Params params = new GetFileByRemotePathUseCase.Params(OCFile.ROOT_PATH, account.name);
+                @NotNull Lazy<GetPersonalRootFolderForAccountUseCase> getRootFolderPersonalUseCaseLazy =
+                        inject(GetPersonalRootFolderForAccountUseCase.class);
+                GetPersonalRootFolderForAccountUseCase.Params params = new GetPersonalRootFolderForAccountUseCase.Params(account.name);
 
-                UseCaseResult<OCFile> useCaseResult = getFileByRemotePathUseCaseLazy.getValue().execute(params);
-                if (useCaseResult.getDataOrNull() != null) {
-                    synchronizeFolder(useCaseResult.getDataOrNull());
+                OCFile rootFolder = getRootFolderPersonalUseCaseLazy.getValue().invoke(params);
+                if (rootFolder != null) {
+                    synchronizeFolder(rootFolder);
                 }
 
             } else {
@@ -204,7 +206,7 @@ public class FileSyncAdapter extends AbstractOwnCloudSyncAdapter {
         @NotNull Lazy<RefreshCapabilitiesFromServerAsyncUseCase> refreshCapabilitiesFromServerAsyncUseCase =
                 inject(RefreshCapabilitiesFromServerAsyncUseCase.class);
         RefreshCapabilitiesFromServerAsyncUseCase.Params params = new RefreshCapabilitiesFromServerAsyncUseCase.Params(getAccount().name);
-        UseCaseResult<Unit> useCaseResult = refreshCapabilitiesFromServerAsyncUseCase.getValue().execute(params);
+        UseCaseResult<Unit> useCaseResult = refreshCapabilitiesFromServerAsyncUseCase.getValue().invoke(params);
 
         if (useCaseResult.isError()) {
             mLastFailedThrowable = useCaseResult.getThrowableOrNull();
@@ -227,11 +229,15 @@ public class FileSyncAdapter extends AbstractOwnCloudSyncAdapter {
         // Discover full account
         @NotNull Lazy<SynchronizeFolderUseCase> synchronizeFolderUseCase =
                 inject(SynchronizeFolderUseCase.class);
-        SynchronizeFolderUseCase.Params params = new SynchronizeFolderUseCase.Params(folder.getRemotePath(), folder.getOwner(),
-                SynchronizeFolderUseCase.SyncFolderMode.REFRESH_FOLDER_RECURSIVELY);
+        SynchronizeFolderUseCase.Params params = new SynchronizeFolderUseCase.Params(
+                folder.getRemotePath(),
+                folder.getOwner(),
+                folder.getSpaceId(),
+                SynchronizeFolderUseCase.SyncFolderMode.REFRESH_FOLDER_RECURSIVELY,
+                false);
         UseCaseResult<Unit> useCaseResult;
 
-        useCaseResult = synchronizeFolderUseCase.getValue().execute(params);
+        useCaseResult = synchronizeFolderUseCase.getValue().invoke(params);
 
         // in failures, the statistics for the global result are updated
         if (useCaseResult.getThrowableOrNull() != null) {

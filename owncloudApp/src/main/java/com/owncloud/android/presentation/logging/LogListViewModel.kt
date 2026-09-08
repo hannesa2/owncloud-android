@@ -21,7 +21,7 @@
 package com.owncloud.android.presentation.logging
 
 import androidx.lifecycle.ViewModel
-import com.owncloud.android.data.storage.LocalStorageProvider
+import com.owncloud.android.data.providers.LocalStorageProvider
 import java.io.File
 
 class LogListViewModel(
@@ -33,7 +33,6 @@ class LogListViewModel(
         return File(logsPath)
     }
 
-    fun getLogsFiles(): List<File> {
-        return getLogsDirectory().listFiles()?.toList()?.sortedBy { it.name } ?: listOf()
-    }
+    fun getLogsFiles(): List<File> =
+        getLogsDirectory().listFiles()?.toList()?.sortedBy { it.name } ?: listOf()
 }

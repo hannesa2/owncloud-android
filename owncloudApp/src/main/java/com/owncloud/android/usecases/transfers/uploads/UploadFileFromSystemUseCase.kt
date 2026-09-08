@@ -2,8 +2,10 @@
  * ownCloud Android client application
  *
  * @author Juan Carlos Garrote Gascón
+ * @author Aitor Ballesteros Pavón
+ * @author Jorge Aguado Recio
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2025 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -26,6 +28,10 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.owncloud.android.domain.BaseUseCase
+import com.owncloud.android.domain.automaticuploads.model.UploadBehavior
+import com.owncloud.android.domain.transfers.model.UploadEnqueuedBy
+import com.owncloud.android.workers.RemoveSourceFileWorker
+import com.owncloud.android.workers.UploadFileFromContentUriWorker
 import com.owncloud.android.workers.UploadFileFromFileSystemWorker
 import timber.log.Timber
 
@@ -34,7 +40,7 @@ class UploadFileFromSystemUseCase(
 ) : BaseUseCase<Unit, UploadFileFromSystemUseCase.Params>() {
 
     override fun run(params: Params) {
-        val inputData = workDataOf(
+        val inputDataUploadFileFromFileSystemWorker = workDataOf(
             UploadFileFromFileSystemWorker.KEY_PARAM_ACCOUNT_NAME to params.accountName,
             UploadFileFromFileSystemWorker.KEY_PARAM_BEHAVIOR to params.behavior,
             UploadFileFromFileSystemWorker.KEY_PARAM_LOCAL_PATH to params.localPath,
@@ -42,19 +48,34 @@ class UploadFileFromSystemUseCase(
             UploadFileFromFileSystemWorker.KEY_PARAM_UPLOAD_PATH to params.uploadPath,
             UploadFileFromFileSystemWorker.KEY_PARAM_UPLOAD_ID to params.uploadIdInStorageManager
         )
+        val inputDataRemoveSourceFileWorker = workDataOf(
+            UploadFileFromContentUriWorker.KEY_PARAM_CONTENT_URI to params.sourcePath,
+        )
 
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
         val uploadFileFromSystemWorker = OneTimeWorkRequestBuilder<UploadFileFromFileSystemWorker>()
-            .setInputData(inputData)
+            .setInputData(inputDataUploadFileFromFileSystemWorker)
             .setConstraints(constraints)
             .addTag(params.accountName)
             .addTag(params.uploadIdInStorageManager.toString())
             .build()
 
-        workManager.enqueue(uploadFileFromSystemWorker)
+        val behavior = UploadBehavior.fromString(params.behavior)
+        val createdBy = params.createdBy
+        if (behavior == UploadBehavior.MOVE && createdBy != UploadEnqueuedBy.ENQUEUED_BY_USER) {
+            val removeSourceFileWorker = OneTimeWorkRequestBuilder<RemoveSourceFileWorker>()
+                .setInputData(inputDataRemoveSourceFileWorker)
+                .build()
+            workManager.beginWith(uploadFileFromSystemWorker)
+                .then(removeSourceFileWorker) // File is already uploaded, so the original one can be removed if the behaviour is MOVE
+                .enqueue()
+        } else {
+            workManager.enqueue(uploadFileFromSystemWorker)
+        }
+
         Timber.i("Plain upload of ${params.localPath} has been enqueued.")
     }
 
@@ -65,5 +86,7 @@ class UploadFileFromSystemUseCase(
         val behavior: String,
         val uploadPath: String,
         val uploadIdInStorageManager: Long,
+        val sourcePath: String? = null,
+        val createdBy: UploadEnqueuedBy,
     )
 }

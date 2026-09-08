@@ -2,7 +2,9 @@
  * ownCloud Android client application
  *
  * @author Abel García de Prada
- * Copyright (C) 2021 ownCloud GmbH.
+ * @author Juan Carlos Garrote Gascón
+ *
+ * Copyright (C) 2023 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -20,53 +22,64 @@
 package com.owncloud.android.data.files.datasources
 
 import com.owncloud.android.domain.files.model.OCFile
+import com.owncloud.android.domain.files.model.OCMetaFile
 
 interface RemoteFileDataSource {
     fun checkPathExistence(
         path: String,
-        checkUserCredentials: Boolean,
+        isUserLogged: Boolean,
         accountName: String,
+        spaceWebDavUrl: String?,
     ): Boolean
-
-    fun getUrlToOpenInWeb(openWebEndpoint: String, fileId: String): String
 
     fun copyFile(
         sourceRemotePath: String,
         targetRemotePath: String,
         accountName: String,
-    ): String
+        sourceSpaceWebDavUrl: String?,
+        targetSpaceWebDavUrl: String?,
+        replace: Boolean,
+    ): String?
 
     fun createFolder(
         remotePath: String,
         createFullPath: Boolean,
         isChunksFolder: Boolean,
         accountName: String,
+        spaceWebDavUrl: String?,
     )
 
     fun getAvailableRemotePath(
         remotePath: String,
         accountName: String,
+        spaceWebDavUrl: String?,
+        isUserLogged: Boolean,
     ): String
 
     fun moveFile(
         sourceRemotePath: String,
         targetRemotePath: String,
         accountName: String,
+        spaceWebDavUrl: String?,
+        replace: Boolean,
     )
 
     fun readFile(
         remotePath: String,
         accountName: String,
+        spaceWebDavUrl: String? = null,
     ): OCFile
 
     fun refreshFolder(
         remotePath: String,
         accountName: String,
+        spaceWebDavUrl: String? = null,
     ): List<OCFile>
 
     fun deleteFile(
         remotePath: String,
         accountName: String,
+        spaceWebDavUrl: String? = null,
     )
 
     fun renameFile(
@@ -75,5 +88,12 @@ interface RemoteFileDataSource {
         newName: String,
         isFolder: Boolean,
         accountName: String,
+        spaceWebDavUrl: String? = null,
     )
+
+    fun getMetaFile(
+        fileId: String,
+        accountName: String,
+    ): OCMetaFile
+
 }

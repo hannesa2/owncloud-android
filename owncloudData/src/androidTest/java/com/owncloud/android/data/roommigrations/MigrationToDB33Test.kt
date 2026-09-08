@@ -2,7 +2,9 @@
  *   ownCloud Android client application
  *
  *   @author Abel García de Prada
- *   Copyright (C) 2020 ownCloud GmbH.
+ *   @author Jorge Aguado Recio
+ *
+ *   Copyright (C) 2026 ownCloud GmbH.
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License version 2,
@@ -22,8 +24,19 @@ package com.owncloud.android.data.roommigrations
 
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.test.filters.SmallTest
-import com.owncloud.android.data.OwncloudDatabase
 import com.owncloud.android.data.ProviderMeta.ProviderTableMeta.OCSHARES_TABLE_NAME
+import com.owncloud.android.data.migrations.MIGRATION_27_28
+import com.owncloud.android.data.migrations.MIGRATION_28_29
+import com.owncloud.android.data.migrations.MIGRATION_29_30
+import com.owncloud.android.data.migrations.MIGRATION_30_31
+import com.owncloud.android.data.migrations.MIGRATION_31_32
+import com.owncloud.android.data.migrations.MIGRATION_32_33
+import com.owncloud.android.data.migrations.MIGRATION_33_34
+import com.owncloud.android.data.migrations.MIGRATION_34_35
+import com.owncloud.android.data.migrations.MIGRATION_35_36
+import com.owncloud.android.data.migrations.MIGRATION_37_38
+import com.owncloud.android.data.migrations.MIGRATION_41_42
+import com.owncloud.android.data.migrations.MIGRATION_42_43
 import com.owncloud.android.testutil.OC_SHARE
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -41,7 +54,20 @@ class MigrationToDB33Test : MigrationTest() {
             currentVersion = DB_VERSION_33,
             insertData = { database -> insertDataToTest(database) },
             validateMigration = { database -> validateMigrationTo33(database) },
-            listOfMigrations = OwncloudDatabase.ALL_MIGRATIONS
+            listOfMigrations = arrayOf(
+                MIGRATION_27_28,
+                MIGRATION_28_29,
+                MIGRATION_29_30,
+                MIGRATION_30_31,
+                MIGRATION_31_32,
+                MIGRATION_32_33,
+                MIGRATION_33_34,
+                MIGRATION_34_35,
+                MIGRATION_35_36,
+                MIGRATION_37_38,
+                MIGRATION_41_42,
+                MIGRATION_42_43,
+            )
         )
     }
 
@@ -80,7 +106,7 @@ class MigrationToDB33Test : MigrationTest() {
                     "file_source)" +
                     " VALUES " +
                     "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            arrayOf(
+            arrayOf<Any?>(
                 OC_SHARE.shareType,
                 OC_SHARE.shareWith,
                 OC_SHARE.path,

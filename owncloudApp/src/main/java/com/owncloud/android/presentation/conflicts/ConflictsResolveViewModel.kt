@@ -3,7 +3,7 @@
  *
  * @author Juan Carlos Garrote Gascón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2023 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -43,7 +43,7 @@ class ConflictsResolveViewModel(
 ) : ViewModel() {
 
     val currentFile: StateFlow<OCFile?> =
-        getFileByIdAsStreamUseCase.execute(GetFileByIdAsStreamUseCase.Params(ocFile.id!!))
+        getFileByIdAsStreamUseCase(GetFileByIdAsStreamUseCase.Params(ocFile.id!!))
             .stateIn(
                 viewModelScope,
                 started = SharingStarted.WhileSubscribed(),
@@ -53,7 +53,7 @@ class ConflictsResolveViewModel(
     fun downloadFile() {
         val fileToDownload = currentFile.value ?: return
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            downloadFileUseCase.execute(
+            downloadFileUseCase(
                 DownloadFileUseCase.Params(
                     accountName = fileToDownload.owner,
                     file = fileToDownload
@@ -65,11 +65,12 @@ class ConflictsResolveViewModel(
     fun uploadFileInConflict() {
         val fileToUpload = currentFile.value ?: return
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            uploadFileInConflictUseCase.execute(
+            uploadFileInConflictUseCase(
                 UploadFileInConflictUseCase.Params(
                     accountName = fileToUpload.owner,
                     localPath = fileToUpload.storagePath!!,
-                    uploadFolderPath = fileToUpload.getParentRemotePath()
+                    uploadFolderPath = fileToUpload.getParentRemotePath(),
+                    spaceId = fileToUpload.spaceId,
                 )
             )
         }
@@ -78,11 +79,12 @@ class ConflictsResolveViewModel(
     fun uploadFileFromSystem() {
         val fileToUpload = currentFile.value ?: return
         viewModelScope.launch(coroutinesDispatcherProvider.io) {
-            uploadFilesFromSystemUseCase.execute(
+            uploadFilesFromSystemUseCase(
                 UploadFilesFromSystemUseCase.Params(
                     accountName = fileToUpload.owner,
                     listOfLocalPaths = listOf(fileToUpload.storagePath!!),
-                    uploadFolderPath = fileToUpload.getParentRemotePath()
+                    uploadFolderPath = fileToUpload.getParentRemotePath(),
+                    spaceId = fileToUpload.spaceId,
                 )
             )
         }

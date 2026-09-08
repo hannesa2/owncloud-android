@@ -2,8 +2,9 @@
  * ownCloud Android client application
  *
  * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
  *
- * Copyright (C) 2021 ownCloud GmbH.
+ * Copyright (C) 2026 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -26,13 +27,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.owncloud.android.R
-import com.owncloud.android.data.preferences.datasources.SharedPreferencesProvider
+import com.owncloud.android.data.providers.SharedPreferencesProvider
 import com.owncloud.android.domain.utils.Event
 import com.owncloud.android.presentation.security.PREFERENCE_LAST_UNLOCK_ATTEMPT_TIMESTAMP
 import com.owncloud.android.presentation.security.PREFERENCE_LAST_UNLOCK_TIMESTAMP
 import com.owncloud.android.presentation.security.biometric.BiometricActivity
 import com.owncloud.android.presentation.settings.security.SettingsSecurityFragment.Companion.PREFERENCE_LOCK_ATTEMPTS
 import com.owncloud.android.providers.ContextProvider
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 import kotlin.math.pow
@@ -120,7 +122,7 @@ class PassCodeViewModel(
             resetNumberOfAttempts()
         } else {
             increaseNumberOfAttempts()
-            passcodeString = StringBuilder()
+            clearPassCode()
             _status.postValue(Status(PasscodeAction.CHECK, PasscodeType.ERROR))
         }
     }
@@ -130,7 +132,7 @@ class PassCodeViewModel(
             removePassCode()
             _status.postValue(Status(PasscodeAction.REMOVE, PasscodeType.OK))
         } else {
-            passcodeString = StringBuilder()
+            clearPassCode()
             _status.postValue(Status(PasscodeAction.REMOVE, PasscodeType.ERROR))
         }
     }
@@ -139,12 +141,13 @@ class PassCodeViewModel(
         // enabling pass code
         if (!confirmingPassCode) {
             requestPassCodeConfirmation()
+            clearPassCode()
             _status.postValue(Status(PasscodeAction.CREATE, PasscodeType.NO_CONFIRM))
         } else if (confirmPassCode()) {
             setPassCode()
             _status.postValue(Status(PasscodeAction.CREATE, PasscodeType.CONFIRM))
         } else {
-            passcodeString = StringBuilder()
+            clearPassCode()
             _status.postValue(Status(PasscodeAction.CREATE, PasscodeType.ERROR))
         }
     }
@@ -209,7 +212,8 @@ class PassCodeViewModel(
                     else TimeUnit.MINUTES.convert(millisUntilFinished.plus(1000), TimeUnit.MILLISECONDS)
                 val seconds = TimeUnit.SECONDS.convert(millisUntilFinished.plus(1000), TimeUnit.MILLISECONDS).rem(60)
                 val timeString =
-                    if (hours > 0) String.format("%02d:%02d:%02d", hours, minutes, seconds) else String.format("%02d:%02d", minutes, seconds)
+                    if (hours > 0) String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, seconds)
+                    else String.format(Locale.US, "%02d:%02d", minutes, seconds)
                 _getTimeToUnlockLiveData.postValue(Event(timeString))
             }
 
@@ -217,6 +221,16 @@ class PassCodeViewModel(
                 _getFinishedTimeToUnlockLiveData.postValue(Event(true))
             }
         }.start()
+    }
+
+    fun restorePassCode(passcode: String) {
+        passcodeString = StringBuilder(passcode)
+        _passcode.postValue(passcode)
+    }
+
+    fun clearPassCode() {
+        passcodeString = StringBuilder()
+        _passcode.postValue("")
     }
 
     private fun loadPinFromOldFormatIfPossible(): String? {

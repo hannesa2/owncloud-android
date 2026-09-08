@@ -2,8 +2,9 @@
  * ownCloud Android client application
  *
  * @author Abel García de Prada
+ * @author Aitor Ballesteros Pavón
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2024 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -36,21 +37,28 @@ class SynchronizeFolderUseCase(
         val remotePath = params.remotePath
         val accountName = params.accountName
 
-        val folderContent = fileRepository.refreshFolder(remotePath, accountName)
+        val folderContent = fileRepository.refreshFolder(
+            remotePath = remotePath,
+            accountName = accountName,
+            spaceId = params.spaceId,
+            isActionSetFolderAvailableOfflineOrSynchronize = params.isActionSetFolderAvailableOfflineOrSynchronize,
+        )
 
         folderContent.forEach { ocFile ->
             if (ocFile.isFolder) {
                 if (shouldSyncFolder(params.syncMode, ocFile)) {
-                    SynchronizeFolderUseCase(synchronizeFileUseCase, fileRepository).execute(
+                    SynchronizeFolderUseCase(synchronizeFileUseCase, fileRepository)(
                         Params(
                             remotePath = ocFile.remotePath,
                             accountName = accountName,
+                            spaceId = ocFile.spaceId,
                             syncMode = params.syncMode,
+                            isActionSetFolderAvailableOfflineOrSynchronize = params.isActionSetFolderAvailableOfflineOrSynchronize,
                         )
                     )
                 }
             } else if (shouldSyncFile(params.syncMode, ocFile)) {
-                synchronizeFileUseCase.execute(
+                synchronizeFileUseCase(
                     SynchronizeFileUseCase.Params(
                         fileToSynchronize = ocFile,
                     )
@@ -68,7 +76,9 @@ class SynchronizeFolderUseCase(
     data class Params(
         val remotePath: String,
         val accountName: String,
+        val spaceId: String? = null,
         val syncMode: SyncFolderMode,
+        val isActionSetFolderAvailableOfflineOrSynchronize: Boolean = false,
     )
 
     /**

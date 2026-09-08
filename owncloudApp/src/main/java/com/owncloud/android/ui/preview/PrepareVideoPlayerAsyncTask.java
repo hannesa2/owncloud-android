@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 package com.owncloud.android.ui.preview;
 
 import android.accounts.Account;
@@ -27,22 +26,27 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Base64;
 
-import com.google.android.exoplayer2.MediaItem;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.ProgressiveMediaSource;
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
-import com.google.android.exoplayer2.upstream.HttpDataSource;
+import androidx.annotation.OptIn;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.datasource.DataSource;
+import androidx.media3.datasource.DefaultDataSourceFactory;
+import androidx.media3.datasource.DefaultHttpDataSource;
+import androidx.media3.datasource.HttpDataSource;
+import androidx.media3.exoplayer.source.MediaSource;
+import androidx.media3.exoplayer.source.ProgressiveMediaSource;
+import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter;
+import androidx.media3.extractor.DefaultExtractorsFactory;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.domain.files.model.OCFile;
+import com.owncloud.android.domain.files.usecases.GetWebDavUrlForSpaceUseCase;
 import com.owncloud.android.lib.common.accounts.AccountUtils;
 import com.owncloud.android.lib.common.authentication.OwnCloudBasicCredentials;
 import com.owncloud.android.lib.common.authentication.OwnCloudBearerCredentials;
 import com.owncloud.android.lib.common.authentication.OwnCloudCredentials;
+import com.owncloud.android.lib.common.network.WebdavUtils;
 import com.owncloud.android.utils.UriUtilsKt;
+import kotlin.Lazy;
 import timber.log.Timber;
 
 import java.io.IOException;
@@ -50,9 +54,12 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.koin.java.KoinJavaComponent.inject;
+
 /**
  * Task for prepare video player asynchronously
  */
+@OptIn(markerClass = UnstableApi.class)
 public class PrepareVideoPlayerAsyncTask extends AsyncTask<Object, Void, MediaSource> {
 
     private final Context mContext;
@@ -60,13 +67,14 @@ public class PrepareVideoPlayerAsyncTask extends AsyncTask<Object, Void, MediaSo
     private final OCFile mFile;
     private final Account mAccount;
 
-    private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
+    private static DefaultBandwidthMeter BANDWIDTH_METER;
 
     public PrepareVideoPlayerAsyncTask(Context context, OnPrepareVideoPlayerTaskListener listener, OCFile file, Account account) {
         mContext = context;
         mListener = new WeakReference<>(listener);
         mFile = file;
         mAccount = account;
+        BANDWIDTH_METER = new DefaultBandwidthMeter.Builder(mContext).build();
     }
 
     @Override
@@ -74,24 +82,26 @@ public class PrepareVideoPlayerAsyncTask extends AsyncTask<Object, Void, MediaSo
 
         MediaSource mediaSource = null;
 
-        Uri uri;
-
         try {
             // If the file is already downloaded, reproduce it locally, if not, do streaming
-            uri = mFile.isAvailableLocally() ? UriUtilsKt.INSTANCE.getStorageUriForFile(mFile) :
-                    Uri.parse(AccountUtils.getWebDavUrlForAccount(mContext, mAccount) +
-                            Uri.encode(mFile.getRemotePath(), "/"));
-
-            boolean useBandwidthMeter = true;
-
-            DefaultBandwidthMeter bandwidthMeter = useBandwidthMeter ? BANDWIDTH_METER : null;
+            Uri uri;
+            if (mFile.isAvailableLocally()) {
+                uri = UriUtilsKt.INSTANCE.getStorageUriForFile(mFile);
+            } else {
+                Lazy<GetWebDavUrlForSpaceUseCase> getWebDavUrlForSpaceUseCaseLazy = inject(GetWebDavUrlForSpaceUseCase.class);
+                String spaceWebDavUrl = getWebDavUrlForSpaceUseCaseLazy.getValue().invoke(
+                        new GetWebDavUrlForSpaceUseCase.Params(mFile.getOwner(), mFile.getSpaceId())
+                );
+                String webDavUrl = spaceWebDavUrl == null ? AccountUtils.getWebDavUrlForAccount(mContext, mAccount) : spaceWebDavUrl;
+                uri = Uri.parse(webDavUrl + WebdavUtils.encodePath(mFile.getRemotePath()));
+            }
 
             HttpDataSource.Factory httpDataSourceFactory =
-                    buildHttpDataSourceFactory(bandwidthMeter, mFile, mAccount);
+                    buildHttpDataSourceFactory(BANDWIDTH_METER, mFile, mAccount);
 
             // Produces DataSource instances through which media data is loaded.
             DataSource.Factory mediaDataSourceFactory = new DefaultDataSourceFactory(mContext,
-                    bandwidthMeter, httpDataSourceFactory);
+                    BANDWIDTH_METER, httpDataSourceFactory);
 
             // This represents the media to be played.
             mediaSource = buildMediaSource(mediaDataSourceFactory, uri);
@@ -121,10 +131,7 @@ public class PrepareVideoPlayerAsyncTask extends AsyncTask<Object, Void, MediaSo
      *                       DataSource factory.
      * @return A new HttpDataSource factory.
      */
-    private HttpDataSource.Factory buildHttpDataSourceFactory(
-            DefaultBandwidthMeter bandwidthMeter,
-            OCFile file,
-            Account account) {
+    private HttpDataSource.Factory buildHttpDataSourceFactory(DefaultBandwidthMeter bandwidthMeter, OCFile file, Account account) {
 
         if (file.isAvailableLocally()) {
 
@@ -150,8 +157,7 @@ public class PrepareVideoPlayerAsyncTask extends AsyncTask<Object, Void, MediaSo
                     params.put("Authorization", auth);
                 }
 
-                return new CustomHttpDataSourceFactory(MainApp.Companion.getUserAgent(),
-                        bandwidthMeter, params);
+                return new CustomHttpDataSourceFactory(MainApp.Companion.getUserAgent(), bandwidthMeter, params);
 
             } catch (AuthenticatorException | IOException | OperationCanceledException e) {
                 Timber.e(e);

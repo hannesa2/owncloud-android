@@ -21,4 +21,18 @@
         app:iconSpaceReserved="false"
         app:key="show_hidden_files"
         app:title="@string/prefs_show_hidden_files" />
+
+    <SwitchPreferenceCompat
+        app:iconSpaceReserved="false"
+        app:key="show_disabled_spaces"
+        app:title="@string/prefs_show_disabled_spaces"
+        app:summary="@string/prefs_show_disabled_spaces_summary"/>
+
+    <ListPreference
+        app:defaultValue="NEVER"
+        app:dialogTitle="@string/prefs_delete_local_files"
+        app:iconSpaceReserved="false"
+        app:key="remove_local_files"
+        app:negativeButtonText=""
+        app:title="@string/prefs_delete_local_files" />
 </PreferenceScreen>

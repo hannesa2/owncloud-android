@@ -6,7 +6,9 @@
  * @author Shashvat Kedia
  * @author David González Verdugo
  * @author John Kalimeris
- * Copyright (C) 2021 ownCloud GmbH.
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2025 ownCloud GmbH.
  * <p>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -58,18 +60,25 @@ public class ReceiveExternalFilesAdapter extends BaseAdapter implements ListAdap
     private FileDataStorageManager mStorageManager;
     private LayoutInflater mInflater;
     private OnSearchQueryUpdateListener mOnSearchQueryUpdateListener;
+    private boolean mIsMultiPersonal;
+
+    private Boolean mShowHiddenFiles;
 
     public ReceiveExternalFilesAdapter(Context context,
                                        FileDataStorageManager storageManager,
-                                       Account account) {
+                                       Account account,
+                                       boolean showHiddenFiles,
+                                       boolean isMultiPersonal) {
         mStorageManager = storageManager;
         mContext = context;
         mInflater = (LayoutInflater) mContext
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mAccount = account;
+        mShowHiddenFiles = showHiddenFiles;
         if (mContext instanceof OnSearchQueryUpdateListener) {
             mOnSearchQueryUpdateListener = (OnSearchQueryUpdateListener) mContext;
         }
+        mIsMultiPersonal = isMultiPersonal;
     }
 
     @Override
@@ -87,8 +96,18 @@ public class ReceiveExternalFilesAdapter extends BaseAdapter implements ListAdap
     }
 
     public void setNewItemVector(Vector<OCFile> newItemVector) {
-        mFiles = newItemVector;
-        mImmutableFilesList = (Vector<OCFile>) mFiles.clone();
+        mFiles.clear();
+        for (OCFile file : newItemVector) {
+            if (!mShowHiddenFiles) {
+                if (!file.getFileName().startsWith(".")) {
+                    mFiles.add(file);
+                }
+            } else {
+                mFiles.add(file);
+            }
+        }
+        mImmutableFilesList.clear();
+        mImmutableFilesList.addAll(mFiles);
         notifyDataSetChanged();
     }
 
@@ -128,8 +147,15 @@ public class ReceiveExternalFilesAdapter extends BaseAdapter implements ListAdap
         TextView fileSizeSeparatorV = vi.findViewById(R.id.file_separator);
 
         fileSizeV.setVisibility(View.VISIBLE);
-        fileSizeSeparatorV.setVisibility(View.VISIBLE);
-        fileSizeV.setText(DisplayUtils.bytesToHumanReadable(file.getLength(), mContext));
+
+        boolean isFolderInKw = mIsMultiPersonal && file.isFolder();
+        if (isFolderInKw) {
+            fileSizeSeparatorV.setVisibility(View.GONE);
+            fileSizeV.setText("");
+        } else {
+            fileSizeSeparatorV.setVisibility(View.VISIBLE);
+            fileSizeV.setText(DisplayUtils.bytesToHumanReadable(file.getLength(), mContext, true));
+        }
 
         // get Thumbnail if file is image
         if (file.isImage() && file.getRemoteId() != null) {

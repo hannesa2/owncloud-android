@@ -3,8 +3,9 @@
  *
  * @author Abel García de Prada
  * @author Juan Carlos Garrote Gascón
+ * @author Jorge Aguado Recio
  *
- * Copyright (C) 2022 ownCloud GmbH.
+ * Copyright (C) 2025 ownCloud GmbH.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2,
@@ -24,11 +25,17 @@ package com.owncloud.android.domain.user
 import com.owncloud.android.domain.user.model.UserAvatar
 import com.owncloud.android.domain.user.model.UserInfo
 import com.owncloud.android.domain.user.model.UserQuota
+import kotlinx.coroutines.flow.Flow
 
 interface UserRepository {
     fun getUserInfo(accountName: String): UserInfo
     fun getUserQuota(accountName: String): UserQuota
     fun getStoredUserQuota(accountName: String): UserQuota?
+    fun getStoredUserQuotaAsFlow(accountName: String): Flow<UserQuota?>
     fun getAllUserQuotas(): List<UserQuota>
+    fun getAllUserQuotasAsFlow(): Flow<List<UserQuota>>
     fun getUserAvatar(accountName: String): UserAvatar
+    fun getUserId(accountName: String): String
+    fun getUserPermissions(accountName: String, accountId: String): List<String>
+    fun getUserGroups(accountName: String): List<String>
 }

@@ -1,0 +1,15 @@
+Enhancement: Show members of a space
+
+A new option to view all members of a space has been added to the bottom sheet, available when the three-dot menu button is tapped.
+This new option opens a new view that shows information like member names, roles, and expiration dates (if available).
+
+https://github.com/owncloud/android/issues/4612
+https://github.com/owncloud/android/issues/4763
+https://github.com/owncloud/android/issues/4772
+https://github.com/owncloud/android/issues/4782
+https://github.com/owncloud/android/pull/4728
+https://github.com/owncloud/android/pull/4765
+https://github.com/owncloud/android/pull/4779
+https://github.com/owncloud/android/pull/4784
+https://github.com/owncloud/android/pull/4809
+https://github.com/owncloud/android/pull/4841

@@ -4,7 +4,9 @@
  * @author David A. Velasco
  * @author Juan Carlos González Cabrero
  * @author David González Verdugo
- * Copyright (C) 2020 ownCloud GmbH.
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2026 ownCloud GmbH.
  *
  *
  * This program is free software: you can redistribute it and/or modify
@@ -56,10 +58,9 @@ import java.util.Locale
 class UsersAndGroupsSearchProvider : ContentProvider() {
     private lateinit var uriMatcher: UriMatcher
 
-    override fun getType(uri: Uri): String? {
+    override fun getType(uri: Uri): String? =
         // TODO implement
-        return null
-    }
+        null
 
     override fun onCreate(): Boolean {
         try {
@@ -112,9 +113,10 @@ class UsersAndGroupsSearchProvider : ContentProvider() {
         sortOrder: String?
     ): Cursor? {
         Timber.d("query received in thread ${Thread.currentThread().name}")
-        return when (uriMatcher.match(uri)) {
-            SEARCH -> searchForUsersOrGroups(uri)
-            else -> null
+        return if (uriMatcher.match(uri) == SEARCH) {
+            searchForUsersOrGroups(uri)
+        } else {
+            null
         }
     }
 
@@ -129,15 +131,14 @@ class UsersAndGroupsSearchProvider : ContentProvider() {
 
         val getStoredCapabilitiesUseCase: GetStoredCapabilitiesUseCase by inject()
 
-        val capabilities = getStoredCapabilitiesUseCase.execute(
-            GetStoredCapabilitiesUseCase.Params(
-                accountName = account.name
-            )
-        )
+        val capabilities = getStoredCapabilitiesUseCase(GetStoredCapabilitiesUseCase.Params(accountName = account.name))
+
+        val searchMinLength = capabilities?.filesSharingSearchMinLength ?: 3
+        if (userQuery.length < searchMinLength) { return MatrixCursor(COLUMNS) }
 
         val getShareesAsyncUseCase: GetShareesAsyncUseCase by inject()
 
-        val getShareesResult = getShareesAsyncUseCase.execute(
+        val getShareesResult = getShareesAsyncUseCase(
             GetShareesAsyncUseCase.Params(
                 searchString = userQuery,
                 page = REQUESTED_PAGE,
@@ -167,15 +168,9 @@ class UsersAndGroupsSearchProvider : ContentProvider() {
             var dataUri: Uri? = null
             var count = 0
 
-            val userBaseUri = Uri.Builder().scheme(CONTENT).authority(
-                suggestAuthority!! + DATA_USER_SUFFIX
-            ).build()
-            val groupBaseUri = Uri.Builder().scheme(CONTENT).authority(
-                suggestAuthority!! + DATA_GROUP_SUFFIX
-            ).build()
-            val remoteBaseUri = Uri.Builder().scheme(CONTENT).authority(
-                suggestAuthority!! + DATA_REMOTE_SUFFIX
-            ).build()
+            val userBaseUri = Uri.Builder().scheme(CONTENT).authority(suggestAuthority!! + DATA_USER_SUFFIX).build()
+            val groupBaseUri = Uri.Builder().scheme(CONTENT).authority(suggestAuthority!! + DATA_GROUP_SUFFIX).build()
+            val remoteBaseUri = Uri.Builder().scheme(CONTENT).authority(suggestAuthority!! + DATA_REMOTE_SUFFIX).build()
 
             val federatedShareAllowed = capabilities?.filesSharingFederationOutgoing?.isTrue ?: false
 
@@ -184,9 +179,7 @@ class UsersAndGroupsSearchProvider : ContentProvider() {
                 val fullName = AccountManager.get(context).getUserData(account, KEY_DISPLAY_NAME)
                 while (namesIt.hasNext()) {
                     item = namesIt.next()
-                    if (item.label == userName || item.label == fullName && item.shareType == ShareType.USER) {
-                        continue
-                    }
+                    if (item.label == userName || item.label == fullName && item.shareType == ShareType.USER) { continue }
                     var userName = item.label
                     val type = item.shareType
                     val shareWith = item.shareWith
@@ -212,15 +205,10 @@ class UsersAndGroupsSearchProvider : ContentProvider() {
                         ShareType.FEDERATED -> {
                             if (federatedShareAllowed) {
                                 icon = R.drawable.ic_user
-                                displayName = if (userName == shareWith) {
-                                    context?.getString(R.string.share_remote_clarification, userName)
+                                displayName = if (userName == shareWith) { context?.getString(R.string.share_remote_clarification, userName)
                                 } else {
-                                    val uriSplitted =
-                                        shareWith.split("@".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-                                    context?.getString(
-                                        R.string.share_known_remote_clarification, userName,
-                                        uriSplitted[uriSplitted.size - 1]
-                                    )
+                                    val uriSplitted = shareWith.split("@".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                                    context?.getString(R.string.share_known_remote_clarification, userName, uriSplitted[uriSplitted.size - 1])
                                 }
                                 dataUri = Uri.withAppendedPath(remoteBaseUri, shareWith)
                             }
@@ -252,20 +240,17 @@ class UsersAndGroupsSearchProvider : ContentProvider() {
         return response
     }
 
-    override fun insert(uri: Uri, values: ContentValues?): Uri? {
+    override fun insert(uri: Uri, values: ContentValues?): Uri? =
         // TODO implementation
-        return null
-    }
+        null
 
-    override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {
+    override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int =
         // TODO implementation
-        return 0
-    }
+        0
 
-    override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<String>?): Int {
+    override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<String>?): Int =
         // TODO implementation
-        return 0
-    }
+        0
 
     /**
      * Show error genericErrorMessage
@@ -296,7 +281,6 @@ class UsersAndGroupsSearchProvider : ContentProvider() {
 
         private const val SEARCH = 1
 
-        private const val DEFAULT_MIN_CHARACTERS_TO_SEARCH = 4
         private const val RESULTS_PER_PAGE = 30
         private const val REQUESTED_PAGE = 1
 
@@ -311,8 +295,7 @@ class UsersAndGroupsSearchProvider : ContentProvider() {
             private set
         private val shareTypes = HashMap<String, ShareType>()
 
-        fun getShareType(authority: String?): ShareType? {
-            return shareTypes[authority]
-        }
+        fun getShareType(authority: String?): ShareType? =
+            shareTypes[authority]
     }
 }

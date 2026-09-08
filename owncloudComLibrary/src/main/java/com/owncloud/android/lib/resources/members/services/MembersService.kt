@@ -1,0 +1,33 @@
+/**
+ * ownCloud Android client application
+ *
+ * @author Jorge Aguado Recio
+ *
+ * Copyright (C) 2026 ownCloud GmbH.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2,
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.owncloud.android.lib.resources.members.services
+
+import com.owncloud.android.lib.common.operations.RemoteOperationResult
+import com.owncloud.android.lib.resources.Service
+import com.owncloud.android.lib.resources.members.responses.MemberResponse
+
+interface MembersService: Service {
+    fun addMember(spaceId: String, memberId: String, memberType: String, roleId: String, expirationDate: String?): RemoteOperationResult<Unit>
+    fun editMember(spaceId: String, memberId: String, roleId: String, expirationDate: String?): RemoteOperationResult<Unit>
+    fun removeMember(spaceId: String, memberId: String): RemoteOperationResult<Unit>
+    fun searchGroups(query: String): RemoteOperationResult<List<MemberResponse>>
+    fun searchUsers(query: String): RemoteOperationResult<List<MemberResponse>>
+}
